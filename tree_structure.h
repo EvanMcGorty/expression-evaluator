@@ -339,7 +339,7 @@ public:
             ret.reserve(var_name.size()+2);
             ret.push_back('@');
             ret.append(var_name);
-            ret.push_back('-');
+            ret.push_back('~');
             break;
         case(sc::push):
             ret.reserve(var_name.size()+2);
@@ -367,7 +367,7 @@ public:
 
         while(start!=stop)
         {
-            if(!(name_checker::isupper(*start) || name_checker::islower(*start)))
+            if(!(name_checker::isinnerchar(*start)))
             {
                 switch(*start)
                 {
@@ -375,7 +375,7 @@ public:
                     sc_ret = sc::push;
                     ++start;
                     break;
-                case('-'):
+                case('~'):
                     sc_ret = sc::pop;
                     ++start;
                     break;
@@ -401,7 +401,7 @@ public:
             ++start;
         }
 
-        if(ret.size()==0)
+        if(ret.size()==0 || name_checker::isotherinner(ret[ret.size()-1]))
         {
             return std::nullopt;
         }
@@ -513,6 +513,35 @@ public:
     static elem make(call&& a)
     {
         return elem{dtp::make<call>(a)};
+    }
+
+    static elem make_nullval()
+    {
+        return elem{dtp::make_nullval()};
+    }
+
+    static elem make(std::string const& to_be_parsed)
+    {
+        std::string::const_iterator it = to_be_parsed.cbegin();
+        std::optional<elem> o {parse(it,to_be_parsed.cend())};
+        if(!o)
+        {
+            return make_nullval();
+        }
+        while(it!=to_be_parsed.cend())
+        {
+            if(*it != ' ')
+            {
+                return make_nullval();
+            }
+            ++it;
+        }
+        return std::move(*o);
+    }
+
+    static elem make(char const* to_be_parsed)
+    {
+        return make(std::string{to_be_parsed});
     }
 
     static std::optional<elem> parse(std::string::const_iterator& start, std::string::const_iterator stop)
