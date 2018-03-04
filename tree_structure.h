@@ -199,6 +199,7 @@ public:
             while(start!=stop && !name_checker::canbeafterelem(*start))
             {
                 ret.push_back(*start);
+                ++start;
             }
             return std::optional<literal>{literal{std::move(ret)}};
         }
@@ -346,9 +347,11 @@ public:
                 {
                 case('+'):
                     sc_ret = sc::push;
+                    ++start;
                     break;
                 case('-'):
                     sc_ret = sc::pop;
+                    ++start;
                     break;
                 case(')'):
                 case(','):
@@ -359,12 +362,27 @@ public:
                     return std::nullopt;
                     break;
                 }
-                return std::optional<variable>{variable{std::move(ret),sc_ret}};
+                if(ret.size()==0)
+                {
+                    return std::nullopt;
+                }
+                else
+                {
+                    return std::optional<variable>{variable{std::move(ret),sc_ret}};
+                }
             }
+            ret.push_back(*start);
+            ++start;
         }
 
-        return std::nullopt;
-
+        if(ret.size()==0)
+        {
+            return std::nullopt;
+        }
+        else
+        {
+            return std::optional<variable>{variable{std::move(ret),sc::neutral}};
+        }
     }
 
 
@@ -425,7 +443,52 @@ public:
 
     }
 
+    std::string str() const
+    {
+        return val->make_string();
+    }
 
+    static std::optional<elem> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+    {
+        if(*start == '@')
+        {
+            std::optional<variable> n = variable::parse(start,stop);
+            if(n)
+            {
+                return std::optional<elem>{elem{mu::algebraic<node,literal,variable,call>::make<variable>(std::move(*n))}};
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }
+        else if(name_checker::isupper(*start) || name_checker::islower(*start))
+        {
+            std::optional<call> n{call::parse(start,stop)};
+            if(n)
+            {
+                return std::optional<elem>{elem{mu::algebraic<node,literal,variable,call>::make<call>(std::move(*n))}};
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }
+        else
+        {
+            std::optional<literal> n = literal::parse(start,stop);
+            if(n)
+            {
+                return std::optional<elem>{elem{mu::algebraic<node,literal,variable,call>::make<literal>(std::move(*n))}};
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }
+    }
+
+private:
     mu::algebraic<node,literal,variable,call> val;
 };
 
@@ -435,12 +498,19 @@ inline std::string call::make_string() const
     ret.reserve(fn_name.size()+arguments.size()*10);
     ret = fn_name;
     ret.push_back('(');
-    for(auto it = arguments.cbegin(); it!=arguments.cend(); ++it)
+    //for(std::vector<elem>::const_iterator it = arguments.cbegin(); it!=arguments.cend(); ++it)
+    for(int i = 0; i!=arguments.size(); ++i)
     {
-        ret.append(it->val->make_string());
+        //ret.append(it->str());
+        ret.append(arguments[i].str());
         ret.push_back(',');
     }
-    *(ret.end()-1) = ')';
+    if(arguments.size()>0)
+    {
+        ret.pop_back();
+    }
+
+    ret.push_back(')');
 
     return ret;
 }
@@ -472,62 +542,58 @@ inline std::optional<call> call::parse(std::string::const_iterator& start, std::
         return ret;
     }
 
-    while(start!=stop && *start==' ')
+
+
+    while(start!=stop && *start != ')')
     {
         ++start;
-    }
 
-    do
-    {
-
-        if(*start == '@')
+        while(start!=stop && *start==' ')
         {
-            std::optional<variable> n = variable::parse(start,stop);
-            if(n)
-            {
-                ret.arguments.emplace_back(mu::algebraic<node,literal,variable,call>::make<variable>(std::move(*n)));
-            }
-            else
-            {
-                return std::nullopt;
-            }
+            ++start;
         }
-        else if(name_checker::isupper(*start) || name_checker::islower(*start))
+
+        if(start==stop)
         {
-            std::optional<call> n{call::parse(start,stop)};
-            if(n)
-            {
-                ret.arguments.emplace_back(mu::algebraic<node,literal,variable,call>::make<call>(std::move(*n)));
-            }
-            else
-            {
-                return std::nullopt;
-            }
+            return std::nullopt;
+        }
+
+        if(*start == ')')
+        {
+            ++start;
+            return ret;
+        }
+
+        auto next = elem::parse(start,stop);
+
+        if(next)
+        {
+            ret.arguments.emplace_back(std::move(*next));
         }
         else
         {
-            std::optional<literal> n = literal::parse(start,stop);
-            if(n)
-            {
-                ret.arguments.emplace_back(mu::algebraic<node,literal,variable,call>::make<literal>(std::move(*n)));
-            }
-            else
-            {
-                return std::nullopt;
-            }
+            return std::nullopt;
         }
 
         while(start!=stop && *start==' ')
         {
             ++start;
         }
+
+        if(start!=stop && *start != ',' && *start != ')')
+        {
+            return std::nullopt;
+        }
+
+
     }
-    while(start!=stop && *start != ')');
 
     if(start==stop)
     {
         return std::nullopt;
     }
+
+    ++start;
 
     return ret;
 
