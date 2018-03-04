@@ -29,6 +29,10 @@ public:
         return false;
     }
 
+    virtual elem duplicate() const = 0;
+
+    virtual bool is_equal(node const* a) const = 0;
+
     virtual std::string make_string() const = 0;
 
     //all nodes also should have a static function called parse that returns an optional of itself.
@@ -53,10 +57,21 @@ public:
         value = a;
     }
 
+
     bool is_literal() const override
     {
         return true;
     }
+
+
+    elem duplicate() const override;
+
+
+    bool is_equal(node const* a) const override
+    {
+        return a->is_literal() && static_cast<literal const*>(a)->value == value;
+    }
+
 
     std::string make_string() const override
     {
@@ -295,10 +310,21 @@ public:
         var_name = std::string(std::move(a));
     }
 
+
+
     bool is_variable() const override
     {
         return true;
     }
+
+    elem duplicate() const override;
+
+
+    bool is_equal(node const* a) const override
+    {
+        return a->is_variable() && static_cast<variable const*>(a)->change == change && static_cast<variable const*>(a)->var_name == var_name;
+    }
+
 
     std::string make_string() const override
     {
@@ -398,21 +424,23 @@ class call : public node
 {
 public:
 
-    call(name_checker&& n)
+    call(name_checker&& n, std::vector<elem> a = {})
     {
         fn_name = std::move(n);
     }
 
-    call(call&& a)
-    {
-        fn_name = std::move(a.fn_name);
-        arguments = std::move(a.arguments);
-    }
+
 
     bool is_call() const override
     {
         return true;
     }
+
+    elem duplicate() const override;
+
+
+    bool is_equal(node const* a) const override;
+
 
     std::string make_string() const override;
 
@@ -426,16 +454,14 @@ private:
 };
 
 
+using dtp = mu::algebraic<node,literal,variable,call>;
 
 class elem
 {
+    friend elem literal::duplicate() const;
+    friend elem variable::duplicate() const;
+    friend elem call::duplicate() const;
 public:
-
-    elem(mu::algebraic<node,literal,variable,call>&& a) :
-        val(std::move(a))
-    {
-
-    }
 
     elem(elem&& a) :
         val(std::move(a.val))
@@ -443,9 +469,50 @@ public:
 
     }
 
+    void operator=(elem&& a)
+    {
+        val = std::move(a.val);
+    }
+
+    elem(elem const& a) :
+        elem(a.val->duplicate())
+    {
+
+    }
+
+    void operator=(elem const& a)
+    {
+        operator=(a.val->duplicate());
+    }
+
+    bool operator==(elem const& a) const
+    {
+        return val->is_equal(&*a.val);
+    }
+
+    bool operator!=(elem const& a) const
+    {
+        return !val->is_equal(&*a.val);
+    }
+
     std::string str() const
     {
         return val->make_string();
+    }
+
+    static elem make(literal&& a)
+    {
+        return elem{dtp::make<literal>(a)};
+    }
+
+    static elem make(variable&& a)
+    {
+        return elem{dtp::make<variable>(a)};
+    }
+
+    static elem make(call&& a)
+    {
+        return elem{dtp::make<call>(a)};
     }
 
     static std::optional<elem> parse(std::string::const_iterator& start, std::string::const_iterator stop)
@@ -455,7 +522,7 @@ public:
             std::optional<variable> n = variable::parse(start,stop);
             if(n)
             {
-                return std::optional<elem>{elem{mu::algebraic<node,literal,variable,call>::make<variable>(std::move(*n))}};
+                return std::optional<elem>{elem{dtp::make<variable>(std::move(*n))}};
             }
             else
             {
@@ -467,7 +534,7 @@ public:
             std::optional<call> n{call::parse(start,stop)};
             if(n)
             {
-                return std::optional<elem>{elem{mu::algebraic<node,literal,variable,call>::make<call>(std::move(*n))}};
+                return std::optional<elem>{elem{dtp::make<call>(std::move(*n))}};
             }
             else
             {
@@ -479,7 +546,7 @@ public:
             std::optional<literal> n = literal::parse(start,stop);
             if(n)
             {
-                return std::optional<elem>{elem{mu::algebraic<node,literal,variable,call>::make<literal>(std::move(*n))}};
+                return std::optional<elem>{elem{dtp::make<literal>(std::move(*n))}};
             }
             else
             {
@@ -489,7 +556,14 @@ public:
     }
 
 private:
-    mu::algebraic<node,literal,variable,call> val;
+    dtp val;
+    
+
+    elem(dtp&& a) :
+        val(std::move(a))
+    {
+
+    }
 };
 
 inline std::string call::make_string() const
@@ -539,7 +613,7 @@ inline std::optional<call> call::parse(std::string::const_iterator& start, std::
 
     if(start == stop || *start != '(')
     {
-        return ret;
+        return std::optional<call>{std::move(ret)};
     }
 
 
@@ -561,7 +635,7 @@ inline std::optional<call> call::parse(std::string::const_iterator& start, std::
         if(*start == ')')
         {
             ++start;
-            return ret;
+            return std::optional<call>{std::move(ret)};
         }
 
         auto next = elem::parse(start,stop);
@@ -595,6 +669,45 @@ inline std::optional<call> call::parse(std::string::const_iterator& start, std::
 
     ++start;
 
-    return ret;
+    return std::optional<call>{std::move(ret)};
 
+}
+
+bool call::is_equal(node const *a) const
+{
+    if (a->is_call() && static_cast<call const *>(a)->fn_name == fn_name)
+    {
+        std::vector<elem> const &r = static_cast<call const *>(a)->arguments;
+        if(r.size() != arguments.size())
+        {
+            return false;
+        }
+        for(int i = 0; i!= arguments.size(); ++i)
+        {
+            if(r[i] != arguments[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+elem literal::duplicate() const
+{
+    return elem{dtp::make<literal>(std::move(*this))};
+}
+
+elem variable::duplicate() const
+{
+    return elem{dtp::make<variable>(std::move(*this))};
+}
+
+elem call::duplicate() const
+{
+    return elem{dtp::make<call>(std::move(*this))};
 }
