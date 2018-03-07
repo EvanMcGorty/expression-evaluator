@@ -199,7 +199,45 @@ std::optional<t> convert(std::string const& tar)
         bool is_negative = p->first;
         big_uint numerator = std::move(p->second.first);
         big_uint denomenator = std::move(p->second.second);
-        assert(false); //unfinished function
+        t ret;
+        
+
+        if constexpr(!std::is_signed<t>::value)
+        {
+            if(is_negative)
+            {
+                return std::nullopt;
+            }
+        }
+
+
+        if constexpr(std::is_integral<t>::value)
+        {
+            ret = (numerator/denomenator);
+            if(ret > std::numeric_limits<t>::max())
+            {
+                return std::nullopt;
+            }
+        }
+        else
+        {
+            if(numerator > std::numeric_limits<t>::max())
+            {
+                return std::nullopt;
+            }
+            ret = t{numerator}/denomenator;
+        }
+
+        if(is_negative)
+        {
+            ret *= -1;
+        }
+
+        return std::optional<t>{std::move(ret)};
+    }
+    else if constexpr(std::is_same<t,std::string>::value)
+    {
+        return std::optional<std::string>{tar};
     }
     else
     {
