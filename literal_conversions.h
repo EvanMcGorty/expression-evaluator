@@ -213,11 +213,12 @@ std::optional<t> convert(std::string const& tar)
 
         if constexpr(std::is_integral<t>::value)
         {
-            ret = (numerator/denomenator);
-            if(ret > std::numeric_limits<t>::max())
+            big_uint tm = (numerator/denomenator);
+            if(tm > std::numeric_limits<t>::max())
             {
                 return std::nullopt;
             }
+            ret = tm;
         }
         else
         {
