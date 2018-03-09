@@ -24,7 +24,7 @@ public:
         return false;
     }
 
-    virtual bool is_call() const
+    virtual bool is_function() const
     {
         return false;
     }
@@ -420,18 +420,18 @@ private:
 };
 
 
-class call : public node
+class function : public node
 {
 public:
 
-    call(name_checker&& n, std::vector<elem> a = {})
+    function(name_checker&& n, std::vector<elem> a = {})
     {
         fn_name = std::move(n);
     }
 
 
 
-    bool is_call() const override
+    bool is_function() const override
     {
         return true;
     }
@@ -444,7 +444,7 @@ public:
 
     std::string make_string() const override;
 
-    static std::optional<call> parse(std::string::const_iterator& start, std::string::const_iterator stop);
+    static std::optional<function> parse(std::string::const_iterator& start, std::string::const_iterator stop);
 
 private:
 
@@ -454,13 +454,13 @@ private:
 };
 
 
-using dtp = mu::algebraic<node,literal,variable,call>;
+using dtp = mu::algebraic<node,literal,variable,function>;
 
 class elem
 {
     friend elem literal::duplicate() const;
     friend elem variable::duplicate() const;
-    friend elem call::duplicate() const;
+    friend elem function::duplicate() const;
 public:
 
     elem(elem&& a) :
@@ -510,9 +510,9 @@ public:
         return elem{dtp::make<variable>(a)};
     }
 
-    static elem make(call&& a)
+    static elem make(function&& a)
     {
-        return elem{dtp::make<call>(a)};
+        return elem{dtp::make<function>(a)};
     }
 
     static elem make_nullval()
@@ -560,10 +560,10 @@ public:
         }
         else if(name_checker::isupper(*start) || name_checker::islower(*start))
         {
-            std::optional<call> n{call::parse(start,stop)};
+            std::optional<function> n{function::parse(start,stop)};
             if(n)
             {
-                return std::optional<elem>{elem{dtp::make<call>(std::move(*n))}};
+                return std::optional<elem>{elem{dtp::make<function>(std::move(*n))}};
             }
             else
             {
@@ -595,7 +595,7 @@ private:
     }
 };
 
-inline std::string call::make_string() const
+inline std::string function::make_string() const
 {
     std::string ret;
     ret.reserve(fn_name.size()+arguments.size()*10);
@@ -618,7 +618,7 @@ inline std::string call::make_string() const
     return ret;
 }
 
-inline std::optional<call> call::parse(std::string::const_iterator& start, std::string::const_iterator stop)
+inline std::optional<function> function::parse(std::string::const_iterator& start, std::string::const_iterator stop)
 {
     assert(start!=stop && (name_checker::isupper(*start)||name_checker::islower(*start)));
     
@@ -633,7 +633,7 @@ inline std::optional<call> call::parse(std::string::const_iterator& start, std::
     {
         return std::nullopt;
     }
-    call ret{name_checker{std::move(retname)}};
+    function ret{name_checker{std::move(retname)}};
 
     while(start!=stop && *start==' ')
     {
@@ -642,7 +642,7 @@ inline std::optional<call> call::parse(std::string::const_iterator& start, std::
 
     if(start == stop || *start != '(')
     {
-        return std::optional<call>{std::move(ret)};
+        return std::optional<function>{std::move(ret)};
     }
 
 
@@ -664,7 +664,7 @@ inline std::optional<call> call::parse(std::string::const_iterator& start, std::
         if(*start == ')')
         {
             ++start;
-            return std::optional<call>{std::move(ret)};
+            return std::optional<function>{std::move(ret)};
         }
 
         auto next = elem::parse(start,stop);
@@ -698,15 +698,15 @@ inline std::optional<call> call::parse(std::string::const_iterator& start, std::
 
     ++start;
 
-    return std::optional<call>{std::move(ret)};
+    return std::optional<function>{std::move(ret)};
 
 }
 
-bool call::is_equal(node const *a) const
+bool function::is_equal(node const *a) const
 {
-    if (a->is_call() && static_cast<call const *>(a)->fn_name == fn_name)
+    if (a->is_function() && static_cast<function const *>(a)->fn_name == fn_name)
     {
-        std::vector<elem> const &r = static_cast<call const *>(a)->arguments;
+        std::vector<elem> const &r = static_cast<function const *>(a)->arguments;
         if(r.size() != arguments.size())
         {
             return false;
@@ -736,7 +736,7 @@ elem variable::duplicate() const
     return elem{dtp::make<variable>(std::move(*this))};
 }
 
-elem call::duplicate() const
+elem function::duplicate() const
 {
-    return elem{dtp::make<call>(std::move(*this))};
+    return elem{dtp::make<function>(std::move(*this))};
 }
