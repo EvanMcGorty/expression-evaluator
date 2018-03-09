@@ -92,6 +92,10 @@ std::optional<std::pair<bool,std::pair<big_uint,big_uint>>> parse_range_to_numbe
         }
         else
         {
+            if((std::numeric_limits<big_uint>::max() - curv)/10 <= ret.first)
+            {
+                return std::nullopt;
+            }
             ret.first*=10;
             ret.first+=curv;
         }
@@ -124,6 +128,10 @@ std::optional<std::pair<bool,std::pair<big_uint,big_uint>>> parse_range_to_numbe
             }
             else
             {
+                if((std::numeric_limits<big_uint>::max() - curv)/10 <= ret.second)
+                {
+                    return std::nullopt;
+                }
                 ret.second*=10;
                 ret.second+=curv;
             }
@@ -151,6 +159,10 @@ std::optional<std::pair<bool,std::pair<big_uint,big_uint>>> parse_range_to_numbe
             }
             else
             {
+                if((std::numeric_limits<big_uint>::max() - curv)/10 <= ret.first || std::numeric_limits<big_uint>::max()/10 <= ret.second)
+                {
+                    return std::nullopt;
+                }
                 ret.first*=10;
                 ret.first+=curv;
                 ret.second*=10;
