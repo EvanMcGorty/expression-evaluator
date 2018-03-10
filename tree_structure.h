@@ -453,20 +453,23 @@ private:
     std::vector<elem> arguments;
 };
 
+#pragma once
 
 using dtp = mu::algebraic<node,literal,variable,function>;
+
+class statement;
 
 class elem
 {
     friend elem literal::duplicate() const;
     friend elem variable::duplicate() const;
     friend elem function::duplicate() const;
+
 public:
 
     elem(elem&& a) :
         val(std::move(a.val))
     {
-
     }
 
     void operator=(elem&& a)
@@ -477,7 +480,6 @@ public:
     elem(elem const& a) :
         elem(a.val->duplicate())
     {
-
     }
 
     void operator=(elem const& a)
@@ -499,6 +501,8 @@ public:
     {
         return val->make_string();
     }
+
+    void push_statements(std::vector<statement> a) const;
 
     static elem make(literal&& a)
     {
