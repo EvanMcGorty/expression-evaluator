@@ -29,16 +29,6 @@ public:
         return false;
     }
 
-    virtual bool is_stack_pop() const
-    {
-        return false;
-    }
-
-    virtual bool is_stack_push() const
-    {
-        return false;
-    }
-
     virtual elem duplicate() const = 0;
 
     virtual bool is_equal(node const* a) const = 0;
@@ -296,6 +286,11 @@ public:
         return std::nullopt;
     }
 
+    std::string const& view_value()
+    {
+        return value;
+    }
+
 
 private:
 
@@ -320,7 +315,11 @@ public:
         var_name = std::string(std::move(a));
     }
 
-
+    variable(sc a)
+    {
+        change = a;
+        var_name = "";
+    }
 
     bool is_variable() const override
     {
@@ -421,6 +420,16 @@ public:
         }
     }
 
+    sc view_change() const
+    {
+        return change;
+    }
+
+    std::string const& view_var_name() const
+    {
+        return var_name;
+    }
+
 
 private:
 
@@ -455,6 +464,17 @@ public:
     std::string make_string() const override;
 
     static std::optional<function> parse(std::string::const_iterator& start, std::string::const_iterator stop);
+
+    
+    std::string const& view_fn_name() const
+    {
+        return fn_name;
+    }
+
+    std::vector<elem> const& view_arguments() const
+    {
+        return arguments;
+    }
 
 private:
 
