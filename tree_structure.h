@@ -29,6 +29,16 @@ public:
         return false;
     }
 
+    virtual bool is_stack_pop() const
+    {
+        return false;
+    }
+
+    virtual bool is_stack_push() const
+    {
+        return false;
+    }
+
     virtual elem duplicate() const = 0;
 
     virtual bool is_equal(node const* a) const = 0;
@@ -502,7 +512,7 @@ public:
         return val->make_string();
     }
 
-    void push_statements(std::vector<statement> a) const;
+    void push_statements(std::vector<statement>& a) const;
 
     static elem make(literal&& a)
     {
@@ -588,8 +598,10 @@ public:
         }
     }
 
-private:
+    
     dtp val;
+
+private:
     
 
     elem(dtp&& a) :
