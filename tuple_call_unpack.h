@@ -1,53 +1,70 @@
 #pragma once
 
 #include<tuple>
-#include<functional>
 #include<iostream>
+#include<typeinfo>
+#include<functional>
 
-template<typename ret_t, typename tar_t, typename...args_t>
-std::function<ret_t(args_t...)> bind(std::function<ret_t(tar_t,args_t...)>&& f, tar_t&& t)
+//todo: try making these constexpr
+
+
+template<typename ret_t, typename funct_t, typename tar_t, typename...args_t>
+constexpr auto perfect_bind(funct_t&& f, tar_t&& tar)
 {
     return
-        [t{std::move(t)},f{std::move(f)}](args_t&&... args) -> ret_t 
+        [b = std::move(tar),f = std::move(f)](args_t&&... args) mutable -> ret_t 
         {
-            return f(t, std::move(args)...);
+            return f(std::move(b), std::move(args)...);
         };
 }
 
-template<size_t ind, typename ret_t, typename tup_t, typename arg_t>
-std::function<ret_t()> make_unpacked_call(std::function<ret_t(arg_t)>&& f, tup_t&& t)
+template<typename ret_t, typename funct_t, typename tuple_t, size_t index, typename argf_t, typename...args_t>
+constexpr auto perfect_bind_all(funct_t&& f, tuple_t&& tup)
 {
-    return
-        [t{std::move(t)},f{std::move(f)}]() -> ret_t
+    if constexpr(sizeof...(args_t) == 0)
+    {
+        return perfect_bind<ret_t,funct_t,argf_t>(std::move(f),std::move(std::get<index>(std::move(tup))));
+    }
+    else
+    {
+        auto newfn = perfect_bind<ret_t,funct_t,argf_t,args_t...>(std::move(f),std::move(std::get<index>(std::move(tup))));
+        return perfect_bind_all<ret_t,decltype(newfn),tuple_t,index+1,args_t...>(std::move(newfn),std::move(tup));
+    }
+}
+
+
+
+template<typename ret, typename...args>
+constexpr ret call(std::function<ret(args...)>&& f, std::tuple<typename std::remove_reference<args>::type...>&& t)
+{
+    return perfect_bind_all<ret,std::function<ret(args...)>,std::tuple<typename std::remove_reference<args>::type...>,0,args...>(std::move(f),std::move(t))();
+}
+
+template<typename ret, typename...args>
+constexpr ret call(ret(*f)(args...), std::tuple<typename std::remove_reference<args>::type...>&& t)
+{
+    return perfect_bind_all<ret,ret(*)(args...),std::tuple<typename std::remove_reference<args>::type...>,0,args...>(std::move(f),std::move(t))();
+}
+
+template<typename t>
+class type_wrap
+{
+public:
+    type_wrap()
+    {}
+
+    constexpr static auto ref_to_ptr()
+    {
+        if constexpr(std::is_reference<t>::value)
         {
-            return f(std::move(std::get<ind>(std::move(t))));
-        };
-}
+            return type_wrap<t*>();
+        }
+        else
+        {
+            return type_wrap<t>();
+        }
+    }
 
-template<size_t ind, typename ret_t, typename tup_t, typename arg_t, typename...args_t>
-std::function<ret_t()> make_unpacked_call(std::function<ret_t(arg_t,args_t...)>&& f, tup_t&& t)
-{
-    return make_unpacked_call<ind+1,ret_t,tup_t,args_t...>
-    (
-        bind<ret_t,typename std::tuple_element<ind,tup_t>::type,args_t...>
-        (std::move(f),std::move(std::get<ind>(t))),
-        std::move(t)
-    );
-}
+    typedef t held;
+};
 
-
-
-
-
-
-template<typename ret_t, typename...args_t>
-ret_t call(std::function<ret_t(args_t...)>&& f, std::tuple<args_t...>&& t)
-{
-    return make_unpacked_call<0, ret_t, std::tuple<args_t...>, args_t...>(std::move(f),std::move(t))();
-}
-
-template<typename ret_t>
-ret_t call(std::function<ret_t()>&& f, std::tuple<>&& t)
-{
-    return f();
-}
