@@ -2,7 +2,6 @@
 #include<unordered_map>
 #include<typeinfo>
 
-#include"virtual-function-utilities\free-store_virtual.h"
 
 #include"tuple_call_unpack.h"
 
@@ -34,7 +33,7 @@ private:
 
 public:
 
-    std::type_info const& get_type() const override
+    std::type_info const& get_type() const final override
     {
         return type();
     }

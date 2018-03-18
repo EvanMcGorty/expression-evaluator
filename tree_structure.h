@@ -2,6 +2,7 @@
 #include<optional>
 
 #include"virtual-function-utilities\algebraic_virtual.h"
+#include"virtual-function-utilities\free-store_virtual.h"
 
 #include"parsing_checks.h"
 
@@ -57,8 +58,13 @@ public:
         value = a;
     }
 
+	~literal()
+	{
+		int a = 3 + 4;
+	}
 
-    bool is_literal() const override
+
+    bool is_literal() const final override
     {
         return true;
     }
@@ -321,7 +327,7 @@ public:
         var_name = "";
     }
 
-    bool is_variable() const override
+    bool is_variable() const final override
     {
         return true;
     }
@@ -397,7 +403,7 @@ public:
                     return std::nullopt;
                     break;
                 }
-                if(ret.size()==0)
+                if(ret.size()==0 || !name_checker::isendchar(ret[ret.size()-1]))
                 {
                     return std::nullopt;
                 }
@@ -450,7 +456,7 @@ public:
 
 
 
-    bool is_function() const override
+    bool is_function() const final override
     {
         return true;
     }
@@ -485,7 +491,9 @@ private:
 
 #pragma once
 
-using dtp = mu::algebraic<node,literal,variable,function>;
+//using dtp = mu::algebraic<node,literal,variable,function>;
+
+using dtp = mu::virt<node>;
 
 class statement;
 
@@ -497,12 +505,12 @@ class elem
 
 public:
 
-    elem(elem&& a) :
+    elem(elem&& a) noexcept(true) :
         val(std::move(a.val))
     {
     }
 
-    void operator=(elem&& a)
+    void operator=(elem&& a) noexcept(true)
     {
         val = std::move(a.val);
     }
@@ -580,6 +588,10 @@ public:
 
     static std::optional<elem> parse(std::string::const_iterator& start, std::string::const_iterator stop)
     {
+        if(start==stop)
+        {
+            return std::nullopt;
+        }
         if(*start == '@')
         {
             std::optional<variable> n = variable::parse(start,stop);
@@ -638,10 +650,19 @@ inline std::string function::make_string() const
     ret = fn_name;
     ret.push_back('(');
     //for(std::vector<elem>::const_iterator it = arguments.cbegin(); it!=arguments.cend(); ++it)
-    for(int i = 0; i!=arguments.size(); ++i)
+    //for(int i = 0; i!=arguments.size(); ++i)
+    for(auto const& it : arguments)
     {
         //ret.append(it->str());
-        ret.append(arguments[i].str());
+        //ret.append(arguments.at(i).str());
+		if (it.val.is_nullval())
+		{
+			ret.push_back('#');
+		}
+		else
+		{
+			ret.append(it.str());
+		}
         ret.push_back(',');
     }
     if(arguments.size()>0)
@@ -762,17 +783,17 @@ bool function::is_equal(node const *a) const
     }
 }
 
-elem literal::duplicate() const
+inline elem literal::duplicate() const
 {
     return elem{dtp::make<literal>(std::move(*this))};
 }
 
-elem variable::duplicate() const
+inline elem variable::duplicate() const
 {
     return elem{dtp::make<variable>(std::move(*this))};
 }
 
-elem function::duplicate() const
+inline elem function::duplicate() const
 {
     return elem{dtp::make<function>(std::move(*this))};
 }
