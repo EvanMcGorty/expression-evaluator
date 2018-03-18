@@ -1,65 +1,58 @@
+
 #pragma once
 #include<unordered_map>
-#include<typeinfo>
-
 
 #include"tuple_call_unpack.h"
+#include"object_holding.h"
 
-#include"literal_conversions.h"
-
-#include"statement.h"
-
-
-class any_object
+class stack
 {
 public:
-    virtual std::type_info const& get_type() const = 0;
-
-    template<typename t>
-    bool is() const
-    {
-        return typeid(t) == get_type();
-    }
+    std::vector<mu::virt<any_elem_val>> stuff;
 };
 
-template<typename t>
-class object_of : public any_object
-{
-private:
-    constexpr std::type_info const& type() const
-    {
-        return typeid(t);
-    }
-
-public:
-
-    std::type_info const& get_type() const final override
-    {
-        return type();
-    }
-
-    t val;
-};
 
 class any_callable
 {
     virtual size_t arg_len() const = 0;
+    virtual void try_perform(stack& a) const = 0;
 };
 
 
-template<typename...args>
+
+template<typename ret_t,typename...args>
 class callable_of : public any_callable
 {
 public:
     
-    size_t arg_len() const
+    size_t arg_len() const override
     {
-        return sizeof...(args);
+        // if(std::is_same<ret_t,void>::value)
+        // {
+        return sizeof...(args) + 1;
+        // }
+        // else
+        // {
+        //     return sizeof...(args);
+        // }
     }
 
+    //when the stack is not popped from, it is the callers responsibility to manage garbage variables
+    void try_perform(stack& a) const override
+    {
+        assert(a.stuff.size() >= arg_len());
 
+        arg_tuple_type to_use;
+    }
 
-    std::function<void(args...)> target;
+    void do_call(arg_tuple_type&& a)
+    {
+        
+    }
+
+    using arg_tuple_type = std::tuple<std::optional<type_wrap<args>::ref_to_ptr()::typename held>...>;
+
+    std::function<ret_t(args...)> target;
 };
 
 class environment
