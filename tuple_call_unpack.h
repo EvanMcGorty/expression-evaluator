@@ -45,26 +45,3 @@ constexpr ret call(ret(*f)(args...), std::tuple<typename std::remove_reference<a
 {
     return perfect_bind_all<ret,ret(*)(args...),std::tuple<typename std::remove_reference<args>::type...>,0,args...>(std::move(f),std::move(t))();
 }
-
-template<typename t>
-class type_wrap
-{
-public:
-    type_wrap()
-    {}
-
-    constexpr static auto ref_to_ptr()
-    {
-        if constexpr(std::is_reference<t>::value)
-        {
-            return type_wrap<t*>();
-        }
-        else
-        {
-            return type_wrap<t>();
-        }
-    }
-
-    typedef t held;
-};
-
