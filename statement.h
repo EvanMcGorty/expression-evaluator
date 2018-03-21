@@ -18,10 +18,6 @@ public:
         return false;
     }
 
-    virtual bool is_value_holder() const
-    {
-        return false;
-    }
 
     virtual bool is_function_call() const
     {
@@ -32,16 +28,8 @@ public:
 
 };
 
-class value_holder : public operation
-{
-    bool is_value_holder() const final override
-    {
-        return true;
-    }
 
-};
-
-class literal_push : public value_holder
+class literal_push : public operation
 {
 public:
 
@@ -62,7 +50,7 @@ public:
     }
 };
 
-class variable_push : public value_holder
+class variable_push : public operation
 {
 public:
 
@@ -82,6 +70,8 @@ public:
         return std::string("variable_push{") + var.make_string() + "}";
     }
 };
+
+
 
 class function_call : public operation
 {

@@ -24,5 +24,5 @@ public:
         return typeid(t);
     }
 
-    std::optional<t*> gotten;
+    std::optional<t> gotten;
 };
