@@ -55,6 +55,11 @@ class callable_of : public any_callable
     using use_tuple_type = std::tuple<typename decltype(as_storable<args>())::held...>;
     using arg_tuple_type = std::tuple<std::optional<typename decltype(as_storable<args>())::held>...>;
 public:
+
+    callable_of(ret_t(*f)(args...))
+    {
+        target = make_storable_call(f);
+    }
     
     size_t arg_len() const override
     {
@@ -118,7 +123,7 @@ private:
     }
 
 
-    std::function<ret_t(args...)> target;
+    std::function<ret_t(typename decltype(as_storable<args>())::held...)> target;
 };
 
 class environment

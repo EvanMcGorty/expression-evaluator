@@ -1,3 +1,4 @@
+#pragma once
 #include<vector>
 #include<optional>
 
@@ -489,7 +490,6 @@ private:
     std::vector<elem> arguments;
 };
 
-#pragma once
 
 //using dtp = mu::algebraic<node,literal,variable,function>;
 
