@@ -20,7 +20,7 @@ class stack
         {
             stuff[stuff.size()-(ind+1)] = mu::virt<any_elem_val>::make_nullval();
         }
-        std::get<ind>(a) = aks.gotten;
+        std::get<ind>(a) = ask.gotten;
         if(sizeof...(ts) > 0)
         {
             set_rest<tup_t,ind+1,ts...>(a);
@@ -78,7 +78,7 @@ public:
         can_perform(might_use,std::move(to_use));
         if(might_use)
         {
-            return std::optional<ret_t>{do_call(std::move(*might_use)));
+            return std::optional<ret_t>{do_call(std::move(*might_use))};
         }
         else
         {
@@ -94,7 +94,7 @@ private:
     template<size_t ind = 0>
     static void can_perform(std::optional<use_tuple_type>& loc, arg_tuple_type&& tar)
     {
-        if constexpr(ind == std::tuple_size<use_tuple_type>)
+        if constexpr(ind == std::tuple_size<use_tuple_type>::value)
         {
             return;
         }

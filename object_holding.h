@@ -97,17 +97,17 @@ public:
 
     bool get(any_type_ask* tar) override
     {
-        if(tar->get_type == typeid(t*))
+        if(tar->get_type() == typeid(t*))
         {
             static_cast<type_ask_of<t*>*>(tar)->gotten = &val;
             return false;
         }
-        else if(tar->get_type == typeid(t const*))
+        else if(tar->get_type() == typeid(t const*))
         {
             static_cast<type_ask_of<t const*>*>(tar)->gotten = &val;
             return false;
         }
-        else if(tar->get_type == typeid(t))
+        else if(tar->get_type() == typeid(t))
         {
             static_cast<type_ask_of<t>*>(tar)->gotten = std::move(val);
             return true;
