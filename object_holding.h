@@ -44,9 +44,11 @@ public:
 
     bool get(any_type_ask* tar) override
     {
-        tar->parse(value);
+        tar->parse(value,temporary_holder);
         return false;
     }
+
+    std::any temporary_holder; //if the type to parse into is a pointer
 
     std::string value;
 };

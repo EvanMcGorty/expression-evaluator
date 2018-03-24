@@ -1,10 +1,14 @@
+#pragma once
 #include"literal_conversions.h"
+
 #include<typeinfo>
+#include<any>
+
 
 class any_type_ask
 {
 public:
-    virtual void parse(std::string const& a) = 0;
+    virtual void parse(std::string const& a, std::any& b) = 0;
 
     virtual std::type_info get_type() const = 0;
 };
@@ -14,9 +18,21 @@ class type_ask_of : public any_type_ask
 {
 public:
 
-    void parse(std::string const& a) override
+    void parse(std::string const& a, std::any& b) override
     {
-        gotten = convert<t>(a);
+        if constexpr(std::is_pointer<t>::value)
+        {
+            auto temp = convert<std::remove_const<std::remove_pointer<t>::type>::type>(a);
+            if(temp)
+            {
+                b = std::move(*temp);
+            }
+            gotten = std::optional<t>{std::any_cast<std::remove_const<std::remove_pointer<t>::type>::type>(&b)};
+        }
+        else
+        {
+            gotten = convert<t>(a);
+        }
     }
 
     std::type_info get_type() const
