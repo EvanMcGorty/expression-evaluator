@@ -12,11 +12,15 @@ class stack
     void set_rest(tup_t& a)
     {
         type_ask_of<t> ask;
+        if(stuff[stuff.size()-(ind+1)].is_nullval())
+        {
+            std::get<ind>(a) = std::nullopt;
+        }
         if(stuff[stuff.size()-(ind+1)]->get(ask))
         {
             stuff[stuff.size()-(ind+1)] = mu::virt<any_elem_val>::make_nullval();
         }
-        std::get<ind>(a) = gotten;
+        std::get<ind>(a) = aks.gotten;
         if(sizeof...(ts) > 0)
         {
             set_rest<tup_t,ind+1,ts...>(a);
@@ -48,13 +52,15 @@ class any_callable
 template<typename ret_t,typename...args>
 class callable_of : public any_callable
 {
+    using use_tuple_type = std::tuple<typename decltype(as_storable<args>())::held...>;
+    using arg_tuple_type = std::tuple<std::optional<typename decltype(as_storable<args>())::held>...>;
 public:
     
     size_t arg_len() const override
     {
         // if(std::is_same<ret_t,void>::value)
         // {
-        return sizeof...(args) + 1;
+        return sizeof...(args);
         // }
         // else
         // {
@@ -67,18 +73,46 @@ public:
     {
         assert(a.stuff.size() >= arg_len());
         arg_tuple_type to_use;
-        a.set_from_front<arg_tuple_type,typename decltype(as_storable<args>())::held...>();
-        //unfinished
+        a.set_from_front<arg_tuple_type,typename decltype(as_storable<args>())::held...>(to_use);
+        std::optional<use_tuple_type> might_use;
+        can_perform(might_use,std::move(to_use));
+        if(might_use)
+        {
+            return std::optional<ret_t>{do_call(std::move(*might_use)));
+        }
+        else
+        {
+            return std::nullopt;
+        }
     }
+
+    
 
 
 private:
 
+    template<size_t ind = 0>
+    static void can_perform(std::optional<use_tuple_type>& loc, arg_tuple_type&& tar)
+    {
+        if constexpr(ind == std::tuple_size<use_tuple_type>)
+        {
+            return;
+        }
+        else
+        {
+            if(std::get<ind>(tar))
+            {
+                std::get<ind>(*loc) = std::move(*std::get<ind>(tar));
+                can_perform<ind+1>(loc,std::move(tar));
+            }
+            else
+            {
+                loc = std::nullopt;
+            }
+        }
+    }
 
-    using arg_tuple_type = std::tuple<std::optional<typename decltype(as_storable<args>())::held>...>;
-
-
-    ret_t do_call(arg_tuple_type&& a)
+    ret_t do_call(use_tuple_type&& a) const
     {
         return call(target,std::move(a));
     }
