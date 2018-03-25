@@ -37,6 +37,12 @@ public:
 class unparsed : public any_elem_val
 {
 public:
+
+    unparsed(literal&& a)
+    {
+        value = std::move(a.value);
+    }
+
     bool is_unparsed() const override
     {
         return true;
@@ -125,6 +131,8 @@ public:
 };
 
 
+using value_holder = mu::virt<any_object>;
+
 
 //a variable.
 //on a stack, this is what a variable pushes (unless if the variable is also being popped).
@@ -143,7 +151,7 @@ public:
         {
             if((**ref).get(tar))
             {
-                *ref = mu::virt<any_object>::make_nullval();
+                *ref = value_holder::make_nullval();
             }
         }
 
@@ -151,5 +159,5 @@ public:
     }
 
 
-    mu::virt<any_object>* ref;
+    value_holder* ref;
 };

@@ -299,8 +299,6 @@ public:
     }
 
 
-private:
-
 
     std::string value;
 };
@@ -438,8 +436,6 @@ public:
     }
 
 
-private:
-
     sc change;
 
     std::string var_name;
@@ -483,7 +479,6 @@ public:
         return arguments;
     }
 
-private:
 
     std::string fn_name;
 

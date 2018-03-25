@@ -6,19 +6,21 @@
 #include"call_typing.h"
 #include"object_holding.h"
 
+using stack_elem = mu::virt<any_elem_val>;
+
 class stack
 {
     template<typename tup_t, size_t ind, typename t, typename...ts>
     void set_rest(tup_t& a)
     {
         type_ask_of<t> ask;
-        if(stuff[stuff.size()-(ind+1)].is_nullval())
+        if(stuff[stuff.size()+ind-std::tuple_size<tup_t>::value].is_nullval())
         {
             std::get<ind>(a) = std::nullopt;
         }
-        if(stuff[stuff.size()-(ind+1)]->get(ask))
+        if(stuff[stuff.size()+ind-std::tuple_size<tup_t>::value]->get(ask))
         {
-            stuff[stuff.size()-(ind+1)] = mu::virt<any_elem_val>::make_nullval();
+            stuff[stuff.size()+ind-std::tuple_size<tup_t>::value] = stack_elem::make_nullval();
         }
         std::get<ind>(a) = ask.gotten;
         if(sizeof...(ts) > 0)
@@ -28,7 +30,7 @@ class stack
     }
 
 public:
-    std::vector<mu::virt<any_elem_val>> stuff;
+    std::vector<stack_elem> stuff;
 
     template<typename tup_t, typename...ts>
     void set_from_front(tup_t& a)
@@ -91,8 +93,8 @@ public:
         }
     }
 
-    
 
+    std::function<ret_t(typename decltype(as_storable<args>())::held...)> target;
 
 private:
 
@@ -122,8 +124,6 @@ private:
         return call(target,std::move(a));
     }
 
-
-    std::function<ret_t(typename decltype(as_storable<args>())::held...)> target;
 };
 
 class environment
@@ -132,6 +132,6 @@ public:
 
     std::unordered_map<std::string,mu::virt<any_callable>> functions;
 
-    std::unordered_map<std::string,mu::virt<any_object>> variable_values;
-    std::vector<mu::virt<any_object>> garbage_values;
+    std::unordered_map<std::string,value_holder> variable_values;
+    std::vector<value_holder> garbage_values;
 };
