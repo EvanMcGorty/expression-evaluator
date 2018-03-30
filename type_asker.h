@@ -11,6 +11,11 @@ public:
     virtual void parse(std::string const& a, std::any& b) = 0;
 
     virtual std::type_info get_type() const = 0;
+
+    virtual ~any_type_ask()
+    {
+
+    }
 };
 
 template<typename t>

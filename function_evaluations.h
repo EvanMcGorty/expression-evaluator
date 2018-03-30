@@ -47,6 +47,10 @@ class any_callable
 {
     virtual size_t arg_len() const = 0;
     virtual void try_perform(stack& a) const = 0;
+    virtual ~any_callable()
+    {
+
+    }
 };
 
 
@@ -91,6 +95,10 @@ public:
         {
             return std::nullopt;
         }
+    }
+
+    ~callable_of()
+    {
     }
 
 
