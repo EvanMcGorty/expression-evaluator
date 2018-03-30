@@ -1,29 +1,29 @@
 #pragma once
-#include"function_evaluations.h"
+#include"environment.h"
 
 void perform(statement&& todo, stack& loc, environment& env)
 {
-    if(todo.val.can_downcast<literal_push>())
+    if(todo.val->is_literal_push())
     {
-        loc.stuff.push_back(stack_elem::make<unparsed>(std::move(todo.val.downcast_get<literal_push>())));
+        loc.stuff.push_back(stack_elem::make<unparsed>(std::move(todo.val.downcast_get<literal_push>()->val)));
     }
-    else if(todo.val.can_downcast<variable_push>())
+    else if(todo.val->is_variable_push())
     {
         variable_push temp = std::move(*todo.val.downcast_get<variable_push>());
 
-        /*
-        auto var = env.variable_values
-        todo:
-            reorganize environment in its own file with classes for the variable map, function map, and variable garbage.
-            create member functions for doing common operations on the maps
-        */
         switch(temp.var.change)
         {
         case(variable::sc::pop):
+            stack_elem to_push = 
+            break;
         }
     }
-    else if(todo.val.can_downcast<function_call>())
+    else if(todo.val->is_function_call())
     {
 
+    }
+    else
+    {
+        assert(false);
     }
 }
