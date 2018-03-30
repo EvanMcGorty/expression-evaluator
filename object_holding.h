@@ -81,11 +81,6 @@ public:
 };
 
 
-//instead of object_of<void> use object_of<empty_object>
-class empty_object
-{
-
-};
 
 template<typename t>
 class object_of final : public any_object
@@ -153,6 +148,10 @@ public:
             {
                 *ref = value_holder::make_nullval();
             }
+        }
+        else
+        {
+
         }
 
         return false;

@@ -40,7 +40,7 @@ public:
         }
     }
 
-    std::type_info get_type() const
+    std::type_info get_type() const override
     {
         return typeid(t);
     }

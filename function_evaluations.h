@@ -13,11 +13,11 @@ class stack
     template<typename tup_t, size_t ind, typename t, typename...ts>
     void set_rest(tup_t& a)
     {
-        type_ask_of<t> ask;
         if(stuff[stuff.size()+ind-std::tuple_size<tup_t>::value].is_nullval())
         {
             std::get<ind>(a) = std::nullopt;
         }
+        type_ask_of<t> ask;
         if(stuff[stuff.size()+ind-std::tuple_size<tup_t>::value]->get(ask))
         {
             stuff[stuff.size()+ind-std::tuple_size<tup_t>::value] = stack_elem::make_nullval();
@@ -132,14 +132,4 @@ private:
         return call(target,std::move(a));
     }
 
-};
-
-class environment
-{
-public:
-
-    std::unordered_map<std::string,mu::virt<any_callable>> functions;
-
-    std::unordered_map<std::string,value_holder> variable_values;
-    std::vector<value_holder> garbage_values;
 };
