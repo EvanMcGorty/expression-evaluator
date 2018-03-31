@@ -31,7 +31,7 @@ public:
     value_holder* push_front(value_holder&& a)
     {
         values.emplace_back(std::move(a));
-        return &*values.rend();
+        return &*values.rbegin();
     }
 
     std::optional<value_holder*> get_front()
@@ -42,7 +42,7 @@ public:
         }
         else
         {
-            return &*values.rend();
+            return &*values.rbegin();
         }
     }
 
@@ -54,7 +54,7 @@ public:
         }
         else
         {
-            auto ret = std::move(*values.rend());
+            auto ret = std::move(*values.rbegin());
             values.pop_back();
             return std::optional<value_holder>{std::move(ret)};
         }

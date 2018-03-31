@@ -8,9 +8,9 @@ void stack::clear_front(size_t a, variable_value_stack& garbage)
 
     for (int i = 0; i != a; ++i)
     {
-        if ((*stuff.rend())->is_object())
+        if ((*stuff.rbegin())->is_object())
         {
-            garbage.push_front(std::move(std::move(*stuff.rend()).downcast<any_object>()));
+            garbage.push_front(std::move(std::move(*stuff.rbegin()).downcast<any_object>()));
         }
     }
 }
@@ -79,11 +79,11 @@ void perform(statement&& todo, stack& loc, environment& env)
                 loc.clear_front(todo.arg_len(),env.garbage);
                 loc.stuff.emplace_back(std::move(tp));
             }
-            else if(todo.arg_len() + 1 == temp.arg_count && (**(loc.stuff.rend()+temp.arg_count)).is_reference())
+            else if(todo.arg_len() + 1 == temp.arg_count && (**(loc.stuff.rbegin()+temp.arg_count)).is_reference())
             {
                 value_holder tp = todo.try_perform(loc);
                 loc.clear_front(todo.arg_len(),env.garbage);
-                *loc.stuff.rend()->downcast_get<value_reference>()->ref = std::move(tp);
+                *loc.stuff.rbegin()->downcast_get<value_reference>()->ref = std::move(tp);
             }
             else
             {
