@@ -6,6 +6,19 @@ class function_set
 {
 public:
 
+    std::optional<mu::virt<any_callable> const*> get(std::string const& a)
+    {
+        auto g = map.find(a);
+        if(g == map.end())
+        {
+            return std::nullopt;
+        }
+        else
+        {
+            return std::optional<mu::virt<any_callable> const*>{(mu::virt<any_callable> const*)&g->second};
+        }
+    }
+
 private:
     std::unordered_map<std::string,mu::virt<any_callable>> map;
 };
@@ -15,12 +28,13 @@ class variable_value_stack
 {
 public:
 
-    void push_front(value_holder&& a)
+    value_holder* push_front(value_holder&& a)
     {
         values.emplace_back(std::move(a));
+        return &*values.rend();
     }
 
-    std::optional<value_holder*> front()
+    std::optional<value_holder*> get_front()
     {
         if(values.size() == 0)
         {
@@ -54,7 +68,36 @@ class variable_set
 {
 public:
 
-    //value_holder* push_var
+    value_holder* push_var(std::string&& a)
+    {
+        return map[a].push_front(value_holder::make_nullval());
+    }
+
+    std::optional<value_holder*> get_var(std::string const& a)
+    {
+        auto it = map.find(a);
+        if(it == map.end())
+        {
+            return std::nullopt;
+        }
+        else
+        {
+            return it->second.get_front();
+        }
+    }
+
+    std::optional<value_holder> take_var(std::string const& a)
+    {
+        auto it = map.find(a);
+        if(it == map.end())
+        {
+            return std::nullopt;
+        }
+        else
+        {
+            return std::optional<value_holder>{it->second.take_front()};
+        }
+    }
 
 private:
     std::unordered_map<std::string,variable_value_stack> map;

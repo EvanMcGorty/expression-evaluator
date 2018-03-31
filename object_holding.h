@@ -135,6 +135,11 @@ class value_reference : public any_elem_val
 {
 public:
 
+    value_reference(value_holder* a)
+    {
+        ref = a;
+    }
+
     bool is_reference() const override
     {
         return true;

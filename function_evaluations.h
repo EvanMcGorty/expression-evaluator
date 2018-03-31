@@ -8,6 +8,8 @@
 
 using stack_elem = mu::virt<any_elem_val>;
 
+class variable_value_stack;
+
 class stack
 {
     template<typename tup_t, size_t ind, typename t, typename...ts>
@@ -39,14 +41,17 @@ public:
         set_rest<tup_t,0,ts...>(a);
     }
 
+    void clear_front(size_t a, variable_value_stack& garbage);
+
 
 };
 
 
 class any_callable
 {
+public:
     virtual size_t arg_len() const = 0;
-    virtual void try_perform(stack& a) const = 0;
+    virtual value_holder try_perform(stack& a) const = 0;
     virtual ~any_callable()
     {
 
@@ -80,7 +85,7 @@ public:
     }
 
     //when the stack is not popped from, it is the callers responsibility to manage garbage variables
-    std::optional<ret_t> try_perform(stack& a) const override
+    value_holder try_perform(stack& a) const override
     {
         assert(a.stuff.size() >= arg_len());
         arg_tuple_type to_use;
@@ -89,11 +94,11 @@ public:
         can_perform(might_use,std::move(to_use));
         if(might_use)
         {
-            return std::optional<ret_t>{do_call(std::move(*might_use))};
+            return value_holder::make<object_of<ret_t>>(do_call(std::move(*might_use)));
         }
         else
         {
-            return std::nullopt;
+            return value_holder::make_nullval();
         }
     }
 
