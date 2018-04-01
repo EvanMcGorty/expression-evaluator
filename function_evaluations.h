@@ -19,13 +19,16 @@ class stack
         {
             std::get<ind>(a) = std::nullopt;
         }
-        type_ask_of<t> ask;
-        if(stuff[stuff.size()+ind-std::tuple_size<tup_t>::value]->get(ask))
+        else
         {
-            stuff[stuff.size()+ind-std::tuple_size<tup_t>::value] = stack_elem::make_nullval();
+            type_ask_of<t> ask;
+            if(stuff[stuff.size()+ind-std::tuple_size<tup_t>::value]->get(&ask))
+            {
+                stuff[stuff.size()+ind-std::tuple_size<tup_t>::value] = stack_elem::make_nullval();
+            }
+            std::get<ind>(a) = ask.gotten;
         }
-        std::get<ind>(a) = ask.gotten;
-        if(sizeof...(ts) > 0)
+        if constexpr(sizeof...(ts) > 0)
         {
             set_rest<tup_t,ind+1,ts...>(a);
         }
@@ -51,7 +54,7 @@ class any_callable
 {
 public:
     virtual size_t arg_len() const = 0;
-    virtual value_holder try_perform(stack& a) const = 0;
+    virtual value_holder try_perform(stack& a) = 0;
     virtual ~any_callable()
     {
 
@@ -85,16 +88,24 @@ public:
     }
 
     //when the stack is not popped from, it is the callers responsibility to manage garbage variables
-    value_holder try_perform(stack& a) const override
+    value_holder try_perform(stack& a) override
     {
         assert(a.stuff.size() >= arg_len());
         arg_tuple_type to_use;
         a.set_from_front<arg_tuple_type,typename decltype(as_storable<args>())::held...>(to_use);
-        std::optional<use_tuple_type> might_use;
-        can_perform(might_use,std::move(to_use));
+        std::optional<use_tuple_type> might_use = can_perform<0,args...>(std::move(to_use));
+        
         if(might_use)
         {
-            return value_holder::make<object_of<ret_t>>(do_call(std::move(*might_use)));
+            if constexpr(std::is_same<void,ret_t>::value)
+            {
+                do_call(std::move(*might_use));
+                return value_holder::make_nullval();
+            }
+            else
+            {
+                return value_holder::make<object_of<ret_t>>(do_call(std::move(*might_use)));
+            }
         }
         else
         {
@@ -111,30 +122,37 @@ public:
 
 private:
 
-    template<size_t ind = 0>
-    static void can_perform(std::optional<use_tuple_type>& loc, arg_tuple_type&& tar)
+    template<size_t ind = 0, typename t, typename...ts>
+    static std::optional<std::tuple<typename decltype(as_storable<t>())::held,typename decltype(as_storable<ts>())::held...>> can_perform(arg_tuple_type&& tar)
     {
-        if constexpr(ind == std::tuple_size<use_tuple_type>::value)
+        if constexpr(sizeof...(ts) == 0)
         {
-            return;
+            if(std::get<ind>(tar))
+            {
+                return std::optional<std::tuple<typename decltype(as_storable<t>())::held,typename decltype(as_storable<ts>())::held...>>(std::move(std::tuple<typename decltype(as_storable<t>())::held>{std::move(*std::get<ind>(tar))}));
+            }
+            else
+            {
+                return std::nullopt;
+            }
         }
         else
         {
             if(std::get<ind>(tar))
             {
-                std::get<ind>(*loc) = std::move(*std::get<ind>(tar));
-                can_perform<ind+1>(loc,std::move(tar));
+                auto rest = can_perform<ind+1,ts...>(std::move(tar));
+                if(rest)
+                {
+                    return std::tuple_cat(std::tuple<typename decltype(as_storable<t>())::held>(std::move(*std::get<ind>(tar))),std::move(*rest));
+                }
             }
-            else
-            {
-                loc = std::nullopt;
-            }
+            return std::nullopt;
         }
     }
 
-    ret_t do_call(use_tuple_type&& a) const
+    ret_t do_call(use_tuple_type&& a)
     {
-        return call(target,std::move(a));
+        return call(std::move(target),std::move(a));
     }
 
 };

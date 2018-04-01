@@ -93,6 +93,11 @@ private:
 
 public:
 
+    object_of(t&& a) :
+        val(std::move(a))
+    {
+    }
+
     std::type_info const& get_type() const override
     {
         return type();

@@ -6,7 +6,14 @@ class function_set
 {
 public:
 
-    std::optional<mu::virt<any_callable> const*> get(std::string const& a)
+    template<typename ret, typename...args>
+    function_set& add(ret(*target)(args...), std::string name)
+    {
+        map.emplace(name,std::move(mu::virt<any_callable>::make<callable_of<ret,args...>>(target)));
+        return *this;
+    }
+
+    std::optional<mu::virt<any_callable>*> get(std::string const& a)
     {
         auto g = map.find(a);
         if(g == map.end())
@@ -15,7 +22,7 @@ public:
         }
         else
         {
-            return std::optional<mu::virt<any_callable> const*>{(mu::virt<any_callable> const*)&g->second};
+            return std::optional<mu::virt<any_callable>*>{&g->second};
         }
     }
 
