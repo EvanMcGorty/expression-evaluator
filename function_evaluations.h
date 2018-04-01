@@ -91,25 +91,41 @@ public:
     value_holder try_perform(stack& a) override
     {
         assert(a.stuff.size() >= arg_len());
-        arg_tuple_type to_use;
-        a.set_from_front<arg_tuple_type,store_t<args>...>(to_use);
-        std::optional<use_tuple_type> might_use = can_perform<0,args...>(std::move(to_use));
-        
-        if(might_use)
+
+        if constexpr(sizeof...(args)>0)
         {
-            if constexpr(std::is_same<void,ret_t>::value)
+            arg_tuple_type to_use;
+            a.set_from_front<arg_tuple_type,store_t<args>...>(to_use);
+            std::optional<use_tuple_type> might_use = can_perform<0,args...>(std::move(to_use));
+            
+            if(might_use)
             {
-                do_call(std::move(*might_use));
-                return value_holder::make_nullval();
+                if constexpr(std::is_same<void,ret_t>::value)
+                {
+                    do_call(std::move(*might_use));
+                    return value_holder::make_nullval();
+                }
+                else
+                {
+                    return value_holder::make<object_of<ret_t>>(do_call(std::move(*might_use)));
+                }
             }
             else
             {
-                return value_holder::make<object_of<ret_t>>(do_call(std::move(*might_use)));
+                return value_holder::make_nullval();
             }
         }
         else
         {
-            return value_holder::make_nullval();
+            if constexpr (std::is_same<void, ret_t>::value)
+            {
+                target();
+                return value_holder::make_nullval();
+            }
+            else
+            {
+                return value_holder::make<object_of<ret_t>>(target());
+            }
         }
     }
 

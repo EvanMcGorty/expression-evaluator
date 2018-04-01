@@ -30,9 +30,8 @@ public:
             auto temp = convert<typename std::remove_const<typename std::remove_pointer<t>::type>::type>(a);
             if(temp)
             {
-                b = std::move(*temp);
+                b = std::move(*temp);gotten = std::optional<t>{std::any_cast<typename std::remove_const<typename std::remove_pointer<t>::type>::type>(&b)};
             }
-            gotten = std::optional<t>{std::any_cast<typename std::remove_const<typename std::remove_pointer<t>::type>::type>(&b)};
         }
         else
         {

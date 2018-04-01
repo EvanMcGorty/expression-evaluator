@@ -97,3 +97,12 @@ void perform(statement&& todo, stack& loc, environment& env)
         assert(false);
     }
 }
+
+void perform_all(std::vector<statement> executable, stack& loc, environment& env)
+{
+    for(auto&& it : executable)
+    {
+        perform(std::move(it),loc,env);
+    }
+    loc.clear_front(loc.stuff.size(),env.garbage);
+}
