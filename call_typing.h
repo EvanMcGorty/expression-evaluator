@@ -63,27 +63,26 @@ constexpr auto as_passable()
 
 
 
-
-#ifdef _MSVC_VER
-
-//remove reference is not nessecary for actual logic, it is only needed for vc17
-template<typename t>
-using store_t = typename std::remove_reference_t<decltype(as_storable<t>())>::held;
-
-
-//remove reference is not nessecary for actual logic, it is only needed for vc17
-template<typename t>
-using pass_t = typename std::remove_reference_t<std::add_lvalue_reference<decltype(as_passable<t>())>>::held;
-
-#else
+//msvc 17 needs this goofy workaround in order to compile.
 
 template<typename t>
-using store_t = typename decltype(as_storable<t>())::held;
+struct store_c
+{
+	typedef decltype(as_storable<t>()) w;
+};
 
 template<typename t>
-using pass_t = typename decltype(as_passable<t>())::held;
+using store_t = typename store_c<t>::w::held;
 
-#endif
+
+template<typename t>
+struct pass_c
+{
+	typedef decltype(as_passable<t>()) w;
+};
+
+template<typename t>
+using pass_t = typename pass_c<t>::w::held;
 
 
 
