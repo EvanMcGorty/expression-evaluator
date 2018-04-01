@@ -66,8 +66,8 @@ public:
 template<typename ret_t,typename...args>
 class callable_of : public any_callable
 {
-    using use_tuple_type = std::tuple<typename std::remove_reference_t<decltype(as_storable<args>())>::held...>;
-    using arg_tuple_type = std::tuple<std::optional<typename std::remove_reference_t<decltype(as_storable<args>())>::held>...>;
+    using use_tuple_type = std::tuple<store_t<args>...>;
+    using arg_tuple_type = std::tuple<std::optional<store_t<args>>...>;
 public:
 
     callable_of(ret_t(*f)(args...))
@@ -92,7 +92,7 @@ public:
     {
         assert(a.stuff.size() >= arg_len());
         arg_tuple_type to_use;
-        a.set_from_front<arg_tuple_type,typename decltype(as_storable<args>())::held...>(to_use);
+        a.set_from_front<arg_tuple_type,store_t<args>...>(to_use);
         std::optional<use_tuple_type> might_use = can_perform<0,args...>(std::move(to_use));
         
         if(might_use)
@@ -118,18 +118,18 @@ public:
     }
 
 
-    std::function<ret_t(typename decltype(as_storable<args>())::held...)> target;
+    std::function<ret_t(store_t<args>...)> target;
 
 private:
 
     template<size_t ind = 0, typename t, typename...ts>
-    static std::optional<std::tuple<typename std::remove_reference_t<decltype(as_storable<t>())>::held,typename std::remove_reference_t<decltype(as_storable<ts>())>::held...>> can_perform(arg_tuple_type&& tar)
+    static std::optional<std::tuple<store_t<t>,store_t<ts>...>> can_perform(arg_tuple_type&& tar)
     {
         if constexpr(sizeof...(ts) == 0)
         {
             if(std::get<ind>(tar))
             {
-                return std::optional<std::tuple<typename std::remove_reference_t<decltype(as_storable<t>())>::held,typename std::remove_reference_t<decltype(as_storable<ts>())>::held...>>(std::move(std::tuple<typename std::remove_reference_t<<decltype(as_storable<t>())>::held>{std::move(*std::get<ind>(tar))}));
+                return std::optional<std::tuple<store_t<t>,store_t<ts>...>>(std::move(std::tuple<store_t<t>>{std::move(*std::get<ind>(tar))}));
             }
             else
             {
@@ -143,7 +143,7 @@ private:
                 auto rest = can_perform<ind+1,ts...>(std::move(tar));
                 if(rest)
                 {
-                    return std::tuple_cat(std::tuple<typename decltype(as_storable<t>())::held>(std::move(*std::get<ind>(tar))),std::move(*rest));
+                    return std::tuple_cat(std::tuple<store_t<t>>(std::move(*std::get<ind>(tar))),std::move(*rest));
                 }
             }
             return std::nullopt;

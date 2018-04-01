@@ -47,8 +47,12 @@ constexpr auto as_storable()
     }
 }
 
+//remove reference is not nessecary for actual logic, it is only needed for vc17
 template<typename t>
-constexpr auto move_or_deref(typename std::remove_reference_t<decltype(as_storable<t>())>::held& x)
+using store_t = typename std::remove_reference_t<decltype(as_storable<t>())>::held;
+
+template<typename t>
+constexpr auto move_or_deref(store_t<t>& x)
 {
     if constexpr(std::is_rvalue_reference<t>::value && !std::is_const<typename std::remove_reference<t>::type>::value)
     {
@@ -61,10 +65,10 @@ constexpr auto move_or_deref(typename std::remove_reference_t<decltype(as_storab
 }
 
 template<typename ret_t, typename...argts>
-std::function<ret_t(typename std::remove_reference_t<decltype(as_storable<argts>())>::held...)> make_storable_call(ret_t(*f)(argts...))
+std::function<ret_t(store_t<argts>...)> make_storable_call(ret_t(*f)(argts...))
 {
-    return std::function<ret_t(typename decltype(as_storable<argts>())::held...)> {
-        [=](typename decltype(as_storable<argts>())::held...argvs) -> ret_t
+    return std::function<ret_t(store_t<argts>...)> {
+        [=](store_t<argts>...argvs) -> ret_t
         {
             return f(move_or_deref<argts>(argvs)...);
         }
