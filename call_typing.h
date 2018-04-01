@@ -12,11 +12,6 @@ public:
     {}
 
     
-
-    
-
-
-
     typedef t held;
 };
 
@@ -53,7 +48,7 @@ constexpr auto as_storable()
 }
 
 template<typename t>
-constexpr auto move_or_deref(typename decltype(as_storable<t>())::held &x)
+constexpr auto move_or_deref(typename std::remove_reference_t<decltype(as_storable<t>())>::held& x)
 {
     if constexpr(std::is_rvalue_reference<t>::value && !std::is_const<typename std::remove_reference<t>::type>::value)
     {
@@ -66,7 +61,7 @@ constexpr auto move_or_deref(typename decltype(as_storable<t>())::held &x)
 }
 
 template<typename ret_t, typename...argts>
-std::function<ret_t(typename decltype(as_storable<argts>())::held...)> make_storable_call(ret_t(*f)(argts...))
+std::function<ret_t(typename std::remove_reference_t<decltype(as_storable<argts>())>::held...)> make_storable_call(ret_t(*f)(argts...))
 {
     return std::function<ret_t(typename decltype(as_storable<argts>())::held...)> {
         [=](typename decltype(as_storable<argts>())::held...argvs) -> ret_t

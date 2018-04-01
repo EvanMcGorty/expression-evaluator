@@ -66,8 +66,8 @@ public:
 template<typename ret_t,typename...args>
 class callable_of : public any_callable
 {
-    using use_tuple_type = std::tuple<typename decltype(as_storable<args>())::held...>;
-    using arg_tuple_type = std::tuple<std::optional<typename decltype(as_storable<args>())::held>...>;
+    using use_tuple_type = std::tuple<typename std::remove_reference_t<decltype(as_storable<args>())>::held...>;
+    using arg_tuple_type = std::tuple<std::optional<typename std::remove_reference_t<decltype(as_storable<args>())>::held>...>;
 public:
 
     callable_of(ret_t(*f)(args...))
@@ -123,13 +123,13 @@ public:
 private:
 
     template<size_t ind = 0, typename t, typename...ts>
-    static std::optional<std::tuple<typename decltype(as_storable<t>())::held,typename decltype(as_storable<ts>())::held...>> can_perform(arg_tuple_type&& tar)
+    static std::optional<std::tuple<typename std::remove_reference_t<decltype(as_storable<t>())>::held,typename std::remove_reference_t<decltype(as_storable<ts>())>::held...>> can_perform(arg_tuple_type&& tar)
     {
         if constexpr(sizeof...(ts) == 0)
         {
             if(std::get<ind>(tar))
             {
-                return std::optional<std::tuple<typename decltype(as_storable<t>())::held,typename decltype(as_storable<ts>())::held...>>(std::move(std::tuple<typename decltype(as_storable<t>())::held>{std::move(*std::get<ind>(tar))}));
+                return std::optional<std::tuple<typename std::remove_reference_t<decltype(as_storable<t>())>::held,typename std::remove_reference_t<decltype(as_storable<ts>())>::held...>>(std::move(std::tuple<typename std::remove_reference_t<<decltype(as_storable<t>())>::held>{std::move(*std::get<ind>(tar))}));
             }
             else
             {
