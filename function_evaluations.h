@@ -152,7 +152,7 @@ private:
 
     ret_t do_call(use_tuple_type&& a)
     {
-        return call(std::move(target),std::move(a));
+        return call(std::function<ret_t(store_t<args>...)>(target),std::move(a));
     }
 
 };
