@@ -69,6 +69,7 @@ void perform(statement&& todo, stack& loc, environment& env)
         if(!optional_todo)
         {
             loc.clear_front(temp.arg_count,env.garbage);
+			loc.stuff.emplace_back(stack_elem::make_nullval());
         }
         else
         {
@@ -89,6 +90,7 @@ void perform(statement&& todo, stack& loc, environment& env)
             else
             {
                 loc.clear_front(temp.arg_count,env.garbage);
+				loc.stuff.emplace_back(stack_elem::make_nullval());
             }
         }
     }
@@ -98,7 +100,7 @@ void perform(statement&& todo, stack& loc, environment& env)
     }
 }
 
-void perform_all(std::vector<statement> executable, stack& loc, environment& env)
+void perform_all(std::vector<statement>&& executable, stack& loc, environment& env)
 {
     for(auto&& it : executable)
     {
