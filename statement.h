@@ -128,13 +128,9 @@ inline void elem::push_statements(std::vector<statement>& a) const
     else if(val->is_function())
     {
         function const* f = val.downcast_get<function>();
-        //for(std::vector<elem>::const_iterator it = f->data.arguments.cbegin(); it != f->data.arguments.cend(); ++it)
         for(auto const& it : f->data.arguments)
-        //for(int i = 0; i!=f->data.arguments.size();++i)
         {
-            //it->push_statements(a);
             it.push_statements(a);
-            //f->data.arguments[i].push_statements(a);
         }
         a.push_back(statement::val_type::make<function_call>(function{*val.downcast_get<function>()}));
     }

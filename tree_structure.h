@@ -49,8 +49,13 @@ public:
     }
 };
 
-struct literal_data
+struct literal_value
 {
+	literal_value(std::string&& a)
+	{
+		value = a;
+	}
+
 	std::string value;
 };
 
@@ -58,11 +63,10 @@ class literal : public node
 {
 public:
 
-    literal(std::string&& a)
-    {
-		data.value = a;
-    }
-
+    
+	literal(literal_value&& a) :
+		data(std::move(a))
+	{}
 
 
     bool is_literal() const final override
@@ -296,7 +300,7 @@ public:
 
 
 
-	literal_data data;
+	literal_value data;
 };
 
 enum class sc
@@ -306,8 +310,14 @@ enum class sc
 	push
 };
 
-struct variable_data
+struct variable_value
 {
+	variable_value(name_checker&& a, sc b)
+	{
+		change = b;
+		var_name = std::string(std::move(a));
+	}
+
 	sc change;
 
 	std::string var_name;
@@ -317,19 +327,10 @@ class variable : public node
 {
 public:
 
-    
+	variable(variable_value&& a) :
+		data(std::move(a))
+	{}
 
-    variable(name_checker&& a, sc b)
-    {
-        data.change = b;
-		data.var_name = std::string(std::move(a));
-    }
-
-    variable(sc a)
-    {
-		data.change = a;
-		data.var_name = "";
-    }
 
     bool is_variable() const final override
     {
@@ -413,7 +414,7 @@ public:
                 }
                 else
                 {
-                    return std::optional<variable>{variable{std::move(ret),sc_ret}};
+					return std::optional<variable>{variable{ variable_value{std::move(ret),sc_ret} }};
                 }
             }
             ret.push_back(*start);
@@ -426,18 +427,24 @@ public:
         }
         else
         {
-            return std::optional<variable>{variable{std::move(ret),sc::neutral}};
+			return std::optional<variable>{variable{ variable_value{std::move(ret),sc::neutral} }};
         }
     }
 
 
 
-	variable_data data;
+	variable_value data;
 };
 
 
-struct function_data
+struct function_value
 {
+	function_value(name_checker&& n, std::vector<elem>&& a = {})
+	{
+		fn_name = std::move(n);
+		arguments = std::move(a);
+	}
+
 	std::string fn_name;
 
 	std::vector<elem> arguments;
@@ -447,11 +454,9 @@ class function : public node
 {
 public:
 
-    function(name_checker&& n, std::vector<elem>&& a = {})
-    {
-		data.fn_name = std::move(n);
-		data.arguments = std::move(a);
-    }
+	function(function_value&& a) :
+		data(std::move(a))
+    {}
 
 
 
@@ -472,7 +477,7 @@ public:
 
 
 
-	function_data data;
+	function_value data;
 
 };
 
@@ -488,6 +493,7 @@ class elem
     friend elem literal::duplicate() const;
     friend elem variable::duplicate() const;
     friend elem function::duplicate() const;
+	friend std::string function::make_string() const;
 
 public:
 
@@ -502,40 +508,69 @@ public:
     }
 
     elem(elem const& a) :
-        elem(a.val->duplicate())
-    {
-    }
+        val(a.val.is_nullval() ? std::move(a.val->duplicate().val) : dtp::make_nullval())
+    {}
 
     void operator=(elem const& a)
     {
-        operator=(a.val->duplicate());
+        val = (a.val.is_nullval() ? std::move(a.val->duplicate().val) : dtp::make_nullval());
     }
 
     bool operator==(elem const& a) const
     {
-        return val->is_equal(&*a.val);
+		if (val.is_nullval())
+		{
+			if (a.val.is_nullval())
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			if (a.val.is_nullval())
+			{
+				return false;
+			}
+			else
+			{
+				return val->is_equal(&*a.val);
+			}
+		}
     }
 
     bool operator!=(elem const& a) const
     {
-        return !val->is_equal(&*a.val);
+        return !operator==(a);
     }
+
 
     std::string str() const
     {
-        return val->make_string();
+		if (val.is_nullval())
+		{
+			return "#";
+		}
+		else
+		{
+			return val->make_string();
+		}
     }
+
 
     void push_statements(std::vector<statement>& a) const;
 
-    static elem make(literal&& a)
+    static elem make(literal_value&& a)
     {
-        return elem{dtp::make<literal>(a)};
+        return elem{dtp::make<literal>(std::move(a))};
     }
 
-    static elem make(variable&& a)
+    static elem make(variable_value&& a)
     {
-        return elem{dtp::make<variable>(a)};
+        return elem{dtp::make<variable>(std::move(a))};
     }
 
     static elem make(function&& a)
@@ -543,7 +578,7 @@ public:
         return elem{dtp::make<function>(a)};
     }
 
-    static elem make_nullval()
+    static elem make_empty()
     {
         return elem{dtp::make_nullval()};
     }
@@ -554,13 +589,13 @@ public:
         std::optional<elem> o {parse(it,to_be_parsed.cend())};
         if(!o)
         {
-            return make_nullval();
+            return make_empty();
         }
         while(it!=to_be_parsed.cend())
         {
             if(*it != ' ')
             {
-                return make_nullval();
+                return make_empty();
             }
             ++it;
         }
@@ -571,6 +606,7 @@ public:
     {
         return make(std::string{to_be_parsed});
     }
+
 
     static std::optional<elem> parse(std::string::const_iterator& start, std::string::const_iterator stop)
     {
@@ -595,7 +631,7 @@ public:
             std::optional<function> n{function::parse(start,stop)};
             if(n)
             {
-                return std::optional<elem>{elem{dtp::make<function>(std::move(*n))}};
+				return std::optional<elem>{elem{ dtp::make<function>(std::move(*n))}};
             }
             else
             {
@@ -605,7 +641,7 @@ public:
 		else if (*start == '#')
 		{
 			++start;
-			return std::optional<elem>{elem::make_nullval()};
+			return std::optional<elem>{elem::make_empty()};
 		}
         else
         {
@@ -621,18 +657,146 @@ public:
         }
     }
 
-    
-    dtp val;
+	static elem literal_parse(std::string::const_iterator& start, std::string::const_iterator stop)
+	{
+		auto g = literal::parse(start, stop);
+		if (g)
+		{
+			return elem::make(std::move(g->data));
+		}
+		else
+		{
+			return elem::make_empty();
+		}
+	}
+
+	static elem variable_parse(std::string::const_iterator& start, std::string::const_iterator stop)
+	{
+		auto g = variable::parse(start, stop);
+		if (g)
+		{
+			return elem::make(std::move(g->data));
+		}
+		else
+		{
+			return elem::make_empty();
+		}
+	}
+
+	static elem function_parse(std::string::const_iterator& start, std::string::const_iterator stop)
+	{
+		auto g = function::parse(start, stop);
+		if (g)
+		{
+			return elem::make(std::move(g->data));
+		}
+		else
+		{
+			return elem::make_empty();
+		}
+	}
+
+
+	literal_value* get_literal()
+	{
+		if (val.is_nullval() && val->is_literal())
+		{
+			return &val.downcast_get<literal>()->data;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	variable_value* get_variable()
+	{
+		if (val.is_nullval() && val->is_variable())
+		{
+			return &val.downcast_get<variable>()->data;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	function_value* get_function()
+	{
+		if (val.is_nullval() && val->is_function())
+		{
+			return &val.downcast_get<function>()->data;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+
+	literal_value const* get_literal() const
+	{
+		if (val.is_nullval() && val->is_literal())
+		{
+			return &val.downcast_get<literal>()->data;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	variable_value const* get_variable() const
+	{
+		if (val.is_nullval() && val->is_variable())
+		{
+			return &val.downcast_get<variable>()->data;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+	function_value const* get_function() const
+	{
+		if (val.is_nullval() && val->is_function())
+		{
+			return &val.downcast_get<function>()->data;
+		}
+		else
+		{
+			return nullptr;
+		}
+	}
+
+
 
 private:
     
+	dtp val;
+
 
     elem(dtp&& a) :
         val(std::move(a))
-    {
-
-    }
+    {}
 };
+
+const elem empty_elem = elem::make_empty();
+
+std::ostream& operator<<(std::ostream& stream, elem const& expression)
+{
+	stream << expression.str();
+	return stream;
+}
+
+std::istream& operator>>(std::istream& stream, elem& expression)
+{
+	std::string to_parse;
+	std::getline(stream, to_parse);
+	expression = elem::make(to_parse);
+	return stream;
+}
 
 inline std::string function::make_string() const
 {
