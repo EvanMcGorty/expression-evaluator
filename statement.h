@@ -102,7 +102,7 @@ class statement
 {
 public:
 
-    using val_type = mu::virt<operation>;
+    using val_type = mu::algebraic<operation,literal_push,variable_push,function_call>;
 
     statement(val_type&& a) :
         val(std::move(a))

@@ -484,7 +484,7 @@ public:
 
 //using dtp = mu::algebraic<node,literal,variable,function>;
 
-using dtp = mu::virt<node>;
+using dtp = mu::algebraic<node,literal,variable,function>;
 
 class statement;
 
