@@ -26,11 +26,11 @@ void perform(statement&& todo, stack& loc, environment& env)
     {
         variable_push temp = std::move(*todo.val.downcast_get<variable_push>());
 
-        switch(temp.var.change)
+        switch(temp.var.data.change)
         {
-        case(variable::sc::pop):
+        case(sc::pop):
         {
-            auto to_push = env.variables.take_var(std::move(temp.var.var_name));
+            auto to_push = env.variables.take_var(std::move(temp.var.data.var_name));
             if(to_push)
             {
                 loc.stuff.emplace_back(std::move(*to_push));
@@ -41,9 +41,9 @@ void perform(statement&& todo, stack& loc, environment& env)
             }
         }
         break;
-        case(variable::sc::neutral):
+        case(sc::neutral):
         {
-            auto to_push = env.variables.get_var(std::move(temp.var.var_name));
+            auto to_push = env.variables.get_var(std::move(temp.var.data.var_name));
             if(to_push)
             {
                 loc.stuff.emplace_back(stack_elem::make<value_reference>(*to_push));
@@ -54,9 +54,9 @@ void perform(statement&& todo, stack& loc, environment& env)
             }
         }
         break;
-        case(variable::sc::push):
+        case(sc::push):
         {
-            auto to_push = env.variables.push_var(std::move(temp.var.var_name));
+            auto to_push = env.variables.push_var(std::move(temp.var.data.var_name));
             loc.stuff.emplace_back(stack_elem::make<value_reference>(to_push));
         }
         break;

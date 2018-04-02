@@ -49,6 +49,10 @@ public:
     }
 };
 
+struct literal_data
+{
+	std::string value;
+};
 
 class literal : public node
 {
@@ -56,13 +60,9 @@ public:
 
     literal(std::string&& a)
     {
-        value = a;
+		data.value = a;
     }
 
-	~literal()
-	{
-		int a = 3 + 4;
-	}
 
 
     bool is_literal() const final override
@@ -76,16 +76,16 @@ public:
 
     bool is_equal(node const* a) const override
     {
-        return a->is_literal() && static_cast<literal const*>(a)->value == value;
+        return a->is_literal() && static_cast<literal const*>(a)->data.value == data.value;
     }
 
 
     std::string make_string() const override
     {
         std::string ret("\"");
-        ret.reserve(size_t(float(value.length()) * 1.1) + 10);
+        ret.reserve(size_t(float(data.value.length()) * 1.1) + 10);
         bool in_text = true;
-        for (auto it = value.cbegin(); it != value.cend(); ++it)
+        for (auto it = data.value.cbegin(); it != data.value.cend(); ++it)
         {
             switch (*it)
             {
@@ -293,37 +293,42 @@ public:
         return std::nullopt;
     }
 
-    std::string const& view_value()
-    {
-        return value;
-    }
 
 
 
-    std::string value;
+	literal_data data;
+};
+
+enum class sc
+{
+	pop,
+	neutral,
+	push
+};
+
+struct variable_data
+{
+	sc change;
+
+	std::string var_name;
 };
 
 class variable : public node
 {
 public:
 
-    enum class sc
-    {
-        pop,
-        neutral,
-        push
-    };
+    
 
     variable(name_checker&& a, sc b)
     {
-        change = b;
-        var_name = std::string(std::move(a));
+        data.change = b;
+		data.var_name = std::string(std::move(a));
     }
 
     variable(sc a)
     {
-        change = a;
-        var_name = "";
+		data.change = a;
+		data.var_name = "";
     }
 
     bool is_variable() const final override
@@ -336,7 +341,7 @@ public:
 
     bool is_equal(node const* a) const override
     {
-        return a->is_variable() && static_cast<variable const*>(a)->change == change && static_cast<variable const*>(a)->var_name == var_name;
+        return a->is_variable() && static_cast<variable const*>(a)->data.change == data.change && static_cast<variable const*>(a)->data.var_name == data.var_name;
     }
 
 
@@ -344,21 +349,21 @@ public:
     {
         std::string ret;
 
-        switch(change)
+        switch(data.change)
         {
         case(sc::neutral):
-            ret = "@" + var_name;
+            ret = "@" + data.var_name;
             break;
         case(sc::pop):
-            ret.reserve(var_name.size()+2);
+            ret.reserve(data.var_name.size()+2);
             ret.push_back('@');
-            ret.append(var_name);
+            ret.append(data.var_name);
             ret.push_back('~');
             break;
         case(sc::push):
-            ret.reserve(var_name.size()+2);
+            ret.reserve(data.var_name.size()+2);
             ret.push_back('@');
-            ret.append(var_name);
+            ret.append(data.var_name);
             ret.push_back('+');
             break;
         }
@@ -425,30 +430,27 @@ public:
         }
     }
 
-    sc view_change() const
-    {
-        return change;
-    }
-
-    std::string const& view_var_name() const
-    {
-        return var_name;
-    }
 
 
-    sc change;
-
-    std::string var_name;
+	variable_data data;
 };
 
+
+struct function_data
+{
+	std::string fn_name;
+
+	std::vector<elem> arguments;
+};
 
 class function : public node
 {
 public:
 
-    function(name_checker&& n, std::vector<elem> a = {})
+    function(name_checker&& n, std::vector<elem>&& a = {})
     {
-        fn_name = std::move(n);
+		data.fn_name = std::move(n);
+		data.arguments = std::move(a);
     }
 
 
@@ -468,21 +470,10 @@ public:
 
     static std::optional<function> parse(std::string::const_iterator& start, std::string::const_iterator stop);
 
-    
-    std::string const& view_fn_name() const
-    {
-        return fn_name;
-    }
-
-    std::vector<elem> const& view_arguments() const
-    {
-        return arguments;
-    }
 
 
-    std::string fn_name;
+	function_data data;
 
-    std::vector<elem> arguments;
 };
 
 
@@ -611,6 +602,11 @@ public:
                 return std::nullopt;
             }
         }
+		else if (*start == '#')
+		{
+			++start;
+			return std::optional<elem>{elem::make_nullval()};
+		}
         else
         {
             std::optional<literal> n = literal::parse(start,stop);
@@ -641,12 +637,12 @@ private:
 inline std::string function::make_string() const
 {
     std::string ret;
-    ret.reserve(fn_name.size()+arguments.size()*10);
-    ret = fn_name;
+    ret.reserve(data.fn_name.size()+ data.arguments.size()*10);
+    ret = data.fn_name;
     ret.push_back('(');
     //for(std::vector<elem>::const_iterator it = arguments.cbegin(); it!=arguments.cend(); ++it)
     //for(int i = 0; i!=arguments.size(); ++i)
-    for(auto const& it : arguments)
+    for(auto const& it : data.arguments)
     {
         //ret.append(it->str());
         //ret.append(arguments.at(i).str());
@@ -660,7 +656,7 @@ inline std::string function::make_string() const
 		}
         ret.push_back(',');
     }
-    if(arguments.size()>0)
+    if(data.arguments.size()>0)
     {
         ret.pop_back();
     }
@@ -723,7 +719,7 @@ inline std::optional<function> function::parse(std::string::const_iterator& star
 
         if(next)
         {
-            ret.arguments.emplace_back(std::move(*next));
+            ret.data.arguments.emplace_back(std::move(*next));
         }
         else
         {
@@ -756,16 +752,16 @@ inline std::optional<function> function::parse(std::string::const_iterator& star
 
 bool function::is_equal(node const *a) const
 {
-    if (a->is_function() && static_cast<function const *>(a)->fn_name == fn_name)
+    if (a->is_function() && static_cast<function const *>(a)->data.fn_name == data.fn_name)
     {
-        std::vector<elem> const &r = static_cast<function const *>(a)->arguments;
-        if(r.size() != arguments.size())
+        std::vector<elem> const &r = static_cast<function const *>(a)->data.arguments;
+        if(r.size() != data.arguments.size())
         {
             return false;
         }
-        for(int i = 0; i!= arguments.size(); ++i)
+        for(int i = 0; i!= data.arguments.size(); ++i)
         {
-            if(r[i] != arguments[i])
+            if(r[i] != data.arguments[i])
             {
                 return false;
             }

@@ -79,8 +79,8 @@ public:
 
     function_call(function const& a)
     {
-        name = a.view_fn_name();
-        arg_count = a.view_arguments().size();
+        name = a.data.fn_name;
+        arg_count = a.data.arguments.size();
     }
 
     std::string name;
@@ -128,13 +128,13 @@ inline void elem::push_statements(std::vector<statement>& a) const
     else if(val->is_function())
     {
         function const* f = val.downcast_get<function>();
-        //for(std::vector<elem>::const_iterator it = f->view_arguments().cbegin(); it != f->view_arguments().cend(); ++it)
-        for(auto const& it : f->view_arguments())
-        //for(int i = 0; i!=f->view_arguments().size();++i)
+        //for(std::vector<elem>::const_iterator it = f->data.arguments.cbegin(); it != f->data.arguments.cend(); ++it)
+        for(auto const& it : f->data.arguments)
+        //for(int i = 0; i!=f->data.arguments.size();++i)
         {
             //it->push_statements(a);
             it.push_statements(a);
-            //f->view_arguments()[i].push_statements(a);
+            //f->data.arguments[i].push_statements(a);
         }
         a.push_back(statement::val_type::make<function_call>(function{*val.downcast_get<function>()}));
     }

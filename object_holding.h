@@ -40,7 +40,7 @@ public:
 
     unparsed(literal&& a)
     {
-        value = std::move(a.value);
+        value = std::move(a.data.value);
     }
 
     bool is_unparsed() const override
@@ -134,7 +134,6 @@ public:
 using value_holder = mu::virt<any_object>;
 
 
-//a variable.
 //on a stack, this is what a variable pushes (unless if the variable is also being popped).
 class value_reference : public any_elem_val
 {
