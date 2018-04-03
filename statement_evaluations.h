@@ -77,23 +77,10 @@ namespace expressions
 			{
 				any_callable& todo = ***optional_todo;
 
-				if (todo.arg_len() == temp.arg_count)
-				{
-					value_holder tp = todo.try_perform(loc);
-					loc.clear_front(todo.arg_len(), env.garbage);
-					loc.stuff.emplace_back(std::move(tp));
-				}
-				else if (todo.arg_len() + 1 == temp.arg_count && (**(loc.stuff.rbegin() + todo.arg_len())).is_reference())
-				{
-					value_holder tp = todo.try_perform(loc);
-					loc.clear_front(todo.arg_len(), env.garbage);
-					*loc.stuff.rbegin()->downcast_get<value_reference>()->ref = std::move(tp);
-				}
-				else
-				{
-					loc.clear_front(temp.arg_count, env.garbage);
-					loc.stuff.emplace_back(stack_elem::make_nullval());
-				}
+				value_holder tp = todo.try_perform(loc,temp.arg_count);
+				loc.clear_front(temp.arg_count, env.garbage);
+				loc.stuff.emplace_back(std::move(tp));
+				
 			}
 		}
 		else

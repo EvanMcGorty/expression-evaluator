@@ -107,10 +107,10 @@ namespace expressions
 	}
 
 	template<typename ret_t, typename...argts>
-	std::function<ret_t(store_t<argts>...)> make_storable_call(ret_t(*f)(argts...))
+	std::function<ret_t(store_t<argts>...)> make_storable_call(std::function<ret_t(argts...)>&& f)
 	{
 		return std::function<ret_t(store_t<argts>...)> {
-			[=](store_t<argts>...argvs) -> ret_t
+			[f = std::move(f)](store_t<argts>...argvs) -> ret_t
 			{
 				return f(move_or_deref<argts>(argvs)...);
 			}

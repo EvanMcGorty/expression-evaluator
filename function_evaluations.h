@@ -56,12 +56,9 @@ namespace expressions
 	class any_callable
 	{
 	public:
-		virtual size_t arg_len() const = 0;
-		virtual value_holder try_perform(stack& a) = 0;
+		virtual value_holder try_perform(stack& a, size_t args_to_take) = 0;
 		virtual ~any_callable()
-		{
-
-		}
+		{}
 	};
 
 
@@ -73,20 +70,19 @@ namespace expressions
 		using arg_tuple_type = std::tuple<std::optional<store_t<args>>...>;
 	public:
 
-		callable_of(ret_t(*f)(args...))
+		callable_of(std::function<ret_t(args...)>&& f)
 		{
-			target = make_storable_call(f);
-		}
-
-		size_t arg_len() const override
-		{
-			return sizeof...(args);
+			target = make_storable_call(std::move(f));
 		}
 
 		//when the stack is not popped from, it is the callers responsibility to manage garbage variables
-		value_holder try_perform(stack& a) override
+		value_holder try_perform(stack& a, size_t args_to_take) override
 		{
-			assert(a.stuff.size() >= arg_len());
+			if (sizeof...(args) != args_to_take)
+			{
+				return value_holder::make_nullval();
+			}
+			assert(a.stuff.size() >= sizeof...(args));
 
 			if constexpr(sizeof...(args) > 0)
 			{
@@ -168,4 +164,28 @@ namespace expressions
 		}
 
 	};
+
+	class manual_callable : public any_callable
+	{
+	public:
+		manual_callable(std::function<value_holder(std::vector<stack_elem>&&)>&& a)
+		{
+			target = a;
+		}
+
+		value_holder try_perform(stack& a, size_t args_to_take) override
+		{
+			assert(a.stuff.size() >= args_to_take);
+			std::vector<stack_elem> to_call;
+			for (int i = a.stuff.size() - args_to_take; i != a.stuff.size(); ++i)
+			{
+				to_call.emplace_back(std::move(a.stuff[i]));
+			}
+			return target(std::move(to_call));
+		}
+		
+	private:
+		std::function<value_holder(std::vector<stack_elem>&&)> target;
+	};
+
 }

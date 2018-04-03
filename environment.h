@@ -9,11 +9,30 @@ namespace expressions
 	public:
 
 		template<typename ret, typename...args>
-		function_set& add(ret(*target)(args...), std::string name)
+		function_set& add_auto(std::function<ret(args...)>&& target, std::string name)
 		{
-			map.emplace(name, std::move(mu::virt<any_callable>::make<callable_of<ret, args...>>(target)));
+			map.emplace(name, std::move(mu::virt<any_callable>::make<callable_of<ret, args...>>(std::move(target))));
 			return *this;
 		}
+
+		template<typename ret, typename...args>
+		function_set& add_auto(ret(*target)(args...), std::string name)
+		{
+			return add_auto(std::function<ret(args...)>{target}, std::move(name));
+		}
+
+		function_set& add_manual(std::function<value_holder(std::vector<stack_elem>&&)>&& target, std::string name)
+		{
+			map.emplace(name, std::move(mu::virt<any_callable>::make<manual_callable>(std::move(target))));
+			return *this;
+		}
+
+		function_set& add_manual(value_holder(*target)(std::vector<stack_elem>&&), std::string name)
+		{
+			return add_manual(std::function<value_holder(std::vector<stack_elem>&&)>{target},name);
+		}
+
+
 
 		std::optional<mu::virt<any_callable>*> get(std::string const& a)
 		{
