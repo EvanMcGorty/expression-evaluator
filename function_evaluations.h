@@ -11,6 +11,46 @@ namespace expressions
 
 	using stack_elem = mu::virt<any_elem_val>;
 
+
+	value_holder get_value(stack_elem& a)
+	{
+		assert(a.is_nullval() || a->has_value());
+		if (a.is_nullval())
+		{
+			return value_holder::make_nullval();
+		}
+		else if (a->is_reference())
+		{
+			return std::move(*a.downcast_get<value_reference>()->ref);
+		}
+		else if (a->is_object())
+		{
+			return std::move(std::move(a).downcast<any_object>());
+		}
+		else
+		{
+			assert(false);
+			return value_holder::make_nullval();
+		}
+	}
+
+	void set_value(stack_elem& a, value_holder&& b)
+	{
+		assert(a.is_nullval() || a->has_value());
+		if (a.is_nullval() || a->is_object())
+		{
+			a = std::move(b);
+		}
+		else if (a->is_reference())
+		{
+			(*a.downcast_get<value_reference>()->ref) = std::move(b);
+		}
+		else
+		{
+			assert(false);
+		}
+	}
+
 	class variable_value_stack;
 
 	class stack

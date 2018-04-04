@@ -25,12 +25,25 @@ namespace expressions
 			return false;
 		}
 
+		virtual bool has_value() const
+		{
+			return false;
+		}
+
 		//returns true if this is an object and the held value was moved.
 		virtual bool get(any_type_ask* tar) = 0;
 
 		virtual ~any_elem_val()
 		{
 
+		}
+	};
+
+	class value_elem_val : public any_elem_val
+	{
+		virtual bool has_value() const final override
+		{
+			return true;
 		}
 	};
 
@@ -64,7 +77,7 @@ namespace expressions
 
 	//the object held by a variable
 	//on a stack, this is what a function pushes.
-	class any_object : public any_elem_val
+	class any_object : public value_elem_val
 	{
 	public:
 		virtual std::type_info const& get_type() const = 0;
@@ -80,6 +93,9 @@ namespace expressions
 		{
 			return true;
 		}
+
+
+
 	};
 
 
@@ -137,7 +153,7 @@ namespace expressions
 
 
 	//on a stack, this is what a variable pushes (unless if the variable is also being popped).
-	class value_reference : public any_elem_val
+	class value_reference : public value_elem_val
 	{
 	public:
 
@@ -167,5 +183,7 @@ namespace expressions
 
 		value_holder* ref;
 	};
+
+
 
 }

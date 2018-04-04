@@ -3,6 +3,8 @@ without overhead (so you can still do algebra with trees of nodes and you can ev
 calculus expressions).
 
 create a system for importing sets of functions into an environment
+have classes that contain sets of functions through a static function (so then they could be templated)
+they would all match a concept and some could be templated to instanciate a vector<int> OR a vector<char>
 
 organize environment class
 

@@ -1,6 +1,5 @@
 #pragma once
-#include"statement_evaluations.h"
-
+#include"function_sets.h"
 
 
 using expressions::elem;
@@ -13,9 +12,5 @@ using expressions::sc;
 using expressions::environment;
 using expressions::executable;
 using expressions::function_set;
-
-using expressions::variable_set;
-using expressions::variable_value_stack;
-using expressions::value_holder;
-using expressions::stack_elem;
+using expressions::core;
 
