@@ -125,7 +125,7 @@ namespace expressions
 		std::vector<statement>& a = result_location.statements;
 		if (val.is_nullval())
 		{
-			return;
+			a.push_back(statement::val_type::make_nullval());
 		}
 		else if (val->is_literal())
 		{

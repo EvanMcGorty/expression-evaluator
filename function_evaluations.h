@@ -168,7 +168,7 @@ namespace expressions
 	class manual_callable : public any_callable
 	{
 	public:
-		manual_callable(std::function<value_holder(std::vector<stack_elem>&&)>&& a)
+		manual_callable(std::function<value_holder(std::vector<stack_elem>&)>&& a)
 		{
 			target = a;
 		}
@@ -177,15 +177,21 @@ namespace expressions
 		{
 			assert(a.stuff.size() >= args_to_take);
 			std::vector<stack_elem> to_call;
+			to_call.reserve(args_to_take);
 			for (int i = a.stuff.size() - args_to_take; i != a.stuff.size(); ++i)
 			{
 				to_call.emplace_back(std::move(a.stuff[i]));
 			}
-			return target(std::move(to_call));
+			auto ret = target(to_call);
+			for (int i = 0; i != to_call.size(); ++i)
+			{
+				a.stuff[a.stuff.size()-args_to_take+i] = std::move(to_call[i]);
+			}
+			return ret;
 		}
 		
 	private:
-		std::function<value_holder(std::vector<stack_elem>&&)> target;
+		std::function<value_holder(std::vector<stack_elem>&)> target;
 	};
 
 }

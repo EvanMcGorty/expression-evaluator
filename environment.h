@@ -21,15 +21,15 @@ namespace expressions
 			return add_auto(std::function<ret(args...)>{target}, std::move(name));
 		}
 
-		function_set& add_manual(std::function<value_holder(std::vector<stack_elem>&&)>&& target, std::string name)
+		function_set& add_manual(std::function<value_holder(std::vector<stack_elem>&)>&& target, std::string name)
 		{
 			map.emplace(name, std::move(mu::virt<any_callable>::make<manual_callable>(std::move(target))));
 			return *this;
 		}
 
-		function_set& add_manual(value_holder(*target)(std::vector<stack_elem>&&), std::string name)
+		function_set& add_manual(value_holder(*target)(std::vector<stack_elem>&), std::string name)
 		{
-			return add_manual(std::function<value_holder(std::vector<stack_elem>&&)>{target},name);
+			return add_manual(std::function<value_holder(std::vector<stack_elem>&)>{target},name);
 		}
 
 
@@ -94,7 +94,9 @@ namespace expressions
 
 	class variable_set
 	{
+		friend class environment;
 	public:
+
 
 		value_holder* push_var(std::string&& a)
 		{
@@ -137,6 +139,12 @@ namespace expressions
 	{
 	public:
 
+		environment() :
+			variables(),
+			functions(),
+			garbage(variables.map["garbage"])
+		{}
+
 		void run(executable&& a);
 
 		void run(elem&& a);
@@ -157,6 +165,6 @@ namespace expressions
 		function_set functions;
 
 		variable_set variables;
-		variable_value_stack garbage;
+		variable_value_stack& garbage;
 	};
 }

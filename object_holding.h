@@ -160,10 +160,6 @@ namespace expressions
 					*ref = value_holder::make_nullval();
 				}
 			}
-			else
-			{
-
-			}
 
 			return false;
 		}

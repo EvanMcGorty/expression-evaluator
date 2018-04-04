@@ -20,7 +20,11 @@ namespace expressions
 
 	void perform(statement&& todo, stack& loc, environment& env)
 	{
-		if (todo.val->is_literal_push())
+		if (todo.val.is_nullval())
+		{
+			loc.stuff.emplace_back(stack_elem::make_nullval());
+		}
+		else if (todo.val->is_literal_push())
 		{
 			loc.stuff.push_back(stack_elem::make<unparsed>(std::move(todo.val.downcast_get<literal_push>()->val)));
 		}

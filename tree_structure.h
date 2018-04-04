@@ -514,12 +514,12 @@ namespace expressions
 		}
 
 		elem(elem const& a) :
-			val(a.val.is_nullval() ? std::move(a.val->duplicate().val) : dtp::make_nullval())
+			val(!a.val.is_nullval() ? std::move(a.val->duplicate().val) : dtp::make_nullval())
 		{}
 
 		void operator=(elem const& a)
 		{
-			val = (a.val.is_nullval() ? std::move(a.val->duplicate().val) : dtp::make_nullval());
+			val = (!a.val.is_nullval() ? std::move(a.val->duplicate().val) : dtp::make_nullval());
 		}
 
 		bool operator==(elem const& a) const
