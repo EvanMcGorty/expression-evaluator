@@ -2,10 +2,10 @@ make evaluation completely unrelated to expressions so expression-like tasks can
 without overhead (so you can still do algebra with trees of nodes and you can evaluate lambda 
 calculus expressions).
 
-make multiple ways to create an any_caller (e.g. from a function that takes a vector of value_holder*)
+create a system for importing sets of functions into an environment
 
-allow any derived class to be passed as an argument for a base class
-
-give expressions access to garbage values
+organize environment class
 
 wrap everything up nicely
+
+allow any derived class to be passed as an argument for a base class (impossible?)
