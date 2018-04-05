@@ -9,7 +9,7 @@ namespace expressions
 
 		static value_holder swap(std::vector<stack_elem>& a)
 		{
-			if (a.size() == 2 && a[0]->has_value() && a[1]->has_value())
+			if (a.size() == 2 && (a[0].is_nullval() || a[0]->has_value()) && (a[0].is_nullval() || a[1]->has_value()))
 			{
 				auto o0 = get_value(a[0]);
 				auto o1 = get_value(a[1]);
@@ -21,34 +21,26 @@ namespace expressions
 
 		static value_holder first(std::vector<stack_elem>& a)
 		{
-			if (a.size() == 0)
+			if (a.size() == 0 || (*a.begin()).is_nullval() || !(*a.begin())->has_value())
 			{
 				return value_holder::make_nullval();
-			}
-			else if((*a.begin())->has_value())
-			{
-				return get_value(*a.begin());
 			}
 			else
 			{
-				return value_holder::make_nullval();
+				return get_value(*a.begin());
 			}
 		}
 
 
 		static value_holder last(std::vector<stack_elem>& a)
 		{
-			if (a.size() == 0)
+			if (a.size() == 0 || (*a.rbegin()).is_nullval() || !(*a.rbegin())->has_value())
 			{
 				return value_holder::make_nullval();
-			}
-			else if ((*a.rbegin())->has_value())
-			{
-				return get_value(*a.rbegin());
 			}
 			else
 			{
-				return value_holder::make_nullval();
+				return get_value(*a.rbegin());
 			}
 		}
 
