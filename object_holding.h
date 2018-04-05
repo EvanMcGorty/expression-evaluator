@@ -65,11 +65,9 @@ namespace expressions
 
 		bool get(any_type_ask* tar) override
 		{
-			tar->parse(value, temporary_holder);
+			tar->parse(value);
 			return false;
 		}
-
-		std::any temporary_holder; //if the type to parse into is a pointer
 
 		std::string value;
 	};
@@ -144,6 +142,10 @@ namespace expressions
 				{
 					static_cast<type_ask_of<std::remove_pointer_t<t> const*>*>(tar)->gotten.emplace(std::move(val));
 					return true;
+				}
+				else
+				{
+					return false;
 				}
 			}
 			else

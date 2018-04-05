@@ -10,7 +10,7 @@ namespace expressions
 	class any_type_ask
 	{
 	public:
-		virtual void parse(std::string const& a, std::any& b) = 0;
+		virtual void parse(std::string const& a) = 0;
 
 		virtual std::type_info const& get_type() const = 0;
 
@@ -25,15 +25,33 @@ namespace expressions
 	{
 	public:
 
-		void parse(std::string const& a, std::any& b) override
+		template<bool b>
+		struct possible;
+
+		template<> struct possible<true>
+		{
+			possible(std::remove_const_t<typename std::remove_pointer_t<t>>&& a)
+			{
+				val = std::move(a);
+			}
+
+			std::remove_const_t<typename std::remove_pointer_t<t>> val;
+		};
+
+		template<> struct possible<false>
+		{
+
+		};
+
+		void parse(std::string const& a) override
 		{
 			if constexpr(std::is_pointer<t>::value)
 			{
-				typedef typename std::remove_const<typename std::remove_pointer<t>::type>::type holdable;
+				typedef std::remove_const_t<typename std::remove_pointer_t<t>> holdable;
 				std::optional<holdable> temp = convert<holdable>(a);
 				if (temp)
 				{
-					gotten = std::optional<t>{ &b.emplace<holdable>(std::move(*temp)) };
+					pointed_to_value = possible<true>{ std::move(*temp) };
 				}
 			}
 			else
@@ -48,6 +66,7 @@ namespace expressions
 		}
 
 		std::optional<t> gotten;
+		std::optional<possible<std::is_pointer_v<t>>> pointed_to_value;
 	};
 
 }
