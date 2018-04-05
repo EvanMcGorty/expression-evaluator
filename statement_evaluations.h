@@ -12,7 +12,11 @@ namespace expressions
 		{
 			if (!stuff.rbegin()->is_nullval() && (*stuff.rbegin())->is_object())
 			{
-				garbage.push_front(std::move(std::move(*stuff.rbegin()).downcast<any_object>()));
+				auto to_push = std::move(std::move(*stuff.rbegin()).downcast<any_object>());
+				if (!to_push->can_trivially_destruct())
+				{
+					garbage.push_front(std::move(to_push));
+				}
 			}
 			stuff.pop_back();
 		}

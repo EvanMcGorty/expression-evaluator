@@ -81,6 +81,8 @@ namespace expressions
 		virtual std::type_info const& get_type() const = 0;
 
 
+		virtual bool can_trivially_destruct() const = 0;
+
 		template<typename t>
 		bool is() const
 		{
@@ -112,6 +114,12 @@ namespace expressions
 		object_of(t&& a) :
 			val(std::move(a))
 		{
+		}
+
+		
+		bool can_trivially_destruct() const override
+		{
+			return std::is_trivially_destructible<t>::value;
 		}
 
 		std::type_info const& get_type() const override
