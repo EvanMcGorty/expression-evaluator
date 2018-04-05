@@ -10,4 +10,4 @@ organize environment class
 
 wrap everything up nicely
 
-allow any derived class to be passed as an argument for a base class (impossible?)
+allow any derived class to be passed as an argument for a base class (try using generic lambdas?)

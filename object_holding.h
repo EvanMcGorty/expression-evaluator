@@ -125,18 +125,26 @@ namespace expressions
 		{
 			if (tar->get_type() == typeid(t*))
 			{
-				static_cast<type_ask_of<t*>*>(tar)->gotten = &val;
+				static_cast<type_ask_of<t*>*>(tar)->gotten.emplace(&val);
 				return false;
 			}
 			else if (tar->get_type() == typeid(t const*))
 			{
-				static_cast<type_ask_of<t const*>*>(tar)->gotten = &val;
+				static_cast<type_ask_of<t const*>*>(tar)->gotten.emplace(&val);
 				return false;
 			}
 			else if (tar->get_type() == typeid(t))
 			{
-				static_cast<type_ask_of<t>*>(tar)->gotten = std::move(val);
+				static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
 				return true;
+			}
+			else if constexpr (std::is_pointer_v<t>)
+			{
+				if (tar->get_type() == typeid(std::remove_pointer_t<t> const*))
+				{
+					static_cast<type_ask_of<std::remove_pointer_t<t> const*>*>(tar)->gotten.emplace(std::move(val));
+					return true;
+				}
 			}
 			else
 			{

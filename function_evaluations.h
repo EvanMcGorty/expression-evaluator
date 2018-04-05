@@ -69,7 +69,7 @@ namespace expressions
 				{
 					stuff[stuff.size() + ind - std::tuple_size<tup_t>::value] = stack_elem::make_nullval();
 				}
-				std::get<ind>(a) = ask.gotten;
+				std::get<ind>(a) = std::move(ask.gotten);
 			}
 			if constexpr(sizeof...(ts) > 0)
 			{

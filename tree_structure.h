@@ -499,7 +499,7 @@ namespace expressions
 
 	public:
 
-		elem() :
+		elem() noexcept(true) :
 			val(dtp::make_nullval())
 		{}
 

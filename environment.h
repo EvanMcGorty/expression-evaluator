@@ -139,11 +139,6 @@ namespace expressions
 	{
 	public:
 
-		environment() :
-			variables(),
-			functions(),
-			garbage(variables.map["garbage"])
-		{}
 
 		void run(executable&& a);
 
@@ -162,9 +157,31 @@ namespace expressions
 			}
 		}
 
+		std::function<value_holder(std::vector<stack_elem>&)> garbage_iterator()
+		{
+			variable_value_stack* g = &garbage;
+			return [g = g](std::vector<stack_elem>& a) -> value_holder
+			{
+				std::optional<value_holder> f = g->take_front();
+				while(f)
+				{
+					if (f->is_nullval())
+					{
+						f = g->take_front();
+						continue;
+					}
+					else
+					{
+						return std::move(*f);
+					}
+				}
+				return value_holder::make_nullval();
+			};
+		}
+
 		function_set functions;
 
 		variable_set variables;
-		variable_value_stack& garbage;
+		variable_value_stack garbage;
 	};
 }

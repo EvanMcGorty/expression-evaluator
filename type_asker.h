@@ -29,10 +29,11 @@ namespace expressions
 		{
 			if constexpr(std::is_pointer<t>::value)
 			{
-				auto temp = convert<typename std::remove_const<typename std::remove_pointer<t>::type>::type>(a);
+				typedef typename std::remove_const<typename std::remove_pointer<t>::type>::type holdable;
+				std::optional<holdable> temp = convert<holdable>(a);
 				if (temp)
 				{
-					b = std::move(*temp); gotten = std::optional<t>{ std::any_cast<typename std::remove_const<typename std::remove_pointer<t>::type>::type>(&b) };
+					gotten = std::optional<t>{ &b.emplace<holdable>(std::move(*temp)) };
 				}
 			}
 			else
