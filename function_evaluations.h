@@ -142,14 +142,14 @@ namespace expressions
 
 				if (might_use)
 				{
-					if constexpr(std::is_same<void, ret_t>::value)
+					if constexpr(std::is_void<ret_t>::value)
 					{
 						do_call(std::move(*might_use));
 						return value_holder::make_nullval();
 					}
 					else
 					{
-						return value_holder::make<object_of<ret_t>>(do_call(std::move(*might_use)));
+						return value_holder::make<object_of<return_t<ret_t>>>(do_call(std::move(*might_use)));
 					}
 				}
 				else
@@ -159,7 +159,7 @@ namespace expressions
 			}
 			else
 			{
-				if constexpr (std::is_same<void, ret_t>::value)
+				if constexpr (std::is_void<ret_t>::value)
 				{
 					target();
 					return value_holder::make_nullval();
@@ -176,7 +176,7 @@ namespace expressions
 		}
 
 
-		std::function<ret_t(store_t<args>...)> target;
+		std::function<return_t<ret_t>(store_t<args>...)> target;
 
 	private:
 
@@ -208,9 +208,9 @@ namespace expressions
 			}
 		}
 
-		ret_t do_call(use_tuple_type&& a)
+		return_t<ret_t> do_call(use_tuple_type&& a)
 		{
-			return call(std::function<ret_t(store_t<args>...)>(target), std::move(a));
+			return call(std::function<return_t<ret_t>(store_t<args>...)>(target), std::move(a));
 		}
 
 	};
