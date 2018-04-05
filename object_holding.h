@@ -134,19 +134,23 @@ namespace expressions
 			else if (tar->get_type() == typeid(t))
 			{
 				static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
-				return true;
+				if constexpr(std::is_trivially_move_constructible<t>::value) //if val is still valid then this doesn't need to be destroyed
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
 			}
 			else if constexpr (std::is_pointer_v<t>)
 			{
 				if (tar->get_type() == typeid(std::remove_pointer_t<t> const*))
 				{
 					static_cast<type_ask_of<std::remove_pointer_t<t> const*>*>(tar)->gotten.emplace(std::move(val));
-					return true;
+					//normally here  this should return true, but a pointer is always still valid after it is std::moved
 				}
-				else
-				{
-					return false;
-				}
+				return false;
 			}
 			else
 			{
