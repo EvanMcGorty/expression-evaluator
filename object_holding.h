@@ -141,13 +141,16 @@ namespace expressions
 			}
 			else if (tar->get_type() == typeid(t))
 			{
-				static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
-				if constexpr(std::is_trivially_move_constructible<t>::value) //if val is still valid then this doesn't need to be destroyed
+				//if copying does the same as moving but leaves behind the old copy, then it should be done instead
+				//it must be trivially destructible though, otherwise the copy will be sent to the garbage and an extra destructor could end up running.
+				if constexpr(std::is_trivially_copy_constructible<t>::value && std::is_trivially_move_constructible<t>::value && std::is_trivially_destructible<t>::value) 
 				{
+					static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
 					return false;
 				}
 				else
 				{
+					static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
 					return true;
 				}
 			}
@@ -156,7 +159,7 @@ namespace expressions
 				if (tar->get_type() == typeid(std::remove_pointer_t<t> const*))
 				{
 					static_cast<type_ask_of<std::remove_pointer_t<t> const*>*>(tar)->gotten.emplace(std::move(val));
-					//normally here  this should return true, but a pointer is always still valid after it is std::moved
+					//normally here  this should return true, but a pointer is always still valid/untouched after it is std::moved
 				}
 				return false;
 			}
