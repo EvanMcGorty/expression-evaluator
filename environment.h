@@ -212,7 +212,7 @@ namespace expr
 				}
 			}
 
-			mu::virt<any_callable> garbage_iterator()
+			mu::virt<any_callable> garbage_getter()
 			{
 				variable_value_stack* g = &garbage;
 				return make_manual_callable(std::function<value_holder(std::vector<stack_elem>&)>{

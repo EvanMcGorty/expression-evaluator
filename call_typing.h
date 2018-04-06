@@ -94,7 +94,14 @@ namespace expr
 			}
 			else
 			{
-				return type_wrap<t>();
+				if constexpr (std::is_const<t>::value)
+				{
+					return type_wrap<std::remove_const_t<t>>();
+				}
+				else
+				{
+					return type_wrap<t>();
+				}
 			}
 		}
 
@@ -132,9 +139,16 @@ namespace expr
 		template<typename t>
 		constexpr pass_t<t> storable_into_passable(store_t<t>&& x)
 		{
-			if constexpr(std::is_rvalue_reference<t>::value && !std::is_const<typename std::remove_reference_t<t>>::value)
+			if constexpr(std::is_rvalue_reference<t>::value)
 			{
-				return std::move(x);
+				if constexpr(std::is_const<typename std::remove_reference_t<t>>::value)
+				{
+					return std::move(*x);
+				}
+				else
+				{
+					return std::move(x);
+				}
 			}
 			else if constexpr(!std::is_reference<t>::value)
 			{
@@ -149,9 +163,27 @@ namespace expr
 		template<typename t>
 		constexpr return_t<t> into_returnable(t&& x)
 		{
-			if constexpr(!std::is_reference<t>::value || (std::is_rvalue_reference<t>::value && !std::is_const<typename std::remove_reference_t<t>>::value))
+			if constexpr(!std::is_reference<t>::value)
 			{
-				return std::move(x);
+				if constexpr(std::is_const<t>::value)
+				{
+					return std::remove_const_t<t>{ x };
+				}
+				else
+				{
+					return std::move(x);
+				}
+			}
+			else if constexpr(std::is_rvalue_reference<t>::value)
+			{
+				if constexpr(!std::is_const<typename std::remove_reference_t<t>>::value)
+				{
+					return std::move(x);
+				}
+				else
+				{
+					return &x;
+				}
 			}
 			else if constexpr(std::is_lvalue_reference<t>::value)
 			{
