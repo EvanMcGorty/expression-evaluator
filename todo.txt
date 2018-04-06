@@ -11,3 +11,8 @@ organize environment class
 wrap everything up nicely
 
 allow any derived class to be passed as an argument for a base class (try using generic lambdas?)
+
+test corner-cases such as const rvalues, const return types, etc.
+
+see if its possible to generate a virtual class hierarchy of wrapper classes that
+all have a static object letting its base classes know of its existance
