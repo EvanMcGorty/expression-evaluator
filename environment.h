@@ -33,7 +33,7 @@ namespace expr
 		{
 		public:
 
-			function_set & add(mu::virt<any_callable>&& f, std::string&& n)
+			function_set& add(mu::virt<any_callable>&& f, std::string&& n)
 			{
 				map.emplace(std::make_pair(std::move(n), std::move(f)));
 				return *this;
@@ -67,7 +67,7 @@ namespace expr
 
 			function_set& use(function_set&& w, char const* n)
 			{
-				if (n == "")
+				if (std::string(n) == "")
 				{
 					return merge(std::move(w));
 				}
@@ -212,26 +212,28 @@ namespace expr
 				}
 			}
 
-			std::function<value_holder(std::vector<stack_elem>&)> garbage_iterator()
+			mu::virt<any_callable> garbage_iterator()
 			{
 				variable_value_stack* g = &garbage;
-				return [g = g](std::vector<stack_elem>& a) -> value_holder
-				{
-					std::optional<value_holder> f = g->take_front();
-					while (f)
+				return make_manual_callable(std::function<value_holder(std::vector<stack_elem>&)>{
+					[g = g](std::vector<stack_elem>& a) -> value_holder
 					{
-						if (f->is_nullval())
+						std::optional<value_holder> f = std::move(g->take_front());
+						while (f)
 						{
-							f = g->take_front();
-							continue;
+							if (f->is_nullval())
+							{
+								f = std::move(g->take_front());
+								continue;
+							}
+							else
+							{
+								return std::move(*f);
+							}
 						}
-						else
-						{
-							return std::move(*f);
-						}
+						return value_holder::make_nullval();
 					}
-					return value_holder::make_nullval();
-				};
+				});
 			}
 
 			function_set functions;
