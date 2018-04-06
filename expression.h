@@ -1,16 +1,21 @@
 #pragma once
 #include"function_sets.h"
 
+namespace expr
+{
 
-using expressions::elem;
-using expressions::literal_value;
-using expressions::variable_value;
-using expressions::function_value;
-using expressions::empty_elem;
-using expressions::sc;
+	using impl::elem;
+	using impl::literal_value;
+	using impl::variable_value;
+	using impl::function_value;
+	using impl::empty_elem;
+	using impl::sc;
 
-using expressions::environment;
-using expressions::executable;
-using expressions::function_set;
-using expressions::core;
+	using impl::environment;
+	using impl::executable;
+	using impl::function_set;
+	using impl::make_manual_callable;
+	using impl::make_smart_callable;
+	using impl::core;
 
+}

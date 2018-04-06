@@ -2,156 +2,159 @@
 #include<string>
 #include<assert.h>
 
-namespace expressions
+namespace expr
 {
-
-	//for passing a string while ensuring that it is a valid name with assert()
-	//or for checking manually
-	class name_checker
+	namespace impl
 	{
-	public:
 
-		name_checker(std::string&& a)
+		//for passing a string while ensuring that it is a valid name with assert()
+		//or for checking manually
+		class name_checker
 		{
-			assert(is_valid(a));
-			held = std::move(a);
-		}
+		public:
 
-		operator std::string() &&
-		{
-			return std::move(held);
-		}
-
-		name_checker(name_checker&& a)
-		{
-			held = std::move(a.held);
-		}
-
-		void operator=(name_checker&& a)
-		{
-			held = std::move(a.held);
-		}
-
-		//starts with a character that is uppercase or lower case
-		//has middle characters that are uppercase, lowercase, digits, dashes, underscores, or dots.
-		//ends with a character that is uppercase, lowercase, or a digit.
-		static bool is_valid(std::string const& a)
-		{
-
-			if (!(a.length() > 0))
+			name_checker(std::string&& a)
 			{
-				return false;
+				assert(is_valid(a));
+				held = std::move(a);
 			}
 
-			if (!isbeginchar(a[0]))
+			operator std::string() &&
 			{
-				return false;
+				return std::move(held);
 			}
 
-			for (int i = 1; i != a.length(); ++i)
+			name_checker(name_checker&& a)
 			{
-				if (i + 1 == a.length())
+				held = std::move(a.held);
+			}
+
+			void operator=(name_checker&& a)
+			{
+				held = std::move(a.held);
+			}
+
+			//starts with a character that is uppercase or lower case
+			//has middle characters that are uppercase, lowercase, digits, dashes, underscores, or dots.
+			//ends with a character that is uppercase, lowercase, or a digit.
+			static bool is_valid(std::string const& a)
+			{
+
+				if (!(a.length() > 0))
 				{
-					if (!isendchar(a[i]))
+					return false;
+				}
+
+				if (!isbeginchar(a[0]))
+				{
+					return false;
+				}
+
+				for (int i = 1; i != a.length(); ++i)
+				{
+					if (i + 1 == a.length())
 					{
-						return false;
+						if (!isendchar(a[i]))
+						{
+							return false;
+						}
+					}
+					else
+					{
+						if (!isinnerchar(a[i]))
+						{
+							return false;
+						}
 					}
 				}
-				else
+				return true;
+			}
+
+			static bool isbeginchar(char a)
+			{
+				return islower(a) || isupper(a);
+			}
+
+			static bool isinnerchar(char a)
+			{
+				return islower(a) || isupper(a) || isdigit(a) || isotherinner(a);
+			}
+
+			static bool isendchar(char a)
+			{
+				return islower(a) || isupper(a) || isdigit(a);
+			}
+
+			static bool isupper(char a)
+			{
+				switch (a)
 				{
-					if (!isinnerchar(a[i]))
-					{
-						return false;
-					}
+				case('A'):case('B'):case('C'):case('D'):case('E'):case('F'):case('G'):case('H'):case('I'):case('J'):case('K'):case('L'):case('M'):case('N'):case('O'):case('P'):case('Q'):case('R'):case('S'):case('T'):case('U'):case('V'):case('W'):case('X'):case('Y'):case('Z'):
+					return true;
+					break;
+				default:
+					return false;
+					break;
 				}
 			}
-			return true;
-		}
 
-		static bool isbeginchar(char a)
-		{
-			return islower(a) || isupper(a);
-		}
-
-		static bool isinnerchar(char a)
-		{
-			return islower(a) || isupper(a) || isdigit(a) || isotherinner(a);
-		}
-
-		static bool isendchar(char a)
-		{
-			return islower(a) || isupper(a) || isdigit(a);
-		}
-
-		static bool isupper(char a)
-		{
-			switch (a)
+			static bool islower(char a)
 			{
-			case('A'):case('B'):case('C'):case('D'):case('E'):case('F'):case('G'):case('H'):case('I'):case('J'):case('K'):case('L'):case('M'):case('N'):case('O'):case('P'):case('Q'):case('R'):case('S'):case('T'):case('U'):case('V'):case('W'):case('X'):case('Y'):case('Z'):
-				return true;
-				break;
-			default:
-				return false;
-				break;
+				switch (a)
+				{
+				case('a'):case('b'):case('c'):case('d'):case('e'):case('f'):case('g'):case('h'):case('i'):case('j'):case('k'):case('l'):case('m'):case('n'):case('o'):case('p'):case('q'):case('r'):case('s'):case('t'):case('u'):case('v'):case('w'):case('x'):case('y'):case('z'):
+					return true;
+					break;
+				default:
+					return false;
+					break;
+				}
 			}
-		}
 
-		static bool islower(char a)
-		{
-			switch (a)
+			static bool isdigit(char a)
 			{
-			case('a'):case('b'):case('c'):case('d'):case('e'):case('f'):case('g'):case('h'):case('i'):case('j'):case('k'):case('l'):case('m'):case('n'):case('o'):case('p'):case('q'):case('r'):case('s'):case('t'):case('u'):case('v'):case('w'):case('x'):case('y'):case('z'):
-				return true;
-				break;
-			default:
-				return false;
-				break;
+				switch (a)
+				{
+				case('0'):case('1'):case('2'):case('3'):case('4'):case('5'):case('6'):case('7'):case('8'):case('9'):
+					return true;
+					break;
+				default:
+					return false;
+					break;
+				}
 			}
-		}
 
-		static bool isdigit(char a)
-		{
-			switch (a)
+			static bool isotherinner(char a)
 			{
-			case('0'):case('1'):case('2'):case('3'):case('4'):case('5'):case('6'):case('7'):case('8'):case('9'):
-				return true;
-				break;
-			default:
-				return false;
-				break;
+				switch (a)
+				{
+				case('_'):case('-'):case('.'):
+					return true;
+					break;
+				default:
+					return false;
+					break;
+				}
 			}
-		}
 
-		static bool isotherinner(char a)
-		{
-			switch (a)
+			static bool canbeafterelem(char a)
 			{
-			case('_'):case('-'):case('.'):
-				return true;
-				break;
-			default:
-				return false;
-				break;
+				switch (a)
+				{
+				case(' '):case(','):case(')'):
+					return true;
+					break;
+				default:
+					return false;
+					break;
+				}
 			}
-		}
 
-		static bool canbeafterelem(char a)
-		{
-			switch (a)
-			{
-			case(' '):case(','):case(')'):
-				return true;
-				break;
-			default:
-				return false;
-				break;
-			}
-		}
+		private:
 
-	private:
+			std::string held;
 
-		std::string held;
+		};
 
-	};
-
+	}
 }

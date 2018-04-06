@@ -1,187 +1,243 @@
 #pragma once
 #include"function_evaluations.h"
 
-namespace expressions
+
+namespace expr
 {
-
-	class function_set
+	namespace impl
 	{
-	public:
-
 		template<typename ret, typename...args>
-		function_set& add_auto(std::function<ret(args...)>&& target, std::string name)
+		mu::virt<any_callable> make_smart_callable(std::function<ret(args...)>&& target)
 		{
-			map.emplace(name, std::move(mu::virt<any_callable>::make<callable_of<ret, args...>>(std::move(target))));
-			return *this;
+			return mu::virt<any_callable>::make<callable_of<ret, args...>>(std::move(target));
 		}
 
 		template<typename ret, typename...args>
-		function_set& add_auto(ret(*target)(args...), std::string name)
+		mu::virt<any_callable> make_smart_callable(ret(*target)(args...))
 		{
-			return add_auto(std::function<ret(args...)>{target}, std::move(name));
+			return mu::virt<any_callable>::make<callable_of<ret, args...>>((std::function<ret(args...)>{target}));
 		}
 
-		function_set& add_manual(std::function<value_holder(std::vector<stack_elem>&)>&& target, std::string name)
+		mu::virt<any_callable> make_manual_callable(std::function<value_holder(std::vector<stack_elem>&)>&& target)
 		{
-			map.emplace(name, std::move(mu::virt<any_callable>::make<manual_callable>(std::move(target))));
-			return *this;
+			return mu::virt<any_callable>::make<manual_callable>(std::move(target));
 		}
 
-		function_set& add_manual(value_holder(*target)(std::vector<stack_elem>&), std::string name)
+		mu::virt<any_callable> make_manual_callable(value_holder(*target)(std::vector<stack_elem>&))
 		{
-			return add_manual(std::function<value_holder(std::vector<stack_elem>&)>{target},name);
+			return mu::virt<any_callable>::make<manual_callable>(std::function<value_holder(std::vector<stack_elem>&)>{target});
 		}
 
 
-
-		std::optional<mu::virt<any_callable>*> get(std::string const& a)
+		class function_set
 		{
-			auto g = map.find(a);
-			if (g == map.end())
+		public:
+
+			function_set & add(mu::virt<any_callable>&& f, std::string&& n)
 			{
-				return std::nullopt;
+				map.emplace(std::make_pair(std::move(n), std::move(f)));
+				return *this;
 			}
-			else
+
+			function_set& add(mu::virt<any_callable>&& f, std::string const& n)
 			{
-				return std::optional<mu::virt<any_callable>*>{&g->second};
+				map.emplace(std::make_pair(n, std::move(f)));
+				return *this;
 			}
-		}
-
-	private:
-		std::unordered_map<std::string, mu::virt<any_callable>> map;
-	};
-
-
-	class variable_value_stack
-	{
-	public:
-
-		value_holder* push_front(value_holder&& a)
-		{
-			values.emplace_back(std::move(a));
-			return &*values.rbegin();
-		}
-
-		std::optional<value_holder*> get_front()
-		{
-			if (values.size() == 0)
+			
+			function_set& add(mu::virt<any_callable>&& f, char const* n)
 			{
-				return std::nullopt;
+				map.emplace(std::make_pair(std::string{n}, std::move(f)));
+				return *this;
 			}
-			else
+
+			function_set& use(function_set&& w, std::string const& n)
 			{
+				if (n == "")
+				{
+					return merge(std::move(w));
+				}
+				for (auto it = w.map.begin(); it != w.map.end(); ++it)
+				{
+					auto cur = std::move(*it);
+					map.emplace(std::make_pair(std::string{ n + "." + cur.first }, std::move(cur.second)));
+				}
+				return *this;
+			}
+
+			function_set& use(function_set&& w, char const* n)
+			{
+				if (n == "")
+				{
+					return merge(std::move(w));
+				}
+				for (auto it = w.map.begin(); it != w.map.end(); ++it)
+				{
+					auto cur = std::move(*it);
+					map.emplace(std::make_pair(std::string{ std::string{n} +"." + cur.first }, std::move(cur.second)));
+				}
+				return *this;
+			}
+
+			function_set& merge(function_set&& w)
+			{
+				for (auto it = w.map.begin(); it != w.map.end(); ++it)
+				{
+					map.emplace(std::move(*it));
+				}
+				return *this;
+			}
+
+
+			std::optional<mu::virt<any_callable>*> get(std::string const& a)
+			{
+				auto g = map.find(a);
+				if (g == map.end())
+				{
+					return std::nullopt;
+				}
+				else
+				{
+					return std::optional<mu::virt<any_callable>*>{&g->second};
+				}
+			}
+
+		private:
+			std::unordered_map<std::string, mu::virt<any_callable>> map;
+		};
+
+
+		class variable_value_stack
+		{
+		public:
+
+			value_holder * push_front(value_holder&& a)
+			{
+				values.emplace_back(std::move(a));
 				return &*values.rbegin();
 			}
-		}
 
-		std::optional<value_holder> take_front()
-		{
-			if (values.size() == 0)
+			std::optional<value_holder*> get_front()
 			{
-				return std::nullopt;
-			}
-			else
-			{
-				auto ret = std::move(*values.rbegin());
-				values.pop_back();
-				return std::optional<value_holder>{std::move(ret)};
-			}
-		}
-
-	private:
-		std::vector<value_holder> values;
-	};
-
-	class variable_set
-	{
-		friend class environment;
-	public:
-
-
-		value_holder* push_var(std::string&& a)
-		{
-			return map[a].push_front(value_holder::make_nullval());
-		}
-
-		std::optional<value_holder*> get_var(std::string const& a)
-		{
-			auto it = map.find(a);
-			if (it == map.end())
-			{
-				return std::nullopt;
-			}
-			else
-			{
-				return it->second.get_front();
-			}
-		}
-
-		std::optional<value_holder> take_var(std::string const& a)
-		{
-			auto it = map.find(a);
-			if (it == map.end())
-			{
-				return std::nullopt;
-			}
-			else
-			{
-				return std::optional<value_holder>{it->second.take_front()};
-			}
-		}
-
-	private:
-		std::unordered_map<std::string, variable_value_stack> map;
-	};
-
-
-
-	class environment
-	{
-	public:
-
-
-		void run(executable&& a);
-
-		void run(elem&& a);
-
-		void attach(std::istream& input, std::ostream& output)
-		{
-			while (true)
-			{
-				output << "\\\\\\\n" << std::flush;
-				elem n;
-				input >> n;
-				output << "///\n" << std::flush;
-				run(std::move(n));
-
-			}
-		}
-
-		std::function<value_holder(std::vector<stack_elem>&)> garbage_iterator()
-		{
-			variable_value_stack* g = &garbage;
-			return [g = g](std::vector<stack_elem>& a) -> value_holder
-			{
-				std::optional<value_holder> f = g->take_front();
-				while(f)
+				if (values.size() == 0)
 				{
-					if (f->is_nullval())
-					{
-						f = g->take_front();
-						continue;
-					}
-					else
-					{
-						return std::move(*f);
-					}
+					return std::nullopt;
 				}
-				return value_holder::make_nullval();
-			};
-		}
+				else
+				{
+					return &*values.rbegin();
+				}
+			}
 
-		function_set functions;
+			std::optional<value_holder> take_front()
+			{
+				if (values.size() == 0)
+				{
+					return std::nullopt;
+				}
+				else
+				{
+					auto ret = std::move(*values.rbegin());
+					values.pop_back();
+					return std::optional<value_holder>{std::move(ret)};
+				}
+			}
 
-		variable_set variables;
-		variable_value_stack garbage;
-	};
+		private:
+			std::vector<value_holder> values;
+		};
+
+		class variable_set
+		{
+			friend class environment;
+		public:
+
+
+			value_holder * push_var(std::string&& a)
+			{
+				return map[a].push_front(value_holder::make_nullval());
+			}
+
+			std::optional<value_holder*> get_var(std::string const& a)
+			{
+				auto it = map.find(a);
+				if (it == map.end())
+				{
+					return std::nullopt;
+				}
+				else
+				{
+					return it->second.get_front();
+				}
+			}
+
+			std::optional<value_holder> take_var(std::string const& a)
+			{
+				auto it = map.find(a);
+				if (it == map.end())
+				{
+					return std::nullopt;
+				}
+				else
+				{
+					return std::optional<value_holder>{it->second.take_front()};
+				}
+			}
+
+		private:
+			std::unordered_map<std::string, variable_value_stack> map;
+		};
+
+
+
+		class environment
+		{
+		public:
+
+
+			void run(executable&& a);
+
+			void run(elem&& a);
+
+			void attach(std::istream& input, std::ostream& output)
+			{
+				while (true)
+				{
+					output << "\\\\\\\n" << std::flush;
+					elem n;
+					input >> n;
+					output << "///\n" << std::flush;
+					run(std::move(n));
+
+				}
+			}
+
+			std::function<value_holder(std::vector<stack_elem>&)> garbage_iterator()
+			{
+				variable_value_stack* g = &garbage;
+				return [g = g](std::vector<stack_elem>& a) -> value_holder
+				{
+					std::optional<value_holder> f = g->take_front();
+					while (f)
+					{
+						if (f->is_nullval())
+						{
+							f = g->take_front();
+							continue;
+						}
+						else
+						{
+							return std::move(*f);
+						}
+					}
+					return value_holder::make_nullval();
+				};
+			}
+
+			function_set functions;
+
+			variable_set variables;
+			variable_value_stack garbage;
+		};
+	}
 }
