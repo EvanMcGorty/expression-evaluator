@@ -863,7 +863,7 @@ namespace expressions
 			return std::optional<function>{std::move(ret)};
 		}
 
-
+		bool on_first_iteration = true;
 
 		while (start != stop && *start != ')')
 		{
@@ -881,6 +881,10 @@ namespace expressions
 
 			if (*start == ')')
 			{
+				if (!on_first_iteration)
+				{
+					return std::nullopt;
+				}
 				++start;
 				return std::optional<function>{std::move(ret)};
 			}
@@ -906,7 +910,7 @@ namespace expressions
 				return std::nullopt;
 			}
 
-
+			on_first_iteration = false;
 		}
 
 		if (start == stop)
