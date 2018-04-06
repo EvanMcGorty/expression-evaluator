@@ -145,7 +145,7 @@ namespace expressions
 				//it must be trivially destructible though, otherwise the copy will be sent to the garbage and an extra destructor could end up running.
 				if constexpr(std::is_trivially_copy_constructible<t>::value && std::is_trivially_move_constructible<t>::value && std::is_trivially_destructible<t>::value) 
 				{
-					static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
+					static_cast<type_ask_of<t>*>(tar)->gotten.emplace(val);
 					return false;
 				}
 				else
