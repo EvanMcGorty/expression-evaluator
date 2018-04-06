@@ -71,10 +71,17 @@ namespace expressions
 					cur = stack_elem::make_nullval();
 					std::get<ind>(a) = std::move(ask.gotten);
 				}
-				else if (ask.pointed_to_value)
+				else if constexpr (std::is_pointer_v<t>)
 				{
+					if (ask.pointed_to_value)
+					{
 					cur = stack_elem::make<object_of<std::remove_const_t<typename std::remove_pointer_t<t>>>>(std::move(ask.pointed_to_value->val));
 					std::get<ind>(a) = &cur.downcast_get<object_of<std::remove_const_t<typename std::remove_pointer_t<t>>>>()->val;
+					}
+					else
+					{
+						std::get<ind>(a) = std::move(ask.gotten);
+					}
 				}
 				else
 				{
