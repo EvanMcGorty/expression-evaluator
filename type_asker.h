@@ -20,28 +20,31 @@ namespace expressions
 		}
 	};
 
+	template <bool b, typename t>
+	struct possible;
+
+	template<typename t>
+	struct possible<true,t>
+	{
+		possible(std::remove_const_t<typename std::remove_pointer_t<t>> &&a)
+		{
+			val = std::move(a);
+		}
+
+		std::remove_const_t<typename std::remove_pointer_t<t>> val;
+	};
+
+	template<typename t>
+	struct possible<false,t>
+	{
+	};
+
 	template<typename t>
 	class type_ask_of : public any_type_ask
 	{
 	public:
 
-		template<bool b>
-		struct possible;
-
-		template<> struct possible<true>
-		{
-			possible(std::remove_const_t<typename std::remove_pointer_t<t>>&& a)
-			{
-				val = std::move(a);
-			}
-
-			std::remove_const_t<typename std::remove_pointer_t<t>> val;
-		};
-
-		template<> struct possible<false>
-		{
-
-		};
+		
 
 		void parse(std::string const& a) override
 		{
@@ -51,7 +54,7 @@ namespace expressions
 				std::optional<holdable> temp = convert<holdable>(a);
 				if (temp)
 				{
-					pointed_to_value = possible<true>{ std::move(*temp) };
+					pointed_to_value = possible<true,t>{ std::move(*temp) };
 				}
 			}
 			else
@@ -66,7 +69,7 @@ namespace expressions
 		}
 
 		std::optional<t> gotten;
-		std::optional<possible<std::is_pointer_v<t>>> pointed_to_value;
+		std::optional<possible<std::is_pointer_v<t>,t>> pointed_to_value;
 	};
 
 }

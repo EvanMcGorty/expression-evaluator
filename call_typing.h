@@ -17,6 +17,8 @@ namespace expressions
 		typedef t held;
 	};
 
+
+
 	template<typename t>
 	constexpr auto as_storable()
 	{
@@ -34,7 +36,7 @@ namespace expressions
 		}
 		else if constexpr (std::template is_lvalue_reference<t>::value)
 		{
-			if constexpr (std::is_const<typename std::remove_reference_t<t>>)
+			if constexpr (std::is_const<typename std::remove_reference_t<t>>::value)
 			{
 				return type_wrap<typename std::remove_reference_t<t> const *>();
 			}
@@ -140,10 +142,6 @@ namespace expressions
 		{
 			return *x;
 		}
-		else
-		{
-			static_assert(false, "template meta-programming error");
-		}
 	}
 
 	template<typename t>
@@ -156,10 +154,6 @@ namespace expressions
 		else if constexpr(std::is_lvalue_reference<t>::value)
 		{
 			return &x;
-		}
-		else
-		{
-			static_assert(false, "template meta-programming error");
 		}
 	}
 
