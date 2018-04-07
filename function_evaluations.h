@@ -151,7 +151,7 @@ namespace expr
 
 					if (might_use)
 					{
-						if constexpr(std::is_void<ret_t>::value)
+						if constexpr(!can_return<ret_t>())
 						{
 							do_call(std::move(*might_use));
 							return value_holder::make_nullval();
@@ -168,7 +168,7 @@ namespace expr
 				}
 				else
 				{
-					if constexpr (std::is_void<ret_t>::value)
+					if constexpr (!can_return<ret_t>())
 					{
 						target();
 						return value_holder::make_nullval();

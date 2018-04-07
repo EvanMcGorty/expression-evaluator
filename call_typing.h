@@ -96,7 +96,14 @@ namespace expr
 			{
 				if constexpr (std::is_const<t>::value)
 				{
-					return type_wrap<std::remove_const_t<t>>();
+					if constexpr(std::is_copy_constructible<std::remove_const_t<t>>::value)
+					{
+						return type_wrap<std::remove_const_t<t>>();
+					}
+					else
+					{
+						return type_wrap<void>();
+					}
 				}
 				else
 				{
@@ -167,7 +174,14 @@ namespace expr
 			{
 				if constexpr(std::is_const<t>::value)
 				{
-					return std::remove_const_t<t>{ x };
+					if constexpr(std::is_copy_constructible<std::remove_const_t<t>>::value)
+					{
+						return std::remove_const_t<t>{ x };
+					}
+					else
+					{
+						return;
+					}
 				}
 				else
 				{
@@ -191,11 +205,17 @@ namespace expr
 			}
 		}
 
+		template<typename t>
+		constexpr bool can_return()
+		{
+			return !(std::is_void<t>::value || (!std::is_reference<t>::value && std::is_const<t>::value && !std::is_copy_constructible<std::remove_const_t<t>>::value));
+		}
+
 
 		template<typename ret_t, typename...argts>
 		std::function<return_t<ret_t>(store_t<argts>...)> make_storable_call(std::function<ret_t(argts...)>&& f)
 		{
-			if constexpr(!std::is_void<ret_t>::value)
+			if constexpr(can_return<ret_t>())
 			{
 				return std::function<return_t<ret_t>(store_t<argts>&&...)> {
 					[f = std::move(f)](store_t<argts>...argvs)->return_t<ret_t>
