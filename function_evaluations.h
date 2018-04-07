@@ -175,7 +175,7 @@ namespace expr
 					}
 					else
 					{
-						return value_holder::make<object_of<ret_t>>(target());
+						return value_holder::make<object_of<return_t<ret_t>>>(do_call(use_tuple_type{}));
 					}
 				}
 			}

@@ -243,7 +243,7 @@ namespace expr
 					{
 						return std::nullopt;
 					}
-					ret = t{ numerator } / denomenator;
+					ret = static_cast<t>(static_cast<t>(numerator) / denomenator);
 				}
 
 				if (is_negative)

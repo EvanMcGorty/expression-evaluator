@@ -41,7 +41,14 @@ namespace expr
 		template<typename ret, typename...args>
 		constexpr ret call(std::function<ret(args...)>&& f, std::tuple<typename std::remove_reference_t<args>...>&& t)
 		{
-			return perfect_bind_all<ret, std::function<ret(args...)>, std::tuple<typename std::remove_reference_t<args>...>, 0, args...>(std::move(f), std::move(t))();
+			if constexpr(sizeof...(args) == 0)
+			{
+				return f();
+			}
+			else
+			{
+				return perfect_bind_all<ret, std::function<ret(args...)>, std::tuple<typename std::remove_reference_t<args>...>, 0, args...>(std::move(f), std::move(t))();
+			}
 		}
 
 		template<typename ret, typename...args>

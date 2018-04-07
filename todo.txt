@@ -18,3 +18,5 @@ see if its possible to generate a virtual class hierarchy of wrapper classes tha
 all have a static object letting its base classes know of its existance
 
 add static asserts to avoid cryptic error messages from bad function signatures
+
+try returning const t as a const t* (because in some sense it is a const t&&)
