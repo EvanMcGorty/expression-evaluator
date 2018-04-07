@@ -226,7 +226,7 @@ namespace expr
 			}
 			else
 			{
-				return std::function<void(store_t<argts>...)> {
+				return std::function<void(store_t<argts>&&...)> {
 					[f = std::move(f)](store_t<argts>&&...argvs) -> void
 					{
 						f(storable_into_passable<argts>(std::move(argvs))...);

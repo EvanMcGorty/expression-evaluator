@@ -18,6 +18,38 @@ namespace expr
 			return mu::virt<any_callable>::make<callable_of<ret, args...>>((std::function<ret(args...)>{target}));
 		}
 
+		template<typename member_holders_type, typename ret, typename...args>
+		mu::virt<any_callable> make_smart_callable(ret(member_holders_type::*target)(args...))
+		{
+			typedef member_holders_type& real_type;
+			auto to_use = std::function<ret(real_type, args...)>{ target };
+			return mu::virt<any_callable>::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+		}
+
+		template<typename member_holders_type, typename ret, typename...args>
+		mu::virt<any_callable> make_smart_callable(ret(member_holders_type::*target)(args...) const)
+		{
+			typedef member_holders_type const& real_type;
+			auto to_use = std::function<ret(real_type, args...)>{ target };
+			return mu::virt<any_callable>::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+		}
+
+		template<typename member_holders_type, typename ret, typename...args>
+		mu::virt<any_callable> make_smart_callable(ret(member_holders_type::*target)(args...) &&)
+		{
+			typedef member_holders_type&& real_type;
+			auto to_use = std::function<ret(real_type, args...)>{ target };
+			return mu::virt<any_callable>::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+		}
+
+		template<typename member_holders_type, typename ret, typename...args>
+		mu::virt<any_callable> make_smart_callable(ret(member_holders_type::*target)(args...) const&&)
+		{
+			typedef member_holders_type const&& real_type;
+			auto to_use = std::function<ret(real_type, args...)>{ target };
+			return mu::virt<any_callable>::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+		}
+
 		mu::virt<any_callable> make_manual_callable(std::function<value_holder(std::vector<stack_elem>&)>&& target)
 		{
 			return mu::virt<any_callable>::make<manual_callable>(std::move(target));
