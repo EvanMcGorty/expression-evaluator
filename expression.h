@@ -17,5 +17,6 @@ namespace expr
 	using impl::make_manual_callable;
 	using impl::make_smart_callable;
 	using impl::core;
+	using impl::get_all_functions;
 
 }

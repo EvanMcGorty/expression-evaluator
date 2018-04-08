@@ -5,17 +5,14 @@ namespace expr
 {
 	namespace impl
 	{
+		template<typename t>
+		function_set get_all_functions()
+		{
+			static_assert("no overrided instance exists for this class");
+		}
+
 		struct core
 		{
-			static function_set all()
-			{
-				function_set ret;
-				ret	.add(make_manual_callable(swap), "swap")
-					.add(make_manual_callable(first), "first")
-					.add(make_manual_callable(last), "last")
-					.add(make_manual_callable(drop), "drop");
-				return ret;
-			}
 
 			static value_holder swap(std::vector<stack_elem>& a)
 			{
@@ -73,6 +70,17 @@ namespace expr
 				return value_holder::make_nullval();
 			}
 		};
+
+		template<>
+		function_set get_all_functions<core>()
+		{
+			function_set ret;
+			ret.add(make_manual_callable(core::swap), "swap")
+				.add(make_manual_callable(core::first), "first")
+				.add(make_manual_callable(core::last), "last")
+				.add(make_manual_callable(core::drop), "drop");
+			return ret;
+		}
 
 	}
 

@@ -67,24 +67,28 @@ namespace expr
 
 			function_set& add(mu::virt<any_callable>&& f, std::string&& n)
 			{
+				assert(name_checker::is_valid(n));
 				map.emplace(std::make_pair(std::move(n), std::move(f)));
 				return *this;
 			}
 
 			function_set& add(mu::virt<any_callable>&& f, std::string const& n)
 			{
+				assert(name_checker::is_valid(n));
 				map.emplace(std::make_pair(n, std::move(f)));
 				return *this;
 			}
 			
 			function_set& add(mu::virt<any_callable>&& f, char const* n)
 			{
+				assert(name_checker::is_valid(n));
 				map.emplace(std::make_pair(std::string{n}, std::move(f)));
 				return *this;
 			}
 
 			function_set& use(function_set&& w, std::string const& n)
 			{
+				assert(name_checker::is_valid(n));
 				if (n == "")
 				{
 					return merge(std::move(w));
@@ -99,6 +103,7 @@ namespace expr
 
 			function_set& use(function_set&& w, char const* n)
 			{
+				assert(name_checker::is_valid(n));
 				if (std::string(n) == "")
 				{
 					return merge(std::move(w));
