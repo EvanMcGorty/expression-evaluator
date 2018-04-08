@@ -27,11 +27,5 @@ a few other notes:
 - an object of type "t" can be passed for a t* or t&. 
 - (currently) passed objects will not be implicitly upcast or copy/move converted to the type in the function signature.
 
-# using the evaluator library overview
-todo: start this section
-
-## specifics of writing c++
-todo: start this section
-
-## specifics of using the interpreter
-todo: start this section
+## using the evaluator library
+the project wiki page on github will contain all documentation
