@@ -88,11 +88,11 @@ namespace expr
 
 			function_set& use(function_set&& w, std::string const& n)
 			{
-				assert(name_checker::is_valid(n));
 				if (n == "")
 				{
 					return merge(std::move(w));
 				}
+				assert(name_checker::is_valid(n));
 				for (auto it = w.map.begin(); it != w.map.end(); ++it)
 				{
 					auto cur = std::move(*it);
@@ -103,11 +103,11 @@ namespace expr
 
 			function_set& use(function_set&& w, char const* n)
 			{
-				assert(name_checker::is_valid(n));
 				if (std::string(n) == "")
 				{
 					return merge(std::move(w));
 				}
+				assert(name_checker::is_valid(n));
 				for (auto it = w.map.begin(); it != w.map.end(); ++it)
 				{
 					auto cur = std::move(*it);
