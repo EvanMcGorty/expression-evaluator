@@ -1,4 +1,5 @@
 #pragma once
+#include"type_demangle.h"
 #include"statement_evaluations.h"
 
 namespace expr
@@ -8,7 +9,13 @@ namespace expr
 		template<typename t>
 		function_set get_all_functions()
 		{
-			static_assert("no overrided instance exists for this class");
+			static_assert("no overloaded instance of get_all_functions exists for this class");
+		}
+
+		template<typename t>
+		std::string get_name()
+		{
+			static_assert("no overloaded instance of get_name exists for this class");
 		}
 
 		struct core
@@ -80,6 +87,75 @@ namespace expr
 				.add(make_manual_callable(core::last), "last")
 				.add(make_manual_callable(core::drop), "drop");
 			return ret;
+		}
+		template<>
+		std::string get_name<core>()
+		{
+			return "core";
+		}
+
+		template<typename t>
+		struct basics
+		{
+			t default_construct()
+			{
+				if constexpr(std::is_default_constructible<t>::value)
+				{
+					return t{};
+				}
+				else
+				{
+					assert(false);
+				}
+			}
+
+			t copy_construct(t const& a)
+			{
+				return std::move(a);
+			}
+
+			t move_construct(t&& a)
+			{
+				return std::move(a);
+			}
+
+			void move_assign(t& a, t&& b)
+			{
+				a = std::move(b);
+			}
+
+			void copy_assign(t& a, t const& b)
+			{
+				a = b;
+			}
+
+			void destruct(t&& a)
+			{
+				//destructor would run automatically when called by the evaluator
+			}
+
+		};
+
+		template<typename t>
+		template<>
+		function_set get_all_functions<basics<t>>()
+		{
+			function_set ret;
+			ret.add(make_smart_callable(basics<t>::construct), "make")
+			.add(make_smart_callable(basics<t>::move_construct), "move_make")
+			.add(make_smart_callable(basics<t>::copy_construct), "copy_make")
+			.add(make_smart_callable(basics<t>::move_assign), "move")
+			.add(make_smart_callable(basics<t>::copy_assign), "copy")
+			.add(make_smart_callable(basics<t>::destruct), "drop")
+			return ret;
+		}
+
+
+		template<typename t>
+		template<>
+		std::string get_name<basics<t>>()
+		{
+			return demangle(typeid(t).name());
 		}
 
 	}
