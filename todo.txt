@@ -1,34 +1,27 @@
-make evaluation completely unrelated to expressions so expression-like tasks can still be done 
-without overhead (so you can still do algebra with trees of nodes and you can evaluate lambda 
-calculus expressions).
+make the library for elem more complicated and provide functions for making algebraic operations convenient
 
-create a system for importing sets of functions into an environment
-have classes that contain sets of functions through a static function (so then they could be templated)
-they would all match a concept and some could be templated to instanciate a vector<int> OR a vector<char>
+make it so an elem can contain enums that corrospond to names.
 
 make some sort of overload-resolution system
 
 organize environment class
-
-wrap everything up nicely
+make data members of environment private, give it function binding member functions
+get rid of (at least most) macros
 
 allow any derived class to be passed as an argument for a base class
 possibly by generating a lookup function that takes a typeid and calls a generic lambda with its type
 
-
-test corner-cases such as const rvalues, const return types, etc.
-
-see if its possible to generate a virtual class hierarchy of wrapper classes that
-all have a static object letting its base classes know of its existance
+allow classes to be passed into types that they are implicitly convertable to
 
 add static asserts to avoid cryptic error messages from bad function signatures
 
 try returning const t as a const t* (because in some sense it is a const t&&)
-have a global struct containing a reference and do reinterpret casts and stuff to reuse it to prolong object lifetimes
-or make a derived class from object_of that looks like:
+possibly by making a derived class from object_of that looks like:
 {
     x(t&& b) : a(b) {}
     t& a;    
 };
 
-make data members of environment private, give it function binding member functions
+use fancy exceptions instead of runtime asserts to give more clear error messages to the user of the library
+
+test, test, test!
