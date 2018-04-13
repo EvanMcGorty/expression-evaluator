@@ -16,7 +16,9 @@ namespace expr
 	using impl::function_set;
 	using impl::make_manual_callable;
 	using impl::make_smart_callable;
+
+	using impl::fs_info;
 	using impl::core;
-	using impl::get_all_functions;
+	using impl::basics;
 
 }

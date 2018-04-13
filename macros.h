@@ -11,10 +11,10 @@
 #define bmcn(f,n) add(expr::make_manual_callable(f),n)
 
 //bind set
-#define bs(s) use(expr::get_all_functions<s>(),expr::get_name<s>())
+#define bs(s) use(expr::fs_info<s>::all(),expr::fs_info<s>::get_name())
 
 //bind set with name
-#define bsn(s,n) use(expr::get_all_functions<s>(),n)
+#define bsn(s,n) use(expr::fs_info<s>::all(),n)
 
 //bind variable
 #define bv(v) add(expr::make_smart_callable(std::function<decltype(v)*()>{[val=&v](){return val;}}),#v)

@@ -6,24 +6,28 @@ namespace expr
 {
 	namespace impl
 	{
+		
 		template<typename t>
-		function_set get_all_functions()
+		struct fs_info
 		{
-			static_assert("no overloaded instance of get_all_functions exists for this class");
-		}
+		
+			static function_set all()
+			{
+				static_assert("no overloaded instance of fs_info exists for this class");
+			}
 
-		template<typename t>
-		std::string get_name()
-		{
-			static_assert("no overloaded instance of get_name exists for this class");
-		}
+			static std::string get_name()
+			{
+				static_assert("no overloaded instance of fs_info exists for this class");
+			}
+		};
 
 		struct core
 		{
 
 			static value_holder swap(std::vector<stack_elem>& a)
 			{
-				if (a.size() == 2 && (a[0].is_nullval() || a[0]->has_value()) && (a[0].is_nullval() || a[1]->has_value()))
+				if (a.size() == 2 && (a[0].is_nullval() || a[0]->has_value()) && (a[1].is_nullval() || a[1]->has_value()))
 				{
 					auto o0 = get_value(a[0]);
 					auto o1 = get_value(a[1]);
@@ -79,25 +83,28 @@ namespace expr
 		};
 
 		template<>
-		function_set get_all_functions<core>()
+		struct fs_info<core>
 		{
-			function_set ret;
-			ret.add(make_manual_callable(core::swap), "swap")
-				.add(make_manual_callable(core::first), "first")
-				.add(make_manual_callable(core::last), "last")
-				.add(make_manual_callable(core::drop), "drop");
-			return ret;
-		}
-		template<>
-		std::string get_name<core>()
-		{
-			return "core";
-		}
+			static function_set all()
+			{
+				function_set ret;
+				ret.add(make_manual_callable(core::swap), "swap")
+					.add(make_manual_callable(core::first), "first")
+					.add(make_manual_callable(core::last), "last")
+					.add(make_manual_callable(core::drop), "drop");
+				return ret;
+			}
+
+			static std::string get_name()
+			{
+				return "core";
+			}
+		};
 
 		template<typename t>
 		struct basics
 		{
-			t default_construct()
+			static t default_construct()
 			{
 				if constexpr(std::is_default_constructible<t>::value)
 				{
@@ -109,27 +116,55 @@ namespace expr
 				}
 			}
 
-			t copy_construct(t const& a)
+			static t copy_construct(t const& a)
 			{
-				return std::move(a);
+				if constexpr(std::is_copy_constructible<t>::value)
+				{
+					return a;
+				}
+				else
+				{
+					assert(false);
+				}
 			}
 
-			t move_construct(t&& a)
+			static t move_construct(t&& a)
 			{
-				return std::move(a);
+				if constexpr(std::is_move_constructible<t>::value)
+				{
+					return std::move(a);
+				}
+				else
+				{
+					assert(false);
+				}
 			}
 
-			void move_assign(t& a, t&& b)
+			static void move_assign(t& a, t&& b)
 			{
-				a = std::move(b);
+				if constexpr(std::is_move_assignable<t>::value)
+				{
+					a = std::move(b);
+				}
+				else
+				{
+					assert(false);
+				}
 			}
 
-			void copy_assign(t& a, t const& b)
+			static void copy_assign(t& a, t const& b)
 			{
-				a = b;
+				if constexpr(std::is_copy_assignable<t>::value)
+				{
+					a = b;
+				}
+				else
+				{
+					assert(false);
+				}
 			}
 
-			void destruct(t&& a)
+			static void destruct(t&& a)
 			{
 				//destructor would run automatically when called by the evaluator
 			}
@@ -137,26 +172,40 @@ namespace expr
 		};
 
 		template<typename t>
-		template<>
-		function_set get_all_functions<basics<t>>()
+		struct fs_info<basics<t>>
 		{
-			function_set ret;
-			ret.add(make_smart_callable(basics<t>::construct), "make")
-			.add(make_smart_callable(basics<t>::move_construct), "move_make")
-			.add(make_smart_callable(basics<t>::copy_construct), "copy_make")
-			.add(make_smart_callable(basics<t>::move_assign), "move")
-			.add(make_smart_callable(basics<t>::copy_assign), "copy")
-			.add(make_smart_callable(basics<t>::destruct), "drop")
-			return ret;
-		}
+			static function_set all()
+			{
+				function_set ret;
+				if constexpr(std::is_default_constructible<t>::value)
+				{
+					ret.add(make_smart_callable(&basics<t>::default_construct), "make");
+				}
+				if constexpr(std::is_move_constructible<t>::value)
+				{
+					ret.add(make_smart_callable(&basics<t>::move_construct), "move_make");
+				}
+				if constexpr(std::is_copy_constructible<t>::value)
+				{
+					ret.add(make_smart_callable(&basics<t>::copy_construct), "copy_make");
+				}
+				if constexpr(std::is_move_assignable<t>::value)
+				{
+					ret.add(make_smart_callable(&basics<t>::move_assign), "move");
+				}
+				if constexpr(std::is_copy_assignable<t>::value)
+				{
+					ret.add(make_smart_callable(&basics<t>::copy_assign), "copy");
+				}
+				ret.add(make_smart_callable(&basics<t>::destruct), "drop");
+				return ret;
+			}
 
-
-		template<typename t>
-		template<>
-		std::string get_name<basics<t>>()
-		{
-			return demangle(typeid(t).name());
-		}
+			static std::string get_name()
+			{
+				return demangle(typeid(t).name());
+			}
+		};
 
 	}
 
