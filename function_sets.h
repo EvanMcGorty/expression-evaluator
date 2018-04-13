@@ -8,10 +8,12 @@ namespace expr
 	{
 		
 		template<typename t>
-		struct fs_info
+		class fs_info
 		{
-		
-			static function_set all()
+			friend function_set fs_functs();
+			friend function_set fs_name();
+
+			static function_set get_functions()
 			{
 				static_assert("no overloaded instance of fs_info exists for this class");
 			}
@@ -21,6 +23,17 @@ namespace expr
 				static_assert("no overloaded instance of fs_info exists for this class");
 			}
 		};
+
+		template<typename t>
+		function_set fs_functs()
+		{
+			return fs_info<t>::get_functions();
+		}
+		template<typename t>
+		function_set fs_name()
+		{
+			return fs_info<t>::get_name();
+		}
 
 		struct core
 		{
@@ -85,13 +98,13 @@ namespace expr
 		template<>
 		struct fs_info<core>
 		{
-			static function_set all()
+			static function_set get_functions()
 			{
 				function_set ret;
-				ret.add(make_manual_callable(core::swap), "swap")
-					.add(make_manual_callable(core::first), "first")
-					.add(make_manual_callable(core::last), "last")
-					.add(make_manual_callable(core::drop), "drop");
+				ret.add(manual(core::swap), "swap")
+					.add(manual(core::first), "first")
+					.add(manual(core::last), "last")
+					.add(manual(core::drop), "drop");
 				return ret;
 			}
 
@@ -174,30 +187,30 @@ namespace expr
 		template<typename t>
 		struct fs_info<basics<t>>
 		{
-			static function_set all()
+			static function_set get_functions()
 			{
 				function_set ret;
 				if constexpr(std::is_default_constructible<t>::value)
 				{
-					ret.add(make_smart_callable(&basics<t>::default_construct), "make");
+					ret.add(callable(&basics<t>::default_construct), "make");
 				}
 				if constexpr(std::is_move_constructible<t>::value)
 				{
-					ret.add(make_smart_callable(&basics<t>::move_construct), "move_make");
+					ret.add(callable(&basics<t>::move_construct), "move_make");
 				}
 				if constexpr(std::is_copy_constructible<t>::value)
 				{
-					ret.add(make_smart_callable(&basics<t>::copy_construct), "copy_make");
+					ret.add(callable(&basics<t>::copy_construct), "copy_make");
 				}
 				if constexpr(std::is_move_assignable<t>::value)
 				{
-					ret.add(make_smart_callable(&basics<t>::move_assign), "move");
+					ret.add(callable(&basics<t>::move_assign), "move");
 				}
 				if constexpr(std::is_copy_assignable<t>::value)
 				{
-					ret.add(make_smart_callable(&basics<t>::copy_assign), "copy");
+					ret.add(callable(&basics<t>::copy_assign), "copy");
 				}
-				ret.add(make_smart_callable(&basics<t>::destruct), "drop");
+				ret.add(callable(&basics<t>::destruct), "drop");
 				return ret;
 			}
 

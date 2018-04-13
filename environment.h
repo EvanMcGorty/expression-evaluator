@@ -7,19 +7,19 @@ namespace expr
 	namespace impl
 	{
 		template<typename ret, typename...args>
-		mu::virt<any_callable> make_smart_callable(std::function<ret(args...)>&& target)
+		mu::virt<any_callable> callable(std::function<ret(args...)>&& target)
 		{
 			return mu::virt<any_callable>::make<callable_of<ret, args...>>(std::move(target));
 		}
 
 		template<typename ret, typename...args>
-		mu::virt<any_callable> make_smart_callable(ret(*target)(args...))
+		mu::virt<any_callable> callable(ret(*target)(args...))
 		{
 			return mu::virt<any_callable>::make<callable_of<ret, args...>>((std::function<ret(args...)>{target}));
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		mu::virt<any_callable> make_smart_callable(ret(member_holders_type::*target)(args...))
+		mu::virt<any_callable> callable(ret(member_holders_type::*target)(args...))
 		{
 			typedef member_holders_type& real_type;
 			auto to_use = std::function<ret(real_type, args...)>{ target };
@@ -27,7 +27,7 @@ namespace expr
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		mu::virt<any_callable> make_smart_callable(ret(member_holders_type::*target)(args...) const)
+		mu::virt<any_callable> callable(ret(member_holders_type::*target)(args...) const)
 		{
 			typedef member_holders_type const& real_type;
 			auto to_use = std::function<ret(real_type, args...)>{ target };
@@ -35,7 +35,7 @@ namespace expr
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		mu::virt<any_callable> make_smart_callable(ret(member_holders_type::*target)(args...) &&)
+		mu::virt<any_callable> callable(ret(member_holders_type::*target)(args...) &&)
 		{
 			typedef member_holders_type&& real_type;
 			auto to_use = std::function<ret(real_type, args...)>{ target };
@@ -43,19 +43,19 @@ namespace expr
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		mu::virt<any_callable> make_smart_callable(ret(member_holders_type::*target)(args...) const&&)
+		mu::virt<any_callable> callable(ret(member_holders_type::*target)(args...) const&&)
 		{
 			typedef member_holders_type const&& real_type;
 			auto to_use = std::function<ret(real_type, args...)>{ target };
 			return mu::virt<any_callable>::make<callable_of<ret, real_type, args...>>(std::move(to_use));
 		}
 
-		mu::virt<any_callable> make_manual_callable(std::function<value_holder(std::vector<stack_elem>&)>&& target)
+		mu::virt<any_callable> manual(std::function<value_holder(std::vector<stack_elem>&)>&& target)
 		{
 			return mu::virt<any_callable>::make<manual_callable>(std::move(target));
 		}
 
-		mu::virt<any_callable> make_manual_callable(value_holder(*target)(std::vector<stack_elem>&))
+		mu::virt<any_callable> manual(value_holder(*target)(std::vector<stack_elem>&))
 		{
 			return mu::virt<any_callable>::make<manual_callable>(std::function<value_holder(std::vector<stack_elem>&)>{target});
 		}
@@ -229,7 +229,10 @@ namespace expr
 
 		class environment
 		{
+			friend void perform(statement&& todo, stack& loc, environment& env);
+			friend void perform_all(executable&& tar, stack& loc, environment& env);
 		public:
+
 
 
 			void run(executable&& a);
@@ -249,10 +252,85 @@ namespace expr
 				}
 			}
 
+			template<typename string_convertible>
+			environment& mbind(string_convertible&& name, std::function<value_holder(std::vector<stack_elem>&)>&& target)
+			{
+				functions.add(manual(target), std::forward<string_convertible>(name));
+				return *this;
+			}
+
+			template<typename string_convertible>
+			environment& mbind(string_convertible&& name, value_holder(*target)(std::vector<stack_elem>&))
+			{
+				functions.add(manual(target), std::forward<string_convertible>(name));
+				return *this;
+			}
+
+			template<typename string_convertible>
+			environment& fbind(string_convertible&& name, mu::virt<any_callable>&& target)
+			{
+				functions.add(std::move(target),std::forward<string_convertible>(name));
+				return *this;
+			}
+			
+			template<typename string_convertible, typename ret, typename...args>
+			environment& fbind(string_convertible&& name, std::function<ret(args...)>&& target)
+			{
+				functions.add(callable(std::move(target)),std::forward<string_convertible>(name));
+				return *this;
+			}
+
+			template<typename string_convertible, typename ret, typename...args>
+			environment& fbind(string_convertible&& name, ret(*target)(args...))
+			{
+				functions.add(callable(target), std::forward<string_convertible>(name));
+				return *this;
+			}
+
+			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
+			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...))
+			{
+				functions.add(callable(target), std::forward<string_convertible>(name));
+				return *this;
+			}
+			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
+			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...) const)
+			{
+				functions.add(callable(target), std::forward<string_convertible>(name));
+				return *this;
+			}
+			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
+			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...) &&)
+			{
+				functions.add(callable(target), std::forward<string_convertible>(name));
+				return *this;
+			}
+			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
+			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...) const&&)
+			{
+				functions.add(callable(target), std::forward<string_convertible>(name));
+				return *this;
+			}
+
+			template<typename t, typename string_convertible>
+			environment& vbind(string_convertible&& name, t& a)
+			{
+				functions.add(callable(std::function<t()>{[ref = a]() {return ref; }}), std::forward<string_convertible>(name));
+				return *this;
+			}
+
+			template<typename t, typename string_convertible>
+			environment& sbind(string_convertible&& name = fs_name<t>(), function_set&& set = fs_functs<t>())
+			{
+				functions.use(std::move(set), std::forward<string_convertible>(name));
+				return *this;
+			}
+
+
 			mu::virt<any_callable> garbage_getter()
 			{
 				variable_value_stack* g = &garbage;
-				return make_manual_callable(std::function<value_holder(std::vector<stack_elem>&)>{
+				return manual(std::function<value_holder(std::vector<stack_elem>&)>{
 					[g = g](std::vector<stack_elem>& a) -> value_holder
 					{
 						std::optional<value_holder> f = std::move(g->take_front());
@@ -272,7 +350,7 @@ namespace expr
 					}
 				});
 			}
-
+		private:
 			function_set functions;
 
 			variable_set variables;
