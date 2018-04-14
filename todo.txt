@@ -4,14 +4,12 @@ make it so an elem can contain enums that corrospond to names.
 
 make some sort of overload-resolution system
 
-organize environment class
-make data members of environment private, give it function binding member functions
-get rid of (at least most) macros
-
 allow any derived class to be passed as an argument for a base class
 possibly by generating a lookup function that takes a typeid and calls a generic lambda with its type
 
 allow classes to be passed into types that they are implicitly convertable to
+
+make object_of::get able to dereference itself for an rvalue if it is a pointer
 
 add static asserts to avoid cryptic error messages from bad function signatures
 

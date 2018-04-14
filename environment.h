@@ -6,58 +6,60 @@ namespace expr
 {
 	namespace impl
 	{
+		using held_callable = mu::virt<any_callable>;
+
 		template<typename ret, typename...args>
-		mu::virt<any_callable> callable(std::function<ret(args...)>&& target)
+		held_callable callable(std::function<ret(args...)>&& target)
 		{
-			return mu::virt<any_callable>::make<callable_of<ret, args...>>(std::move(target));
+			return held_callable::make<callable_of<ret, args...>>(std::move(target));
 		}
 
 		template<typename ret, typename...args>
-		mu::virt<any_callable> callable(ret(*target)(args...))
+		held_callable callable(ret(*target)(args...))
 		{
-			return mu::virt<any_callable>::make<callable_of<ret, args...>>((std::function<ret(args...)>{target}));
+			return held_callable::make<callable_of<ret, args...>>((std::function<ret(args...)>{target}));
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		mu::virt<any_callable> callable(ret(member_holders_type::*target)(args...))
+		held_callable callable(ret(member_holders_type::*target)(args...))
 		{
 			typedef member_holders_type& real_type;
 			auto to_use = std::function<ret(real_type, args...)>{ target };
-			return mu::virt<any_callable>::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+			return held_callable::make<callable_of<ret, real_type, args...>>(std::move(to_use));
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		mu::virt<any_callable> callable(ret(member_holders_type::*target)(args...) const)
+		held_callable callable(ret(member_holders_type::*target)(args...) const)
 		{
 			typedef member_holders_type const& real_type;
 			auto to_use = std::function<ret(real_type, args...)>{ target };
-			return mu::virt<any_callable>::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+			return held_callable::make<callable_of<ret, real_type, args...>>(std::move(to_use));
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		mu::virt<any_callable> callable(ret(member_holders_type::*target)(args...) &&)
+		held_callable callable(ret(member_holders_type::*target)(args...) &&)
 		{
 			typedef member_holders_type&& real_type;
 			auto to_use = std::function<ret(real_type, args...)>{ target };
-			return mu::virt<any_callable>::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+			return held_callable::make<callable_of<ret, real_type, args...>>(std::move(to_use));
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		mu::virt<any_callable> callable(ret(member_holders_type::*target)(args...) const&&)
+		held_callable callable(ret(member_holders_type::*target)(args...) const&&)
 		{
 			typedef member_holders_type const&& real_type;
 			auto to_use = std::function<ret(real_type, args...)>{ target };
-			return mu::virt<any_callable>::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+			return held_callable::make<callable_of<ret, real_type, args...>>(std::move(to_use));
 		}
 
-		mu::virt<any_callable> manual(std::function<value_holder(std::vector<stack_elem>&)>&& target)
+		held_callable manual(std::function<value_holder(std::vector<stack_elem>&)>&& target)
 		{
-			return mu::virt<any_callable>::make<manual_callable>(std::move(target));
+			return held_callable::make<manual_callable>(std::move(target));
 		}
 
-		mu::virt<any_callable> manual(value_holder(*target)(std::vector<stack_elem>&))
+		held_callable manual(value_holder(*target)(std::vector<stack_elem>&))
 		{
-			return mu::virt<any_callable>::make<manual_callable>(std::function<value_holder(std::vector<stack_elem>&)>{target});
+			return held_callable::make<manual_callable>(std::function<value_holder(std::vector<stack_elem>&)>{target});
 		}
 
 
@@ -65,21 +67,21 @@ namespace expr
 		{
 		public:
 
-			function_set& add(mu::virt<any_callable>&& f, std::string&& n)
+			function_set& add(held_callable&& f, std::string&& n)
 			{
 				assert(name_checker::is_valid(n));
 				map.emplace(std::make_pair(std::move(n), std::move(f)));
 				return *this;
 			}
 
-			function_set& add(mu::virt<any_callable>&& f, std::string const& n)
+			function_set& add(held_callable&& f, std::string const& n)
 			{
 				assert(name_checker::is_valid(n));
 				map.emplace(std::make_pair(n, std::move(f)));
 				return *this;
 			}
 			
-			function_set& add(mu::virt<any_callable>&& f, char const* n)
+			function_set& add(held_callable&& f, char const* n)
 			{
 				assert(name_checker::is_valid(n));
 				map.emplace(std::make_pair(std::string{n}, std::move(f)));
@@ -126,7 +128,7 @@ namespace expr
 			}
 
 
-			std::optional<mu::virt<any_callable>*> get(std::string const& a)
+			std::optional<held_callable*> get(std::string const& a)
 			{
 				auto g = map.find(a);
 				if (g == map.end())
@@ -135,12 +137,12 @@ namespace expr
 				}
 				else
 				{
-					return std::optional<mu::virt<any_callable>*>{&g->second};
+					return std::optional<held_callable*>{&g->second};
 				}
 			}
 
 		private:
-			std::unordered_map<std::string, mu::virt<any_callable>> map;
+			std::unordered_map<std::string, held_callable> map;
 		};
 
 
@@ -190,7 +192,7 @@ namespace expr
 		public:
 
 
-			value_holder * push_var(std::string&& a)
+			value_holder* push_var(std::string&& a)
 			{
 				return map[a].push_front(value_holder::make_nullval());
 			}
@@ -252,7 +254,6 @@ namespace expr
 					input >> n;
 					output << "///\n" << std::flush;
 					run(std::move(n));
-
 				}
 			}
 
@@ -271,7 +272,7 @@ namespace expr
 			}
 
 			template<typename string_convertible>
-			environment& fbind(string_convertible&& name, mu::virt<any_callable>&& target)
+			environment& fbind(string_convertible&& name, held_callable&& target)
 			{
 				functions.add(std::move(target),std::forward<string_convertible>(name));
 				return *this;
@@ -331,7 +332,7 @@ namespace expr
 			}
 
 			
-			mu::virt<any_callable> garbage_getter()
+			held_callable garbage_getter()
 			{
 				variable_value_stack* g = &garbage;
 				return manual(std::function<value_holder(std::vector<stack_elem>&)>{
