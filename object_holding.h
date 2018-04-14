@@ -121,7 +121,7 @@ namespace expr
 
 			bool can_trivially_destruct() const override
 			{
-				return std::is_trivially_destructible<t>::value;
+				return std::is_trivially_destructible_v<t>;
 			}
 
 			std::type_info const& get_type() const override
@@ -145,7 +145,7 @@ namespace expr
 				{
 					//if copying does the same as moving but leaves behind the old copy, then it should be done instead
 					//it must be trivially destructible though, otherwise the copy will be sent to the garbage and an extra destructor could end up running.
-					if constexpr(std::is_trivially_copy_constructible<t>::value && std::is_trivially_move_constructible<t>::value && std::is_trivially_destructible<t>::value)
+					if constexpr(std::is_trivially_copy_constructible_v<t> && std::is_trivially_move_constructible_v<t> && std::is_trivially_destructible_v<t>)
 					{
 						static_cast<type_ask_of<t>*>(tar)->gotten.emplace(val);
 						return false;

@@ -22,6 +22,4 @@ use fancy exceptions instead of runtime asserts to give more clear error message
 
 make scripting utilities, error messages for failed calls, ability to list all variables, ability to list all functions, ability to add default operations for the last value left on the stack
 
-replace std::blah<t>::value with std::blah_v<t>
-
 test, test, test!

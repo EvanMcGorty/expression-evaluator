@@ -102,7 +102,7 @@ namespace expr
 			template<typename tup_t, typename...ts>
 			void set_from_front(tup_t& a)
 			{
-				static_assert(std::is_same<tup_t, std::tuple<std::optional<ts>...>>::value);
+				static_assert(std::is_same_v<tup_t, std::tuple<std::optional<ts>...>>);
 				set_rest<tup_t, 0, ts...>(a);
 			}
 

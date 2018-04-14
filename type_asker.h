@@ -49,7 +49,7 @@ namespace expr
 
 			void parse(std::string const& a) override
 			{
-				if constexpr(std::is_pointer<t>::value)
+				if constexpr(std::is_pointer_v<t>)
 				{
 					typedef std::remove_const_t<typename std::remove_pointer_t<t>> holdable;
 					std::optional<holdable> temp = converter<holdable>::on(a);
