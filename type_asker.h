@@ -60,7 +60,7 @@ namespace expr
 				}
 				else
 				{
-					gotten = converter<t>::on(a);
+					gotten = converter<std::remove_const_t<t>>::on(a);
 				}
 			}
 
@@ -69,7 +69,7 @@ namespace expr
 				return typeid(t);
 			}
 
-			std::optional<t> gotten;
+			std::optional<std::remove_const_t<t>> gotten;
 			std::optional<possible<std::is_pointer_v<t>, t>> pointed_to_value;
 		};
 

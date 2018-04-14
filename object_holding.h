@@ -156,12 +156,16 @@ namespace expr
 						return true;
 					}
 				}
-				else if constexpr (std::is_pointer_v<t>)
+				else if constexpr (std::is_pointer_v<t>) //to return a t*/t& as a t&& or t const&
 				{
 					if (tar->get_type() == typeid(std::remove_pointer_t<t> const*))
 					{
 						static_cast<type_ask_of<std::remove_pointer_t<t> const*>*>(tar)->gotten.emplace(std::move(val));
-						//normally here  this should return true, but a pointer is always still valid/untouched after it is std::moved
+						//normally here  this should return true, but a pointer is always still valid/untouched after it is std::moved, it is trivially copy/move constructible and trivially destructible
+					}
+					if (tar->get_type() == typeid(std::remove_pointer_t<t>))
+					{
+						static_cast<type_ask_of<std::remove_pointer_t<t>>*>(tar)->gotten.emplace(std::move(*val));
 					}
 					return false;
 				}

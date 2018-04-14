@@ -7,9 +7,7 @@ make some sort of overload-resolution system
 allow any derived class to be passed as an argument for a base class
 possibly by generating a lookup function that takes a typeid and calls a generic lambda with its type
 
-allow classes to be passed into types that they are implicitly convertable to
-
-make object_of::get able to dereference itself for an rvalue if it is a pointer
+allow classes to be passed into types that they are implicitly convertible to
 
 add static asserts to avoid cryptic error messages from bad function signatures
 
@@ -17,9 +15,13 @@ try returning const t as a const t* (because in some sense it is a const t&&)
 possibly by making a derived class from object_of that looks like:
 {
     x(t&& b) : a(b) {}
-    t& a;    
+    t& a;
 };
 
 use fancy exceptions instead of runtime asserts to give more clear error messages to the user of the library
+
+make scripting utilities, error messages for failed calls, ability to list all variables, ability to list all functions, ability to add default operations for the last value left on the stack
+
+replace std::blah<t>::value with std::blah_v<t>
 
 test, test, test!
