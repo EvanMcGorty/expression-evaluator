@@ -10,9 +10,7 @@ namespace expr
 		template<typename t>
 		class fs_info
 		{
-			friend function_set fs_functs();
-			friend function_set fs_name();
-
+		public:
 			static function_set get_functions()
 			{
 				static_assert("no overloaded instance of fs_info exists for this class");
@@ -179,7 +177,22 @@ namespace expr
 
 			static void destruct(t&& a)
 			{
-				//destructor would run automatically when called by the evaluator
+				//let evaluator call destructor naturally
+			}
+
+			static t&& temporary_reference(t& a)
+			{
+				return std::move(a);
+			}
+
+			static t& mutable_reference(t& a)
+			{
+				return a;
+			}
+
+			static t const& const_reference(t& a)
+			{
+				return a;
 			}
 
 		};
@@ -196,11 +209,11 @@ namespace expr
 				}
 				if constexpr(std::is_move_constructible<t>::value)
 				{
-					ret.add(callable(&basics<t>::move_construct), "move_make");
+					ret.add(callable(&basics<t>::move_construct), "take");
 				}
 				if constexpr(std::is_copy_constructible<t>::value)
 				{
-					ret.add(callable(&basics<t>::copy_construct), "copy_make");
+					ret.add(callable(&basics<t>::copy_construct), "clone");
 				}
 				if constexpr(std::is_move_assignable<t>::value)
 				{
@@ -210,7 +223,10 @@ namespace expr
 				{
 					ret.add(callable(&basics<t>::copy_assign), "copy");
 				}
-				ret.add(callable(&basics<t>::destruct), "drop");
+				ret.add(callable(&basics<t>::destruct),"drop");
+				ret.add(callable(&basics<t>::temporary_reference), "tref");
+				ret.add(callable(&basics<t>::mutable_reference), "mref");
+				ret.add(callable(&basics<t>::const_reference), "cref");
 				return ret;
 			}
 

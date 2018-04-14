@@ -225,7 +225,11 @@ namespace expr
 			std::unordered_map<std::string, variable_value_stack> map;
 		};
 
-
+		
+		template<typename t>
+		function_set fs_functs();
+		template<typename t>
+		function_set fs_name();
 
 		class environment
 		{
@@ -255,7 +259,7 @@ namespace expr
 			template<typename string_convertible>
 			environment& mbind(string_convertible&& name, std::function<value_holder(std::vector<stack_elem>&)>&& target)
 			{
-				functions.add(manual(target), std::forward<string_convertible>(name));
+				functions.add(manual(std::move(target)), std::forward<string_convertible>(name));
 				return *this;
 			}
 
@@ -326,7 +330,7 @@ namespace expr
 				return *this;
 			}
 
-
+			
 			mu::virt<any_callable> garbage_getter()
 			{
 				variable_value_stack* g = &garbage;
