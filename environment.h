@@ -70,21 +70,21 @@ namespace expr
 			function_set& add(held_callable&& f, std::string&& n)
 			{
 				assert(name_checker::is_valid(n));
-				map.emplace(std::make_pair(std::move(n), std::move(f)));
+				emplace_to_map(std::make_pair(std::move(n), std::move(f)));
 				return *this;
 			}
 
 			function_set& add(held_callable&& f, std::string const& n)
 			{
 				assert(name_checker::is_valid(n));
-				map.emplace(std::make_pair(n, std::move(f)));
+				emplace_to_map(std::make_pair(n, std::move(f)));
 				return *this;
 			}
 			
 			function_set& add(held_callable&& f, char const* n)
 			{
 				assert(name_checker::is_valid(n));
-				map.emplace(std::make_pair(std::string{n}, std::move(f)));
+				emplace_to_map(std::make_pair(std::string{n}, std::move(f)));
 				return *this;
 			}
 
@@ -98,7 +98,7 @@ namespace expr
 				for (auto it = w.map.begin(); it != w.map.end(); ++it)
 				{
 					auto cur = std::move(*it);
-					map.emplace(std::make_pair(std::string{ n + "." + cur.first }, std::move(cur.second)));
+					emplace_to_map(std::make_pair(std::string{ n + "." + cur.first }, std::move(cur.second)));
 				}
 				return *this;
 			}
@@ -113,7 +113,7 @@ namespace expr
 				for (auto it = w.map.begin(); it != w.map.end(); ++it)
 				{
 					auto cur = std::move(*it);
-					map.emplace(std::make_pair(std::string{ std::string{n} +"." + cur.first }, std::move(cur.second)));
+					emplace_to_map(std::make_pair(std::string{ std::string{n} +"." + cur.first }, std::move(cur.second)));
 				}
 				return *this;
 			}
@@ -122,7 +122,7 @@ namespace expr
 			{
 				for (auto it = w.map.begin(); it != w.map.end(); ++it)
 				{
-					map.emplace(std::move(*it));
+					emplace_to_map(std::move(*it));
 				}
 				return *this;
 			}
@@ -142,6 +142,12 @@ namespace expr
 			}
 
 		private:
+
+			void emplace_to_map(std::pair<std::string, held_callable>&& a)
+			{
+				map.emplace(std::move(a));
+			}
+
 			std::unordered_map<std::string, held_callable> map;
 		};
 
@@ -324,7 +330,7 @@ namespace expr
 				return *this;
 			}
 
-			template<typename t, typename string_convertible>
+			template<typename t = void, typename string_convertible>
 			environment& sbind(string_convertible&& name = fs_name<t>(), function_set&& set = fs_functs<t>())
 			{
 				functions.use(std::move(set), std::forward<string_convertible>(name));

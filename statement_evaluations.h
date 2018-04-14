@@ -118,7 +118,7 @@ namespace expr
 		{
 			stack loc;
 			executable run;
-			tar.make_executable(run);
+			std::move(tar).into_executable(run);
 			perform_all(std::move(run), loc, *this);
 		}
 

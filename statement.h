@@ -147,5 +147,31 @@ namespace expr
 				a.push_back(statement::val_type::make<function_call>(function{ *val.downcast_get<function>() }));
 			}
 		}
+
+		inline void elem::into_executable(executable& result_location) &&
+		{
+			std::vector<statement>& a = result_location.statements;
+			if (val.is_nullval())
+			{
+				a.push_back(statement::val_type::make_nullval());
+			}
+			else if (val->is_literal())
+			{
+				a.push_back(statement::val_type::make<literal_push>(literal{ std::move(*val.downcast_get<literal>()) }));
+			}
+			else if (val->is_variable())
+			{
+				a.push_back(statement::val_type::make<variable_push>(variable{ std::move(*val.downcast_get<variable>()) }));
+			}
+			else if (val->is_function())
+			{
+				function* f = val.downcast_get<function>();
+				for (auto& it : f->data.arguments)
+				{
+					std::move(it).into_executable(result_location);
+				}
+				a.push_back(statement::val_type::make<function_call>(function{ std::move(*val.downcast_get<function>()) }));
+			}
+		}
 	}
 }

@@ -571,6 +571,8 @@ namespace expr
 
 			void make_executable(executable& a) const;
 
+			void into_executable(executable& a) &&;
+
 			static elem make(literal_value&& a)
 			{
 				return elem{ dtp::make<literal>(std::move(a)) };
