@@ -301,21 +301,7 @@ namespace expr
 			}
 
 			template<typename string_convertible>
-			environment& mbind(string_convertible&& name, std::function<value_holder(std::vector<stack_elem>&)>&& target)
-			{
-				functions.add(manual(std::move(target)), std::forward<string_convertible>(name));
-				return *this;
-			}
-
-			template<typename string_convertible>
-			environment& mbind(string_convertible&& name, value_holder(*target)(std::vector<stack_elem>&))
-			{
-				functions.add(manual(target), std::forward<string_convertible>(name));
-				return *this;
-			}
-
-			template<typename string_convertible>
-			environment& fbind(string_convertible&& name, held_callable&& target)
+			environment& bind(string_convertible&& name, held_callable&& target)
 			{
 				functions.add(std::move(target),std::forward<string_convertible>(name));
 				return *this;
@@ -360,10 +346,32 @@ namespace expr
 				return *this;
 			}
 
-			template<typename t, typename string_convertible>
-			environment& vbind(string_convertible&& name, t& a)
+			template<typename string_convertible, typename member_holders_type, typename members_type>
+			environment& mbind(string_convertible&& name, members_type member_holders_type::*member)
 			{
-				functions.add(callable(std::function<t()>{[ref = a]() {return ref; }}), std::forward<string_convertible>(name));
+				functions.add(callable(std::function<members_type&(member_holders_type&)>{[pmember = member](member_holders_type& a) -> members_type&
+				{
+					return a.*pmember;
+				}
+				}), std::forward<string_convertible>(name));
+				return *this;
+			}
+
+			template<typename string_convertible, typename member_holders_type, typename members_type>
+			environment& cmbind(string_convertible&& name, members_type member_holders_type::*member)
+			{
+				functions.add(callable(std::function<members_type const&(member_holders_type const&)>{[pmember = member](member_holders_type const& a) -> members_type const&
+				{
+					return a.*pmember;
+				}
+				}), std::forward<string_convertible>(name));
+				return *this;
+			}
+
+			template<typename t, typename string_convertible>
+			environment& vbind(string_convertible&& name, t&& a)
+			{
+				functions.add(callable(std::function<t()>{[val = std::move(a)]() {return t{ val }; }}), std::forward<string_convertible>(name));
 				return *this;
 			}
 

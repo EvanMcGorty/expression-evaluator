@@ -37,6 +37,8 @@ namespace expr
 			//returns true if this is an object and the held value was moved.
 			virtual bool get(any_type_ask* tar) = 0;
 
+			virtual bool can(std::type_info const& tar) const = 0;
+
 			virtual ~any_elem_val()
 			{
 
@@ -77,6 +79,11 @@ namespace expr
 			{
 				tar->parse(value);
 				return false;
+			}
+
+			bool can(std::type_info const& tar) const override
+			{
+				return true;
 			}
 
 			std::string value;
@@ -175,11 +182,46 @@ namespace expr
 						static_cast<type_ask_of<std::remove_pointer_t<t> const*>*>(tar)->gotten.emplace(std::move(val));
 						//normally here  this should return true, but a pointer is always still valid/untouched after it is std::moved, it is trivially copy/move constructible and trivially destructible
 					}
-					if (tar->get_type() == typeid(std::remove_pointer_t<t>))
+					else if (tar->get_type() == typeid(std::remove_pointer_t<t>))
 					{
 						static_cast<type_ask_of<std::remove_pointer_t<t>>*>(tar)->gotten.emplace(std::move(*val));
 					}
 					return false;
+				}
+				else
+				{
+					return false;
+				}
+			}
+
+			bool can(std::type_info const& tar) const override
+			{
+				if (tar == typeid(t*))
+				{
+					return true;
+				}
+				else if (tar == typeid(t const*))
+				{
+					return true;
+				}
+				else if (tar == typeid(t))
+				{
+					return true;
+				}
+				else if constexpr(std::is_pointer_v<t>)
+				{
+					if (tar == typeid(std::remove_pointer_t<t> const*))
+					{
+						return true;
+					}
+					else if (tar == typeid(std::remove_pointer_t<t>))
+					{
+						return true;
+					}
+					else
+					{
+						return false;
+					}
 				}
 				else
 				{
@@ -221,6 +263,18 @@ namespace expr
 				}
 
 				return false;
+			}
+
+			bool can(std::type_info const& tar) const override
+			{
+				if (ref->is_nullval())
+				{
+					return false;
+				}
+				else
+				{
+					return (**ref).can(tar);
+				}
 			}
 
 			std::string string_view() const override
