@@ -116,11 +116,24 @@ namespace expr
 		{
 		public:
 			virtual value_holder try_perform(stack& a, size_t args_to_take) = 0;
+			virtual void put_type(std::ostream& target) const = 0;
 			virtual ~any_callable()
 			{}
 		};
 
-
+		template<typename t,typename...ts>
+		void put_types(std::ostream& target)
+		{
+			if constexpr(sizeof...(ts) > 0)
+			{
+				target << demangle(typeid(t).name()) << ", ";
+				put_types<ts...>(target);
+			}
+			else
+			{
+				target << demangle(typeid(t).name());
+			}
+		}
 
 		template<typename ret_t, typename...args>
 		class callable_of : public any_callable
@@ -132,6 +145,16 @@ namespace expr
 			callable_of(std::function<ret_t(args...)>&& f)
 			{
 				target = make_storable_call(std::move(f));
+			}
+
+			void put_type(std::ostream& target) const override
+			{
+				target << '(';
+				if constexpr(sizeof...(args) > 0)
+				{
+					put_types<store_t<args>...>(target);
+				}
+				target << ") -> " << demangle(typeid(return_t<ret_t>).name());
 			}
 
 			//when the stack is not popped from, it is the callers responsibility to manage garbage variables
@@ -230,6 +253,11 @@ namespace expr
 			manual_callable(std::function<value_holder(std::vector<stack_elem>&)>&& a)
 			{
 				target = a;
+			}
+
+			void put_type(std::ostream& target) const override
+			{
+				target << "(...)->?";
 			}
 
 			value_holder try_perform(stack& a, size_t args_to_take) override

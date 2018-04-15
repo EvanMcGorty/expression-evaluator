@@ -141,6 +141,11 @@ namespace expr
 				}
 			}
 
+			std::unordered_map<std::string, held_callable> const& view() const
+			{
+				return map;
+			}
+
 		private:
 
 			void emplace_to_map(std::pair<std::string, held_callable>&& a)
@@ -340,9 +345,8 @@ namespace expr
 			
 			held_callable garbage_getter()
 			{
-				variable_value_stack* g = &garbage;
 				return manual(std::function<value_holder(std::vector<stack_elem>&)>{
-					[g = g](std::vector<stack_elem>& a) -> value_holder
+					[g = &garbage](std::vector<stack_elem>& a) -> value_holder
 					{
 						std::optional<value_holder> f = std::move(g->take_front());
 						while (f)
@@ -361,6 +365,22 @@ namespace expr
 					}
 				});
 			}
+
+			held_callable functions_printer(std::ostream& to)
+			{
+				return callable(std::function<void()>{
+					[to = &to,fs =&functions]() -> void
+					{
+						for (auto const& it : fs->view())
+						{
+							*to << it.first;
+							it.second->put_type(*to);
+							*to << '\n' << std::flush;
+						}
+					}
+				});
+			}
+
 		private:
 			function_set functions;
 
