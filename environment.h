@@ -193,6 +193,29 @@ namespace expr
 				}
 			}
 
+			std::string string_view() const
+			{
+				if (values.size() == 0)
+				{
+					return "[]";
+				}
+				std::string ret{ "[" };
+				for (auto const& it : values)
+				{
+					if (it.is_nullval())
+					{
+						ret.push_back('#');
+					}
+					else
+					{
+						ret.append(it->string_view());
+					}
+					ret.push_back(',');
+				}
+				*ret.rbegin() = ']';
+				return ret;
+			}
+
 		private:
 			std::vector<value_holder> values;
 		};
@@ -232,6 +255,15 @@ namespace expr
 				{
 					return std::optional<value_holder>{it->second.take_front()};
 				}
+			}
+
+			void put_values(std::ostream& to) const
+			{
+				for (auto const& it : map)
+				{
+					to << it.first << " -> "<< it.second.string_view() << '\n';
+				}
+				to << std::flush;
 			}
 
 		private:
@@ -377,6 +409,16 @@ namespace expr
 							it.second->put_type(*to);
 							*to << '\n' << std::flush;
 						}
+					}
+				});
+			}
+
+			held_callable variables_printer(std::ostream& to)
+			{
+				return callable(std::function<void()>{
+					[to = &to, vs = &variables]() -> void
+					{
+						vs->put_values(*to);
 					}
 				});
 			}

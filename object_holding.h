@@ -1,8 +1,8 @@
 #pragma once
 
 #include"type_asker.h"
-
 #include"statement.h"
+#include"type_demangle.h"
 
 namespace expr
 {
@@ -31,6 +31,8 @@ namespace expr
 			{
 				return false;
 			}
+
+			virtual std::string string_view() const = 0;
 
 			//returns true if this is an object and the held value was moved.
 			virtual bool get(any_type_ask* tar) = 0;
@@ -63,6 +65,12 @@ namespace expr
 			bool is_unparsed() const override
 			{
 				return true;
+			}
+
+			std::string string_view() const override
+			{
+				literal temp{ literal_value{std::string{value}} };
+				return std::string("unparsed{") + temp.make_string() + "}";
 			}
 
 			bool get(any_type_ask* tar) override
@@ -118,6 +126,10 @@ namespace expr
 			{
 			}
 
+			std::string string_view() const override
+			{
+				return std::string("object_of{") + demangle(typeid(t).name()) + "}";
+			}
 
 			bool can_trivially_destruct() const override
 			{
@@ -211,6 +223,10 @@ namespace expr
 				return false;
 			}
 
+			std::string string_view() const override
+			{
+				return (**ref).string_view();
+			}
 
 			value_holder* ref;
 		};
