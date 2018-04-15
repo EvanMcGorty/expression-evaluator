@@ -2,8 +2,8 @@
 #include<vector>
 #include<optional>
 
-#include"virtual-function-utilities\algebraic_virtual.h"
-#include"virtual-function-utilities\free-store_virtual.h"
+#include"virtual-function-utilities/algebraic_virtual.h"
+#include"virtual-function-utilities/free-store_virtual.h"
 
 #include"parsing_checks.h"
 
