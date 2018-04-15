@@ -8,6 +8,7 @@ namespace expr
 	using impl::empty_elem;
 	using impl::sc;
 	using impl::executable;
+	using impl::as_function;
 	using impl::manual;
 	using impl::callable;
 	using impl::held_callable;

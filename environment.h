@@ -6,50 +6,52 @@ namespace expr
 {
 	namespace impl
 	{
-		using held_callable = mu::virt<any_callable>;
 
 		template<typename ret, typename...args>
-		held_callable callable(std::function<ret(args...)>&& target)
+		held_callable callable(std::function<ret(args...)>&& target, std::optional<held_callable*> old = std::nullopt)
 		{
-			return held_callable::make<callable_of<ret, args...>>(std::move(target));
+			if (old)
+			{
+				return held_callable::make<multi_callable_of<ret, args...>>(std::move(target), std::move(**old));
+			}
+			else
+			{
+				return held_callable::make<callable_of<ret, args...>>(std::move(target));
+			}
 		}
 
 		template<typename ret, typename...args>
-		held_callable callable(ret(*target)(args...))
+		auto as_function(ret(*target)(args...))
 		{
-			return held_callable::make<callable_of<ret, args...>>((std::function<ret(args...)>{target}));
+			return std::function<ret(args...)>{target};
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		held_callable callable(ret(member_holders_type::*target)(args...))
+		auto as_function(ret(member_holders_type::*target)(args...))
 		{
 			typedef member_holders_type& real_type;
-			auto to_use = std::function<ret(real_type, args...)>{ target };
-			return held_callable::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+			return std::function<ret(real_type, args...)>{ target };
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		held_callable callable(ret(member_holders_type::*target)(args...) const)
+		auto as_function(ret(member_holders_type::*target)(args...) const)
 		{
 			typedef member_holders_type const& real_type;
-			auto to_use = std::function<ret(real_type, args...)>{ target };
-			return held_callable::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+			return std::function<ret(real_type, args...)>{ target };
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		held_callable callable(ret(member_holders_type::*target)(args...) &&)
+		auto as_function(ret(member_holders_type::*target)(args...) &&)
 		{
 			typedef member_holders_type&& real_type;
-			auto to_use = std::function<ret(real_type, args...)>{ target };
-			return held_callable::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+			return  std::function<ret(real_type, args...)>{ target };
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		held_callable callable(ret(member_holders_type::*target)(args...) const&&)
+		auto as_function(ret(member_holders_type::*target)(args...) const&&)
 		{
 			typedef member_holders_type const&& real_type;
-			auto to_use = std::function<ret(real_type, args...)>{ target };
-			return held_callable::make<callable_of<ret, real_type, args...>>(std::move(to_use));
+			return std::function<ret(real_type, args...)>{ target };
 		}
 
 		held_callable manual(std::function<value_holder(std::vector<stack_elem>&)>&& target)
@@ -70,21 +72,21 @@ namespace expr
 			function_set& add(held_callable&& f, std::string&& n)
 			{
 				assert(name_checker::is_valid(n));
-				emplace_to_map(std::make_pair(std::move(n), std::move(f)));
+				add_to_map(std::make_pair(std::move(n), std::move(f)));
 				return *this;
 			}
 
 			function_set& add(held_callable&& f, std::string const& n)
 			{
 				assert(name_checker::is_valid(n));
-				emplace_to_map(std::make_pair(n, std::move(f)));
+				add_to_map(std::make_pair(n, std::move(f)));
 				return *this;
 			}
 			
 			function_set& add(held_callable&& f, char const* n)
 			{
 				assert(name_checker::is_valid(n));
-				emplace_to_map(std::make_pair(std::string{n}, std::move(f)));
+				add_to_map(std::make_pair(std::string{n}, std::move(f)));
 				return *this;
 			}
 
@@ -98,7 +100,7 @@ namespace expr
 				for (auto it = w.map.begin(); it != w.map.end(); ++it)
 				{
 					auto cur = std::move(*it);
-					emplace_to_map(std::make_pair(std::string{ n + "." + cur.first }, std::move(cur.second)));
+					add_to_map(std::make_pair(std::string{ n + "." + cur.first }, std::move(cur.second)));
 				}
 				return *this;
 			}
@@ -113,7 +115,7 @@ namespace expr
 				for (auto it = w.map.begin(); it != w.map.end(); ++it)
 				{
 					auto cur = std::move(*it);
-					emplace_to_map(std::make_pair(std::string{ std::string{n} +"." + cur.first }, std::move(cur.second)));
+					add_to_map(std::make_pair(std::string{ std::string{n} +"." + cur.first }, std::move(cur.second)));
 				}
 				return *this;
 			}
@@ -122,7 +124,7 @@ namespace expr
 			{
 				for (auto it = w.map.begin(); it != w.map.end(); ++it)
 				{
-					emplace_to_map(std::move(*it));
+					add_to_map(std::move(*it));
 				}
 				return *this;
 			}
@@ -148,9 +150,9 @@ namespace expr
 
 		private:
 
-			void emplace_to_map(std::pair<std::string, held_callable>&& a)
+			void add_to_map(std::pair<std::string, held_callable>&& a)
 			{
-				map.emplace(std::move(a));
+				map.insert_or_assign(std::move(a.first),std::move(a.second));
 			}
 
 			std::unordered_map<std::string, held_callable> map;
@@ -300,78 +302,82 @@ namespace expr
 				}
 			}
 
+			//not yet implemented
 			template<typename string_convertible>
-			environment& bind(string_convertible&& name, held_callable&& target)
+			environment& unbind(string_convertible&& name);
+
+			template<typename string_convertible>
+			environment& rebind(string_convertible&& name, held_callable&& target)
 			{
-				functions.add(std::move(target),std::forward<string_convertible>(name));
+				if (!target.is_nullval())
+				{
+					functions.add(std::move(target), std::forward<string_convertible>(name));
+				}
 				return *this;
 			}
 			
 			template<typename string_convertible, typename ret, typename...args>
 			environment& fbind(string_convertible&& name, std::function<ret(args...)>&& target)
 			{
-				functions.add(callable(std::move(target)),std::forward<string_convertible>(name));
+				auto g = functions.get(name);
+				functions.add(callable(std::move(target), functions.get(std::string(name))),std::forward<string_convertible>(name));
 				return *this;
 			}
 
 			template<typename string_convertible, typename ret, typename...args>
 			environment& fbind(string_convertible&& name, ret(*target)(args...))
 			{
-				functions.add(callable(target), std::forward<string_convertible>(name));
+				functions.add(callable(as_function(target), functions.get(std::string(name))), std::forward<string_convertible>(name));
 				return *this;
 			}
 
 			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
 			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...))
 			{
-				functions.add(callable(target), std::forward<string_convertible>(name));
+				functions.add(callable(as_function(target), functions.get(std::string(name))), std::forward<string_convertible>(name));
 				return *this;
 			}
 			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
 			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...) const)
 			{
-				functions.add(callable(target), std::forward<string_convertible>(name));
+				functions.add(callable(as_function(target), functions.get(std::string(name))), std::forward<string_convertible>(name));
 				return *this;
 			}
 			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
 			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...) &&)
 			{
-				functions.add(callable(target), std::forward<string_convertible>(name));
+				functions.add(callable(as_function(target), functions.get(std::string(name))), std::forward<string_convertible>(name));
 				return *this;
 			}
 			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
 			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...) const&&)
 			{
-				functions.add(callable(target), std::forward<string_convertible>(name));
+				functions.add(callable(as_function(target), functions.get(std::string(name))), std::forward<string_convertible>(name));
 				return *this;
 			}
 
 			template<typename string_convertible, typename member_holders_type, typename members_type>
 			environment& mbind(string_convertible&& name, members_type member_holders_type::*member)
 			{
+				held_callable constant_version = callable(std::function<members_type const&(member_holders_type const&)>{[pmember = member](member_holders_type const& a) -> members_type const&
+				{
+					return a.*pmember;
+				}
+				}, functions.get(std::string(name)));
+
 				functions.add(callable(std::function<members_type&(member_holders_type&)>{[pmember = member](member_holders_type& a) -> members_type&
 				{
 					return a.*pmember;
 				}
-				}), std::forward<string_convertible>(name));
+				}, std::optional<held_callable*>{&constant_version}), std::forward<string_convertible>(name));
 				return *this;
 			}
 
-			template<typename string_convertible, typename member_holders_type, typename members_type>
-			environment& cmbind(string_convertible&& name, members_type member_holders_type::*member)
-			{
-				functions.add(callable(std::function<members_type const&(member_holders_type const&)>{[pmember = member](member_holders_type const& a) -> members_type const&
-				{
-					return a.*pmember;
-				}
-				}), std::forward<string_convertible>(name));
-				return *this;
-			}
 
 			template<typename t, typename string_convertible>
 			environment& vbind(string_convertible&& name, t&& a)
 			{
-				functions.add(callable(std::function<t()>{[val = std::move(a)]() {return t{ val }; }}), std::forward<string_convertible>(name));
+				functions.add(callable(std::function<t()>{[val = std::move(a)]() {return t{ val }; }}, functions.get(std::string(name))), std::forward<string_convertible>(name));
 				return *this;
 			}
 

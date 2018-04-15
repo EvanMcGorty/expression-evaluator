@@ -96,6 +96,8 @@ namespace expr
 				}
 			}
 
+
+
 		public:
 			std::vector<stack_elem> stuff;
 
@@ -103,7 +105,29 @@ namespace expr
 			void set_from_front(tup_t& a)
 			{
 				static_assert(std::is_same_v<tup_t, std::tuple<std::optional<ts>...>>);
-				set_rest<tup_t, 0, ts...>(a);
+				set_rest<tup_t, 0, ts...>(a); //easier not to have this all in one function
+			}
+
+			template<size_t ind, typename t, typename...ts>
+			bool check_from_front() const
+			{
+				if (stuff[stuff.size() - 1 - sizeof...(ts)].is_nullval())
+				{
+					return false;
+				}
+				else
+				{
+					stack_elem const& cur = stuff[stuff.size() - 1 - sizeof...(ts)];
+					bool ret = cur->can(typeid(t));
+					if constexpr(sizeof...(ts) == 0)
+					{
+						return ret;
+					}
+					else
+					{
+						return ret && check_from_front<ind+1,ts...>();
+					}
+				}
 			}
 
 			void clear_front(size_t a, variable_value_stack& garbage);
@@ -120,6 +144,8 @@ namespace expr
 			virtual ~any_callable()
 			{}
 		};
+
+		using held_callable = mu::virt<any_callable>;
 
 		template<typename t,typename...ts>
 		void put_types(std::ostream& target)
@@ -244,8 +270,8 @@ namespace expr
 			{
 				return call(std::function<return_t<ret_t>(store_t<args>...)>(target), std::move(a));
 			}
-
 		};
+
 
 		class manual_callable : public any_callable
 		{
@@ -279,6 +305,51 @@ namespace expr
 
 		private:
 			std::function<value_holder(std::vector<stack_elem>&)> target;
+		};
+
+
+		template<typename ret_t, typename...args>
+		class multi_callable_of : public callable_of<ret_t, args...>
+		{
+		public:
+			multi_callable_of(std::function<ret_t(args...)>&& f, held_callable&& old) :
+				next(std::move(old)),
+				callable_of<ret_t, args...>(std::move(f))
+			{}
+
+			value_holder try_perform(stack& a, size_t args_to_take) override
+			{
+				if (sizeof...(args) != args_to_take)
+				{
+					return next->try_perform(a, args_to_take);
+				}
+				assert(a.stuff.size() >= sizeof...(args));
+
+				if constexpr(sizeof...(args) == 0)
+				{
+					return callable_of<ret_t, args...>::try_perform(a, args_to_take);
+				}
+				else if (a.check_from_front<0, args...>())
+				{
+					return callable_of<ret_t, args...>::try_perform(a, args_to_take);
+				}
+				else
+				{
+					return next->try_perform(a, args_to_take);
+				}
+			}
+
+
+			void put_type(std::ostream& target) const override
+			{
+				target << "\\ ";
+				callable_of<ret_t, args...>::put_type(target);
+				target << " | ";
+				next->put_type(target);
+			}
+
+		private:
+			held_callable next;
 		};
 
 	}

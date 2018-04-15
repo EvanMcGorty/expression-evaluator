@@ -18,6 +18,8 @@ possibly by making a derived class from object_of that looks like:
     t& a;
 };
 
+add more function signature types than just callable and manual (maybe one that accepts only optionals and returns an optional or something like that)
+
 use fancy exceptions instead of runtime asserts to give more clear error messages to the user of the library
 
 make scripting utilities, error messages for failed calls, ability to list all variables, ability to list all functions, ability to add default operations for the last value left on the stack
@@ -25,3 +27,7 @@ make scripting utilities, error messages for failed calls, ability to list all v
 make sure mutable and volitile values work
 
 test, test, test!
+
+try testing by making an algebra library, a matrix library
+
+test it with simple board games

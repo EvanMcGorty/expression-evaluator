@@ -204,28 +204,28 @@ namespace expr
 				function_set ret;
 				if constexpr(std::is_default_constructible<t>::value)
 				{
-					ret.add(callable(&basics<t>::default_construct), "make");
+					ret.add(callable(as_function(&basics<t>::default_construct)), "make");
 				}
 				if constexpr(std::is_move_constructible<t>::value)
 				{
-					ret.add(callable(&basics<t>::move_construct), "take");
+					ret.add(callable(as_function(&basics<t>::move_construct)), "take");
 				}
 				if constexpr(std::is_copy_constructible<t>::value)
 				{
-					ret.add(callable(&basics<t>::copy_construct), "clone");
+					ret.add(callable(as_function(&basics<t>::copy_construct)), "clone");
 				}
 				if constexpr(std::is_move_assignable<t>::value)
 				{
-					ret.add(callable(&basics<t>::move_assign), "move");
+					ret.add(callable(as_function(&basics<t>::move_assign)), "move");
 				}
 				if constexpr(std::is_copy_assignable<t>::value)
 				{
-					ret.add(callable(&basics<t>::copy_assign), "copy");
+					ret.add(callable(as_function(&basics<t>::copy_assign)), "copy");
 				}
-				ret.add(callable(&basics<t>::destruct),"drop");
-				ret.add(callable(&basics<t>::temporary_reference), "tref");
-				ret.add(callable(&basics<t>::mutable_reference), "mref");
-				ret.add(callable(&basics<t>::const_reference), "cref");
+				ret.add(callable(as_function(&basics<t>::destruct)),"drop");
+				ret.add(callable(as_function(&basics<t>::temporary_reference)), "tref");
+				ret.add(callable(as_function(&basics<t>::mutable_reference)), "mref");
+				ret.add(callable(as_function(&basics<t>::const_reference)), "cref");
 				return ret;
 			}
 
