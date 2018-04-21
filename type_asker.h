@@ -55,12 +55,16 @@ namespace expr
 					std::optional<holdable> temp = converter<holdable>::on(a);
 					if (temp)
 					{
-						pointed_to_value = possible<true, t>{ std::move(*temp) };
+						pointed_to_value.emplace(possible<true, t>{ std::move(*temp) });
 					}
 				}
 				else
 				{
-					gotten = converter<std::remove_const_t<t>>::on(a);
+					auto temp = converter<std::remove_const_t<t>>::on(a);
+					if (temp)
+					{
+						gotten.emplace(std::move(*temp));
+					}
 				}
 			}
 

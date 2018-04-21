@@ -68,10 +68,14 @@ namespace expr
 				{
 					stack_elem& cur = stuff[stuff.size() + ind - std::tuple_size<tup_t>::value];
 					type_ask_of<t> ask;
-					if (cur->get(&ask))
+					bool has_moved = cur->get(&ask);
+					if (has_moved)
 					{
 						cur = stack_elem::make_nullval();
-						std::get<ind>(a) = std::move(ask.gotten);
+						if (ask.gotten)
+						{
+							std::get<ind>(a).emplace(std::move(*ask.gotten));
+						}
 					}
 					else if constexpr (std::is_pointer_v<t>)
 					{
@@ -82,12 +86,18 @@ namespace expr
 						}
 						else
 						{
-							std::get<ind>(a) = std::move(ask.gotten);
+							if (ask.gotten)
+							{
+								std::get<ind>(a).emplace(std::move(*ask.gotten));
+							}
 						}
 					}
 					else
 					{
-						std::get<ind>(a) = std::move(ask.gotten);
+						if (ask.gotten)
+						{
+							std::get<ind>(a).emplace(std::move(*ask.gotten));
+						}
 					}
 				}
 				if constexpr(sizeof...(ts) > 0)
