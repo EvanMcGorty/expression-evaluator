@@ -59,7 +59,6 @@ namespace expr
 				}
 			}
 
-
 			static value_holder last(std::vector<stack_elem>& a)
 			{
 				if (a.size() == 0 || (*a.rbegin()).is_nullval() || !(*a.rbegin())->has_value())
@@ -112,7 +111,7 @@ namespace expr
 		};
 
 		template<typename t>
-		struct basics
+		struct util
 		{
 			static t default_construct()
 			{
@@ -202,40 +201,40 @@ namespace expr
 		};
 
 		template<typename t>
-		struct fs_info<basics<t>>
+		struct fs_info<util<t>>
 		{
 			static function_set get_functions()
 			{
 				function_set ret;
 				if constexpr(std::is_default_constructible<t>::value)
 				{
-					ret.add(callable(as_function(&basics<t>::default_construct)), "make");
+					ret.add(callable(as_function(&util<t>::default_construct)), "make");
 				}
 				if constexpr(std::is_move_constructible<t>::value)
 				{
-					ret.add(callable(as_function(&basics<t>::move_construct), ret.get("make")), "make");
-					ret.add(callable(as_function(&basics<t>::move_construct)), "move_make");
+					ret.add(callable(as_function(&util<t>::move_construct)), "make");
+					ret.add(callable(as_function(&util<t>::move_construct)), "move-make");
 				}
 				if constexpr(std::is_copy_constructible<t>::value)
 				{
-					ret.add(callable(as_function(&basics<t>::copy_construct), ret.get("make")), "make");
-					ret.add(callable(as_function(&basics<t>::copy_construct)), "copy_make");
+					ret.add(callable(as_function(&util<t>::copy_construct)), "make");
+					ret.add(callable(as_function(&util<t>::copy_construct)), "copy-make");
 				}
 				if constexpr(std::is_move_assignable<t>::value)
 				{
-					ret.add(callable(as_function(&basics<t>::move_assign)), "give");
-					ret.add(callable(as_function(&basics<t>::move_assign)), "move_give");
+					ret.add(callable(as_function(&util<t>::move_assign)), "give");
+					ret.add(callable(as_function(&util<t>::move_assign)), "move-give");
 				}
 				if constexpr(std::is_copy_assignable<t>::value)
 				{
-					ret.add(callable(as_function(&basics<t>::copy_assign), ret.get("give")), "give");
-					ret.add(callable(as_function(&basics<t>::copy_assign)), "copy_give");
+					ret.add(callable(as_function(&util<t>::copy_assign)), "give");
+					ret.add(callable(as_function(&util<t>::copy_assign)), "copy-give");
 				}
-				ret.add(callable(as_function(&basics<t>::swap)), "swap");
-				ret.add(callable(as_function(&basics<t>::destruct)),"drop");
-				ret.add(callable(as_function(&basics<t>::temporary_reference)), "move");
-				ret.add(callable(as_function(&basics<t>::mutable_reference)), "mref");
-				ret.add(callable(as_function(&basics<t>::const_reference)), "cref");
+				ret.add(callable(as_function(&util<t>::swap)), "swap");
+				ret.add(callable(as_function(&util<t>::destruct)),"drop");
+				ret.add(callable(as_function(&util<t>::temporary_reference)), "tref");
+				ret.add(callable(as_function(&util<t>::mutable_reference)), "mref");
+				ret.add(callable(as_function(&util<t>::const_reference)), "cref");
 				return ret;
 			}
 
@@ -244,6 +243,13 @@ namespace expr
 				return demangle(typeid(t).name());
 			}
 		};
+
+		/*template<typename t>
+		template<>
+		struct util<std::vector<t>>
+		{
+
+		}*/
 
 	}
 

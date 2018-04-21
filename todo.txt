@@ -2,32 +2,25 @@ make the library for elem more complicated and provide functions for making alge
 
 make it so an elem can contain enums that corrospond to names.
 
-make some sort of overload-resolution system
-
-allow any derived class to be passed as an argument for a base class
-possibly by generating a lookup function that takes a typeid and calls a generic lambda with its type
-
-allow classes to be passed into types that they are implicitly convertible to
 
 add static asserts to avoid cryptic error messages from bad function signatures
+use fancy exceptions instead of runtime assertions to give more clear error messages to the user of the library
 
-try returning const t as a const t* (because in some sense it is a const t&&)
-possibly by making a derived class from object_of that looks like:
-{
-    x(t&& b) : a(b) {}
-    t& a;
-};
 
 add more function signature types than just callable and manual (maybe one that accepts only optionals and returns an optional or something like that)
 
-use fancy exceptions instead of runtime asserts to give more clear error messages to the user of the library
 
-make scripting utilities, error messages for failed calls, ability to list all variables, ability to list all functions, ability to add default operations for the last value left on the stack
+make scripting utilities, error messages for failed calls, ability to add default operations for the last value left on the stack
+
+in addition to parsing of a string into a class, add methods for getting a view string for a class.
+
+
+optimize, get rid of extra copy construction, etc.
+
 
 make sure mutable and volitile values work
 
+
 test, test, test!
-
 try testing by making an algebra library, a matrix library
-
 test it with simple board games

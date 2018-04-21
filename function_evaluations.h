@@ -141,6 +141,7 @@ namespace expr
 		public:
 			virtual value_holder try_perform(stack& a, size_t args_to_take) = 0;
 			virtual void put_type(std::ostream& target) const = 0;
+			virtual mu::virt<any_callable> add_layer(mu::virt<any_callable>&& layer) && = 0;
 			virtual ~any_callable()
 			{}
 		};
@@ -161,6 +162,9 @@ namespace expr
 			}
 		}
 
+		struct dummy_argument
+		{};
+
 		template<typename ret_t, typename...args>
 		class callable_of : public any_callable
 		{
@@ -172,6 +176,13 @@ namespace expr
 			{
 				target = make_storable_call(std::move(f));
 			}
+
+			callable_of(dummy_argument,std::function<return_t<ret_t>(store_t<args>&&...)>&& f)
+			{
+				target = std::move(f);
+			}
+
+			held_callable add_layer(held_callable&& layer) && override;
 
 			void put_type(std::ostream& target) const override
 			{
@@ -234,7 +245,7 @@ namespace expr
 			}
 
 
-			std::function<return_t<ret_t>(store_t<args>...)> target;
+			std::function<return_t<ret_t>(store_t<args>&&...)> target;
 
 		private:
 
@@ -268,7 +279,7 @@ namespace expr
 
 			return_t<ret_t> do_call(use_tuple_type&& a)
 			{
-				return call(std::function<return_t<ret_t>(store_t<args>...)>(target), std::move(a));
+				return call(std::function<return_t<ret_t>(store_t<args>&&...)>(target), std::move(a));
 			}
 		};
 
@@ -284,6 +295,12 @@ namespace expr
 			void put_type(std::ostream& target) const override
 			{
 				target << "(...)->?";
+			}
+
+			held_callable add_layer(held_callable&& layer) &&
+			{
+				//because try_perform never fails, the next layer would never need to be called
+				return held_callable::make<manual_callable>(std::move(target));
 			}
 
 			value_holder try_perform(stack& a, size_t args_to_take) override
@@ -316,6 +333,16 @@ namespace expr
 				next(std::move(old)),
 				callable_of<ret_t, args...>(std::move(f))
 			{}
+
+			multi_callable_of(dummy_argument,std::function<return_t<ret_t>(store_t<args>&&...)>&& f, held_callable&& old) :
+				next(std::move(old)),
+				callable_of<ret_t, args...>(dummy_argument{},std::move(f))
+			{}
+
+			held_callable add_layer(held_callable&& layer) && override
+			{
+				return std::move(*next).add_layer(std::move(layer));
+			}
 
 			value_holder try_perform(stack& a, size_t args_to_take) override
 			{
@@ -351,6 +378,12 @@ namespace expr
 		private:
 			held_callable next;
 		};
+
+		template<typename ret_t,typename...args>
+		inline held_callable callable_of<ret_t,args...>::add_layer(held_callable&& layer) &&
+		{
+			return held_callable::make<multi_callable_of<ret_t, args...>>(dummy_argument{},std::move(target), std::move(layer));
+		}
 
 	}
 }
