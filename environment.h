@@ -69,6 +69,12 @@ namespace expr
 		{
 		public:
 
+			function_set& remove(std::string const& b)
+			{
+				map.erase(b);
+				return *this;
+			}
+
 			function_set& add(held_callable&& f, std::string&& n)
 			{
 				assert(name_checker::is_valid(n));
@@ -302,9 +308,11 @@ namespace expr
 				}
 			}
 
-			//not yet implemented
-			template<typename string_convertible>
-			environment& unbind(string_convertible&& name);
+			environment& unbind(std::string const& name)
+			{
+				functions.remove(name);
+				return *this;
+			}
 
 			template<typename string_convertible>
 			environment& rebind(string_convertible&& name, held_callable&& target)

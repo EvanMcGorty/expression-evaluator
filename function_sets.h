@@ -174,6 +174,11 @@ namespace expr
 				}
 			}
 
+			static void swap(t& a, t& b)
+			{
+				std::swap(a, b);
+			}
+
 			static void destruct(t&& a)
 			{
 				//let evaluator call destructor naturally
@@ -208,22 +213,27 @@ namespace expr
 				}
 				if constexpr(std::is_move_constructible<t>::value)
 				{
-					ret.add(callable(as_function(&basics<t>::move_construct)), "take");
+					ret.add(callable(as_function(&basics<t>::move_construct), ret.get("make")), "make");
+					ret.add(callable(as_function(&basics<t>::move_construct)), "move_make");
 				}
 				if constexpr(std::is_copy_constructible<t>::value)
 				{
-					ret.add(callable(as_function(&basics<t>::copy_construct)), "clone");
+					ret.add(callable(as_function(&basics<t>::copy_construct), ret.get("make")), "make");
+					ret.add(callable(as_function(&basics<t>::copy_construct)), "copy_make");
 				}
 				if constexpr(std::is_move_assignable<t>::value)
 				{
-					ret.add(callable(as_function(&basics<t>::move_assign)), "move");
+					ret.add(callable(as_function(&basics<t>::move_assign)), "give");
+					ret.add(callable(as_function(&basics<t>::move_assign)), "move_give");
 				}
 				if constexpr(std::is_copy_assignable<t>::value)
 				{
-					ret.add(callable(as_function(&basics<t>::copy_assign)), "copy");
+					ret.add(callable(as_function(&basics<t>::copy_assign), ret.get("give")), "give");
+					ret.add(callable(as_function(&basics<t>::copy_assign)), "copy_give");
 				}
+				ret.add(callable(as_function(&basics<t>::swap)), "swap");
 				ret.add(callable(as_function(&basics<t>::destruct)),"drop");
-				ret.add(callable(as_function(&basics<t>::temporary_reference)), "tref");
+				ret.add(callable(as_function(&basics<t>::temporary_reference)), "move");
 				ret.add(callable(as_function(&basics<t>::mutable_reference)), "mref");
 				ret.add(callable(as_function(&basics<t>::const_reference)), "cref");
 				return ret;
