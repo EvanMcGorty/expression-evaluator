@@ -49,7 +49,7 @@ namespace expr
 			}
 			else
 			{
-				return type_wrap<typename std::add_const_t<t>*>();
+				return type_wrap<t>();
 			}
 		}
 
@@ -63,7 +63,7 @@ namespace expr
 			}
 			else
 			{
-				return type_wrap<t const&>();
+				return type_wrap<std::remove_const_t<t>&&>();
 			}
 		}
 
@@ -140,7 +140,7 @@ namespace expr
 		};
 
 		template<typename t>
-		using return_t = typename returned<t>::type::held;
+		using returned_t = typename returned<t>::type::held;
 
 
 		template<typename t>
@@ -159,7 +159,7 @@ namespace expr
 			}
 			else if constexpr(!std::is_reference_v<t>)
 			{
-				return std::move(*x);
+				return std::move(x);
 			}
 			else if constexpr(std::is_lvalue_reference_v<t>)
 			{
@@ -168,7 +168,7 @@ namespace expr
 		}
 
 		template<typename t>
-		constexpr return_t<t> into_returnable(t&& x)
+		constexpr returned_t<t> into_returnable(t&& x)
 		{
 			if constexpr(!std::is_reference_v<t>)
 			{
@@ -213,12 +213,12 @@ namespace expr
 
 
 		template<typename ret_t, typename...argts>
-		std::function<return_t<ret_t>(store_t<argts>...)> make_storable_call(std::function<ret_t(argts...)>&& f)
+		std::function<returned_t<ret_t>(store_t<argts>...)> make_storable_call(std::function<ret_t(argts...)>&& f)
 		{
 			if constexpr(can_return<ret_t>())
 			{
-				return std::function<return_t<ret_t>(store_t<argts>&&...)> {
-					[f = std::move(f)](store_t<argts>...argvs)->return_t<ret_t>
+				return std::function<returned_t<ret_t>(store_t<argts>&&...)> {
+					[f = std::move(f)](store_t<argts>...argvs)->returned_t<ret_t>
 					{
 						return into_returnable<ret_t>(f(storable_into_passable<argts>(std::move(argvs))...));
 					}

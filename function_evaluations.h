@@ -177,7 +177,7 @@ namespace expr
 				target = make_storable_call(std::move(f));
 			}
 
-			callable_of(dummy_argument,std::function<return_t<ret_t>(store_t<args>&&...)>&& f)
+			callable_of(dummy_argument,std::function<returned_t<ret_t>(store_t<args>&&...)>&& f)
 			{
 				target = std::move(f);
 			}
@@ -191,7 +191,7 @@ namespace expr
 				{
 					put_types<store_t<args>...>(target);
 				}
-				target << ") -> " << demangle(typeid(return_t<ret_t>).name());
+				target << ") -> " << demangle(typeid(returned_t<ret_t>).name());
 			}
 
 			//when the stack is not popped from, it is the callers responsibility to manage garbage variables
@@ -218,7 +218,7 @@ namespace expr
 						}
 						else
 						{
-							return value_holder::make<object_of<return_t<ret_t>>>(do_call(std::move(*might_use)));
+							return value_holder::make<object_of<returned_t<ret_t>>>(do_call(std::move(*might_use)));
 						}
 					}
 					else
@@ -235,7 +235,7 @@ namespace expr
 					}
 					else
 					{
-						return value_holder::make<object_of<return_t<ret_t>>>(do_call(use_tuple_type{}));
+						return value_holder::make<object_of<returned_t<ret_t>>>(do_call(use_tuple_type{}));
 					}
 				}
 			}
@@ -245,7 +245,7 @@ namespace expr
 			}
 
 
-			std::function<return_t<ret_t>(store_t<args>&&...)> target;
+			std::function<returned_t<ret_t>(store_t<args>&&...)> target;
 
 		private:
 
@@ -277,9 +277,9 @@ namespace expr
 				}
 			}
 
-			return_t<ret_t> do_call(use_tuple_type&& a)
+			returned_t<ret_t> do_call(use_tuple_type&& a)
 			{
-				return call(std::function<return_t<ret_t>(store_t<args>&&...)>(target), std::move(a));
+				return call(std::function<returned_t<ret_t>(store_t<args>&&...)>(target), std::move(a));
 			}
 		};
 
@@ -334,7 +334,7 @@ namespace expr
 				callable_of<ret_t, args...>(std::move(f))
 			{}
 
-			multi_callable_of(dummy_argument,std::function<return_t<ret_t>(store_t<args>&&...)>&& f, held_callable&& old) :
+			multi_callable_of(dummy_argument,std::function<returned_t<ret_t>(store_t<args>&&...)>&& f, held_callable&& old) :
 				next(std::move(old)),
 				callable_of<ret_t, args...>(dummy_argument{},std::move(f))
 			{}
