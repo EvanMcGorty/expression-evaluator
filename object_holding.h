@@ -135,7 +135,7 @@ namespace expr
 
 			std::string string_view() const override
 			{
-				return std::string("object_of{") + demangle(typeid(t).name()) + "}";
+				return std::string("object_of{") + demangle(typeid(t).name()) + "(" + converter<t>::print(val) + ")" + "}";
 			}
 
 			bool can_trivially_destruct() const override
@@ -279,7 +279,7 @@ namespace expr
 
 			std::string string_view() const override
 			{
-				return (**ref).string_view();
+				return "variable_with" + (**ref).string_view();
 			}
 
 			value_holder* ref;

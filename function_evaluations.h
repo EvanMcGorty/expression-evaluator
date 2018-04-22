@@ -307,7 +307,7 @@ namespace expr
 				target << "(...)->?";
 			}
 
-			held_callable add_layer(held_callable&& layer) &&
+			held_callable add_layer(held_callable&& layer) && override
 			{
 				//because try_perform never fails, the next layer would never need to be called
 				return held_callable::make<manual_callable>(std::move(target));

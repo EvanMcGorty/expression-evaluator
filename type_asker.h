@@ -52,7 +52,7 @@ namespace expr
 				if constexpr(std::is_pointer_v<t>)
 				{
 					typedef std::remove_const_t<typename std::remove_pointer_t<t>> holdable;
-					std::optional<holdable> temp = converter<holdable>::on(a);
+					std::optional<holdable> temp = converter<holdable>::parse(a);
 					if (temp)
 					{
 						pointed_to_value.emplace(possible<true, t>{ std::move(*temp) });
@@ -60,7 +60,7 @@ namespace expr
 				}
 				else
 				{
-					auto temp = converter<std::remove_const_t<t>>::on(a);
+					auto temp = converter<std::remove_const_t<t>>::parse(a);
 					if (temp)
 					{
 						gotten.emplace(std::move(*temp));

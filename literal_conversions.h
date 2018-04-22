@@ -1,6 +1,8 @@
 #pragma once
 #include<optional>
 #include<string>
+#include<sstream>
+#include<iomanip>
 #include<utility>
 #include<limits>
 #include"parsing_checks.h"
@@ -206,9 +208,9 @@ namespace expr
 		template<typename t>
 		struct converter
 		{
-			static std::optional<t> on(std::string const& tar)
+			static std::optional<t> parse(std::string const& tar)
 			{
-				if constexpr(std::is_arithmetic<t>::value)
+				if constexpr(std::is_arithmetic_v<t>)
 				{
 					auto p = parse_string_to_number(tar);
 					if (!p)
@@ -255,13 +257,39 @@ namespace expr
 
 					return std::optional<t>{std::move(ret)};
 				}
-				else if constexpr(std::is_same<t, std::string>::value)
+				else if constexpr(std::is_convertible_v<std::string const&, t>)
 				{
-					return std::optional<std::string>{tar};
+					return std::optional<t>(tar);
 				}
 				else
 				{
 					return std::nullopt;
+				}
+			}
+
+			static std::string print(t const& tar)
+			{
+				if constexpr(std::is_arithmetic_v<t>)
+				{
+					std::stringstream s;
+					s << tar;
+					return s.str();
+				}
+				else if constexpr(std::is_convertible_v<t const&, std::string>)
+				{
+					return tar;
+				}
+				else
+				{
+					std::stringstream s;
+					s << std::hex << std::setw(2) << std::setfill('0') << "0x";
+					unsigned char const* p = reinterpret_cast<unsigned char const*>(&tar);
+					typedef unsigned int printable;
+					for (int i = 0; i != sizeof(t); ++i)
+					{
+						s << std::setw(2) << printable{ p[i] };
+					}
+					return s.str();
 				}
 			}
 		};

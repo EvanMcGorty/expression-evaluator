@@ -34,7 +34,6 @@ namespace expr
 
 		struct core
 		{
-
 			static value_holder swap(std::vector<stack_elem>& a)
 			{
 				if (a.size() == 2 && (a[0].is_nullval() || a[0]->has_value()) && (a[1].is_nullval() || a[1]->has_value()))
@@ -70,7 +69,28 @@ namespace expr
 					return get_value(*a.rbegin());
 				}
 			}
+		};
 
+		template<>
+		struct fs_info<core>
+		{
+			static function_set get_functions()
+			{
+				function_set ret;
+				ret.add(manual(core::swap), "swap")
+					.add(manual(core::first), "first")
+					.add(manual(core::last), "last");
+				return ret;
+			}
+
+			static std::string get_name()
+			{
+				return "core";
+			}
+		};
+
+		struct cpp_core
+		{
 			static value_holder drop(std::vector<stack_elem>& a)
 			{
 				for (auto& it : a)
@@ -92,21 +112,18 @@ namespace expr
 		};
 
 		template<>
-		struct fs_info<core>
+		struct fs_info<cpp_core>
 		{
 			static function_set get_functions()
 			{
 				function_set ret;
-				ret.add(manual(core::swap), "swap")
-					.add(manual(core::first), "first")
-					.add(manual(core::last), "last")
-					.add(manual(core::drop), "drop");
+				ret.add(manual(cpp_core::drop), "drop");
 				return ret;
 			}
 
 			static std::string get_name()
 			{
-				return "core";
+				return "cpp";
 			}
 		};
 
@@ -243,13 +260,6 @@ namespace expr
 				return demangle(typeid(t).name());
 			}
 		};
-
-		/*template<typename t>
-		template<>
-		struct util<std::vector<t>>
-		{
-
-		}*/
 
 	}
 
