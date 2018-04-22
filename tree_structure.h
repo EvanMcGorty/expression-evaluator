@@ -583,9 +583,9 @@ namespace expr
 				return elem{ dtp::make<variable>(std::move(a)) };
 			}
 
-			static elem make(function&& a)
+			static elem make(function_value&& a)
 			{
-				return elem{ dtp::make<function>(a) };
+				return elem{ dtp::make<function>(std::move(a)) };
 			}
 
 			static elem make_empty()

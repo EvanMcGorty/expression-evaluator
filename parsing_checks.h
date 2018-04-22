@@ -13,7 +13,23 @@ namespace expr
 		{
 		public:
 
+			name_checker(char const* a)
+			{
+				name_checker(std::string{ a });
+			}
+
 			name_checker(std::string&& a)
+			{
+				assert(is_valid(a));
+				held = std::move(a);
+			}
+
+			void operator=(char const* a)
+			{
+				name_checker(std::string{ a });
+			}
+
+			void operator=(std::string&& a)
 			{
 				assert(is_valid(a));
 				held = std::move(a);
@@ -32,6 +48,11 @@ namespace expr
 			void operator=(name_checker&& a)
 			{
 				held = std::move(a.held);
+			}
+
+			std::string get_copy() const
+			{
+				return std::string(held);
 			}
 
 			//starts with a character that is uppercase or lower case

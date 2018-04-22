@@ -24,10 +24,11 @@ namespace expr
 			}
 		}
 
-		void perform(statement&& todo, stack& loc, environment& env)
+		void perform(statement&& todo, stack& loc, environment& env, std::ostream& errors)
 		{
 			if (todo.val.is_nullval())
 			{
+				errors << "empty value found\n";
 				loc.stuff.emplace_back(stack_elem::make_nullval());
 			}
 			else if (todo.val->is_literal_push())
@@ -42,26 +43,28 @@ namespace expr
 				{
 				case(sc::pop):
 				{
-					auto to_push = env.variables.take_var(std::move(temp.var.data.var_name));
+					auto to_push = env.variables.take_var(temp.var.data.var_name);
 					if (to_push)
 					{
 						loc.stuff.emplace_back(std::move(*to_push));
 					}
 					else
 					{
+						errors << "variable name \"" << temp.var.data.var_name << "\" not found\n";
 						loc.stuff.emplace_back(stack_elem::make_nullval());
 					}
 				}
 				break;
 				case(sc::neutral):
 				{
-					auto to_push = env.variables.get_var(std::move(temp.var.data.var_name));
+					auto to_push = env.variables.get_var(temp.var.data.var_name);
 					if (to_push)
 					{
 						loc.stuff.emplace_back(stack_elem::make<value_reference>(*to_push));
 					}
 					else
 					{
+						errors << "variable name \"" << temp.var.data.var_name << "\" not found\n";
 						loc.stuff.emplace_back(stack_elem::make_nullval());
 					}
 				}
@@ -80,6 +83,7 @@ namespace expr
 				auto optional_todo = env.functions.get(temp.name);
 				if (!optional_todo)
 				{
+					errors << "function name \"" << temp.name << "\" not found\n";
 					loc.clear_front(temp.arg_count, env.garbage);
 					loc.stuff.emplace_back(stack_elem::make_nullval());
 				}
@@ -88,9 +92,12 @@ namespace expr
 					any_callable& todo = ***optional_todo;
 
 					value_holder tp = todo.try_perform(loc, temp.arg_count);
+					if (tp.is_nullval())
+					{
+						errors << "call to function \"" << temp.name << "\" returned empty\n";
+					}
 					loc.clear_front(temp.arg_count, env.garbage);
 					loc.stuff.emplace_back(std::move(tp));
-
 				}
 			}
 			else
@@ -99,27 +106,26 @@ namespace expr
 			}
 		}
 
-		void perform_all(executable&& tar, stack& loc, environment& env)
+		void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors)
 		{
 			for (auto&& it : std::move(tar.statements))
 			{
-				perform(std::move(it), loc, env);
+				perform(std::move(it), loc, env, errors);
 			}
 			loc.clear_front(loc.stuff.size(), env.garbage);
 		}
 
-		void environment::run(executable&& tar)
+		void environment::run(executable&& tar, std::ostream& errors)
 		{
 			stack loc;
-			perform_all(std::move(tar), loc, *this);
+			perform_all(std::move(tar), loc, *this, errors);
 		}
 
-		void environment::run(elem&& tar)
+		void environment::run(elem&& tar, std::ostream& errors)
 		{
-			stack loc;
-			executable run;
-			std::move(tar).into_executable(run);
-			perform_all(std::move(run), loc, *this);
+			executable to_run;
+			std::move(tar).into_executable(to_run);
+			run(std::move(to_run), errors);
 		}
 
 	}

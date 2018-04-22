@@ -292,7 +292,7 @@ namespace expr
 			{
 				for (auto const& it : map)
 				{
-					to << it.first << " -> "<< it.second.string_view() << '\n';
+					to << it.first << "= "<< it.second.string_view() << '\n';
 				}
 				to << std::flush;
 			}
@@ -309,15 +309,15 @@ namespace expr
 
 		class environment
 		{
-			friend void perform(statement&& todo, stack& loc, environment& env);
-			friend void perform_all(executable&& tar, stack& loc, environment& env);
+			friend void perform(statement&& todo, stack& loc, environment& env, std::ostream& errors);
+			friend void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors);
 		public:
 
 
 
-			void run(executable&& a);
+			void run(executable&& a, std::ostream& errors);
 
-			void run(elem&& a);
+			void run(elem&& a, std::ostream& errors);
 
 			void attach(std::istream& input, std::ostream& output)
 			{
@@ -326,8 +326,21 @@ namespace expr
 					output << "\\\\\\\n" << std::flush;
 					elem n;
 					input >> n;
-					output << "///\n" << std::flush;
-					run(std::move(n));
+					if (settings.whether_to_reprint_input_as_parsed)
+					{
+						output << "|||\n" << n.str() << "\n";
+					}
+					if (settings.default_final_operation)
+					{
+						n = elem::make(function_value{ settings.default_final_operation->get_copy(), std::vector<elem>{ std::move(n) } });
+					}
+					output << "///" << std::endl;
+					std::stringstream errors;
+					run(std::move(n),errors);
+					if (settings.whether_to_print_error_messages)
+					{
+						output << "|||\n" << errors.str() << std::flush;
+					}
 				}
 			}
 
@@ -466,6 +479,46 @@ namespace expr
 					}
 				});
 			}
+
+			struct option_set
+			{
+				friend class environment;
+				option_set()
+				{
+					default_final_operation = std::nullopt;
+					whether_to_reprint_input_as_parsed = true;
+					whether_to_print_error_messages = true;
+				}
+
+				void auto_call(std::optional<std::string>&& a)
+				{
+					if (a)
+					{
+						default_final_operation = name_checker{ std::move(*a) };
+					}
+					else
+					{
+						default_final_operation = std::nullopt;
+					}
+				}
+
+				void input_reprint(bool a)
+				{
+					whether_to_reprint_input_as_parsed = a;
+				}
+
+				void error_print(bool a)
+				{
+					whether_to_print_error_messages = a;
+				}
+
+			private:
+				std::optional<name_checker> default_final_operation;
+				bool whether_to_reprint_input_as_parsed;
+				bool whether_to_print_error_messages;
+			};
+
+			option_set settings;
 
 		private:
 			function_set functions;
