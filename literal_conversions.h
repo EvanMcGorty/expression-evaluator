@@ -239,7 +239,7 @@ namespace expr
 						{
 							return std::nullopt;
 						}
-						ret = tm;
+						ret = static_cast<t>(tm);
 					}
 					else
 					{
