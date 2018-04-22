@@ -357,19 +357,19 @@ namespace expr
 				switch (data.change)
 				{
 				case(sc::neutral):
-					ret = "@" + data.var_name;
+					ret = "=" + data.var_name;
 					break;
 				case(sc::pop):
 					ret.reserve(data.var_name.size() + 2);
-					ret.push_back('@');
+					ret.push_back('=');
 					ret.append(data.var_name);
-					ret.push_back('~');
+					ret.push_back('\\');
 					break;
 				case(sc::push):
 					ret.reserve(data.var_name.size() + 2);
-					ret.push_back('@');
+					ret.push_back('=');
 					ret.append(data.var_name);
-					ret.push_back('+');
+					ret.push_back('/');
 					break;
 				}
 				return ret;
@@ -378,7 +378,7 @@ namespace expr
 
 			static std::optional<variable> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
-				assert(start != stop && *start == '@');
+				assert(start != stop && *start == '=');
 
 				std::string ret;
 				sc sc_ret;
@@ -395,11 +395,11 @@ namespace expr
 					{
 						switch (*start)
 						{
-						case('+'):
+						case('/'):
 							sc_ret = sc::push;
 							++start;
 							break;
-						case('~'):
+						case('\\'):
 							sc_ret = sc::pop;
 							++start;
 							break;
@@ -624,7 +624,7 @@ namespace expr
 				{
 					return std::nullopt;
 				}
-				if (*start == '@')
+				if (*start == '=')
 				{
 					std::optional<variable> n = variable::parse(start, stop);
 					if (n)
