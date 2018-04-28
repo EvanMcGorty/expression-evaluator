@@ -432,7 +432,8 @@ namespace expr
 			}
 
 
-			held_callable value_printer(std::ostream& to)
+
+			held_callable info_printer(std::ostream& to)
 			{
 				return manual(std::function<value_holder(std::vector<stack_elem>&)>{[to = &to](std::vector<stack_elem>& a) -> value_holder
 					{
@@ -446,6 +447,23 @@ namespace expr
 							return value_holder::make_nullval();
 						}
 					}});
+			}
+
+
+			held_callable value_printer(std::ostream& to)
+			{
+				return manual(std::function<value_holder(std::vector<stack_elem>&)>{[to = &to](std::vector<stack_elem>& a) -> value_holder
+				{
+					if (a.size() == 1 && !a[0].is_nullval())
+					{
+						*to << a[0]->convert_into_string() << std::endl;
+						return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
+					}
+					else
+					{
+						return value_holder::make_nullval();
+					}
+				}});
 			}
 			
 			held_callable garbage_getter()

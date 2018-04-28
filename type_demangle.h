@@ -58,7 +58,6 @@ namespace expr
 			
 		}
 		
-		//these wierd function signatures let someone do name_of<compile_time_known_type>() or name_of(type_info_for_runtime_known_type)
 		template<typename type>
 		std::string name_of()
 		{
