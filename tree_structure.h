@@ -560,7 +560,7 @@ namespace expr
 			{
 				if (val.is_nullval())
 				{
-					return "#";
+					return "_";
 				}
 				else
 				{
@@ -648,7 +648,7 @@ namespace expr
 						return std::nullopt;
 					}
 				}
-				else if (*start == '#')
+				else if (*start == '_')
 				{
 					++start;
 					return std::optional<elem>{elem::make_empty()};
@@ -822,7 +822,7 @@ namespace expr
 				//ret.append(arguments.at(i).str());
 				if (it.val.is_nullval())
 				{
-					ret.push_back('#');
+					ret.push_back('_');
 				}
 				else
 				{

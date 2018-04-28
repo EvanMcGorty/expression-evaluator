@@ -69,6 +69,7 @@ namespace expr
 					return get_value(*a.rbegin());
 				}
 			}
+
 		};
 
 		template<>
@@ -91,6 +92,7 @@ namespace expr
 
 		struct cpp_core
 		{
+
 			static value_holder drop(std::vector<stack_elem>& a)
 			{
 				for (auto& it : a)

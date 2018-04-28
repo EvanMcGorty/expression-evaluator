@@ -431,6 +431,22 @@ namespace expr
 				return *this;
 			}
 
+
+			held_callable value_printer(std::ostream& to)
+			{
+				return manual(std::function<value_holder(std::vector<stack_elem>&)>{[to = &to](std::vector<stack_elem>& a) -> value_holder
+					{
+						if (a.size() == 1 && !a[0].is_nullval())
+						{
+							*to << a[0]->string_view() << std::endl;
+						}
+						else
+						{
+							*to << "EMPTY" << std::endl;
+						}
+						return value_holder::make_nullval();
+					}});
+			}
 			
 			held_callable garbage_getter()
 			{
