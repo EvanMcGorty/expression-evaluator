@@ -10,4 +10,6 @@ namespace expr
 	using impl::core;
 	using impl::util;
 	using impl::cpp_core;
+
+	using impl::rename;
 }

@@ -27,7 +27,7 @@ namespace expr
 			return fs_info<t>::get_functions();
 		}
 		template<typename t>
-		function_set fs_name()
+		std::string fs_name()
 		{
 			return fs_info<t>::get_name();
 		}
@@ -97,6 +97,18 @@ namespace expr
 		struct cpp_core
 		{
 
+			static value_holder to_string(std::vector<stack_elem>& a)
+			{
+				if (a.size() == 1 && !a[0].is_nullval())
+				{
+					return value_holder::make<object_of<std::string>>(a[0]->convert_into_string());
+				}
+				else
+				{
+					return value_holder::make_nullval();
+				}
+			}
+
 			static value_holder drop(std::vector<stack_elem>& a)
 			{
 				for (auto& it : a)
@@ -123,7 +135,8 @@ namespace expr
 			static function_set get_functions()
 			{
 				function_set ret;
-				ret.add(manual(cpp_core::drop), "drop");
+				ret.add(manual(cpp_core::drop), "drop")
+					.add(manual(cpp_core::to_string), "to_string");
 				return ret;
 			}
 
@@ -263,7 +276,7 @@ namespace expr
 
 			static std::string get_name()
 			{
-				return demangle(typeid(t).name());
+				return name_of<t>();
 			}
 		};
 

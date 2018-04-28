@@ -163,12 +163,12 @@ namespace expr
 		{
 			if constexpr(sizeof...(ts) > 0)
 			{
-				target << demangle(typeid(t).name()) << ", ";
+				target << name_of<t>() << ", ";
 				put_types<ts...>(target);
 			}
 			else
 			{
-				target << demangle(typeid(t).name());
+				target << name_of<t>();
 			}
 		}
 
@@ -201,7 +201,7 @@ namespace expr
 				{
 					put_types<store_t<args>...>(target);
 				}
-				target << ") -> " << demangle(typeid(returned_t<ret_t>).name());
+				target << ") -> " << name_of<returned_t<ret_t>>();
 			}
 
 			//when the stack is not popped from, it is the callers responsibility to manage garbage variables

@@ -32,6 +32,8 @@ namespace expr
 				return false;
 			}
 
+			virtual std::string convert_into_string() const = 0;
+
 			virtual std::string string_view() const = 0;
 
 			//returns true if this is an object and the held value was moved.
@@ -67,6 +69,11 @@ namespace expr
 			bool is_unparsed() const override
 			{
 				return true;
+			}
+
+			std::string convert_into_string() const override
+			{
+				return std::string{ value };
 			}
 
 			std::string string_view() const override
@@ -124,6 +131,11 @@ namespace expr
 			{
 				return typeid(void);
 			}
+
+			std::string convert_into_string() const override
+			{
+				return "";
+			}
 			
 			std::string string_view() const override
 			{
@@ -163,9 +175,14 @@ namespace expr
 			{
 			}
 
+			std::string convert_into_string() const override
+			{
+				return converter<t>::print(val);
+			}
+
 			std::string string_view() const override
 			{
-				return std::string("object_of{") + demangle(typeid(t).name()) + "(" + converter<t>::print(val) + ")" + "}";
+				return std::string("object_of{") + name_of<t>() + "(" + converter<t>::print(val) + ")" + "}";
 			}
 
 			bool can_trivially_destruct() const override
@@ -305,6 +322,11 @@ namespace expr
 				{
 					return (**ref).can(tar);
 				}
+			}
+
+			std::string convert_into_string() const override
+			{
+				return (**ref).convert_into_string();
 			}
 
 			std::string string_view() const override

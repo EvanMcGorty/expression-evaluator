@@ -305,7 +305,7 @@ namespace expr
 		template<typename t>
 		function_set fs_functs();
 		template<typename t>
-		function_set fs_name();
+		std::string fs_name();
 
 		class environment
 		{
@@ -424,7 +424,7 @@ namespace expr
 				return *this;
 			}
 
-			template<typename t = void, typename string_convertible>
+			template<typename t = void, typename string_convertible = std::string>
 			environment& sbind(string_convertible&& name = fs_name<t>(), function_set&& set = fs_functs<t>())
 			{
 				functions.use(std::move(set), std::forward<string_convertible>(name));
