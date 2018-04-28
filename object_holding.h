@@ -116,6 +116,36 @@ namespace expr
 		};
 
 
+		//indicates a successful function call for with return type void
+		class void_object final : public any_object
+		{
+		public:
+			std::type_info const& get_type() const override
+			{
+				return typeid(void);
+			}
+			
+			std::string string_view() const override
+			{
+				return "void_object{}";
+			}
+
+			bool can_trivially_destruct() const override
+			{
+				return true;
+			}
+
+			bool get(any_type_ask* tar) override
+			{
+				return false;
+			}
+
+			bool can(std::type_info const& tar) const override
+			{
+				return false;
+			}
+
+		};
 
 		template<typename t>
 		class object_of final : public any_object

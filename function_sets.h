@@ -42,8 +42,12 @@ namespace expr
 					auto o1 = get_value(a[1]);
 					set_value(a[0], std::move(o1));
 					set_value(a[1], std::move(o0));
+					return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 				}
-				return value_holder::make_nullval();
+				else
+				{
+					return value_holder::make_nullval();
+				}
 			}
 
 			static value_holder first(std::vector<stack_elem>& a)
@@ -109,7 +113,7 @@ namespace expr
 						}
 					}
 				}
-				return value_holder::make_nullval();
+				return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 			}
 		};
 

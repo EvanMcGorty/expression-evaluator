@@ -28,7 +28,7 @@ namespace expr
 		{
 			if (todo.val.is_nullval())
 			{
-				errors << "empty value found\n";
+				errors << "null value found\n";
 				loc.stuff.emplace_back(stack_elem::make_nullval());
 			}
 			else if (todo.val->is_literal_push())
@@ -94,7 +94,7 @@ namespace expr
 					value_holder tp = todo.try_perform(loc, temp.arg_count);
 					if (tp.is_nullval())
 					{
-						errors << "call to function \"" << temp.name << "\" returned empty\n";
+						errors << "call to function \"" << temp.name << "\" returned null\n";
 					}
 					loc.clear_front(temp.arg_count, env.garbage);
 					loc.stuff.emplace_back(std::move(tp));

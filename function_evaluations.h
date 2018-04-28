@@ -224,7 +224,7 @@ namespace expr
 						if constexpr(!can_return<ret_t>())
 						{
 							do_call(std::move(*might_use));
-							return value_holder::make_nullval();
+							return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 						}
 						else
 						{
@@ -241,7 +241,7 @@ namespace expr
 					if constexpr (!can_return<ret_t>())
 					{
 						target();
-						return value_holder::make_nullval();
+						return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 					}
 					else
 					{

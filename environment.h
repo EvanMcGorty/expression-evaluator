@@ -439,12 +439,12 @@ namespace expr
 						if (a.size() == 1 && !a[0].is_nullval())
 						{
 							*to << a[0]->string_view() << std::endl;
+							return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 						}
 						else
 						{
-							*to << "EMPTY" << std::endl;
+							return value_holder::make_nullval();
 						}
-						return value_holder::make_nullval();
 					}});
 			}
 			
