@@ -344,7 +344,7 @@ namespace expr
 				}
 				else
 				{
-					return "variable_with" + (**ref).string_view();
+					return "variable_with_" + (**ref).string_view();
 				}
 			}
 
