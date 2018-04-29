@@ -326,12 +326,26 @@ namespace expr
 
 			std::string convert_into_string() const override
 			{
-				return (**ref).convert_into_string();
+				if (ref->is_nullval())
+				{
+					return "";
+				}
+				else
+				{
+					return (**ref).convert_into_string();
+				}
 			}
 
 			std::string string_view() const override
 			{
-				return "variable_with" + (**ref).string_view();
+				if (ref->is_nullval())
+				{
+					return "empty_variable";
+				}
+				else
+				{
+					return "variable_with" + (**ref).string_view();
+				}
 			}
 
 			value_holder* ref;
