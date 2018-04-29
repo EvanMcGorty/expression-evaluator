@@ -140,8 +140,6 @@ namespace expr
 				}
 			}
 
-			void clear_front(size_t a, variable_value_stack& garbage);
-
 
 		};
 

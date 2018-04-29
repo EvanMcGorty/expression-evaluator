@@ -6,25 +6,7 @@ namespace expr
 	namespace impl
 	{
 
-		void stack::clear_front(size_t a, variable_value_stack& garbage)
-		{
-			assert(a <= stuff.size());
-
-			for (int i = 0; i != a; ++i)
-			{
-				if (!stuff.rbegin()->is_nullval() && (*stuff.rbegin())->is_object())
-				{
-					auto to_push = std::move(std::move(*stuff.rbegin()).downcast<any_object>());
-					if (!to_push->can_trivially_destruct())
-					{
-						garbage.push_front(std::move(to_push));
-					}
-				}
-				stuff.pop_back();
-			}
-		}
-
-		void perform(statement&& todo, stack& loc, environment& env, std::ostream& errors)
+		void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors)
 		{
 			if (todo.val.is_nullval())
 			{
@@ -43,7 +25,7 @@ namespace expr
 				{
 				case(sc::pop):
 				{
-					auto to_push = env.variables.take_var(temp.var.data.var_name);
+					auto to_push = variables.take_var(temp.var.data.var_name);
 					if (to_push)
 					{
 						loc.stuff.emplace_back(std::move(*to_push));
@@ -57,7 +39,7 @@ namespace expr
 				break;
 				case(sc::neutral):
 				{
-					auto to_push = env.variables.get_var(temp.var.data.var_name);
+					auto to_push = variables.get_var(temp.var.data.var_name);
 					if (to_push)
 					{
 						loc.stuff.emplace_back(stack_elem::make<value_reference>(*to_push));
@@ -71,7 +53,7 @@ namespace expr
 				break;
 				case(sc::push):
 				{
-					auto to_push = env.variables.push_var(std::move(temp.var.data.var_name));
+					auto to_push = variables.push_var(std::move(temp.var.data.var_name));
 					loc.stuff.emplace_back(stack_elem::make<value_reference>(to_push));
 				}
 				break;
@@ -80,11 +62,11 @@ namespace expr
 			else if (todo.val->is_function_call())
 			{
 				function_call temp = std::move(*todo.val.downcast_get<function_call>());
-				auto optional_todo = env.functions.get(temp.name);
+				auto optional_todo = functions.get(temp.name);
 				if (!optional_todo)
 				{
 					errors << "function name \"" << temp.name << "\" not found\n";
-					loc.clear_front(temp.arg_count, env.garbage);
+					garbage.clean_all_to_front(loc, temp.arg_count);
 					loc.stuff.emplace_back(stack_elem::make_nullval());
 				}
 				else
@@ -96,7 +78,7 @@ namespace expr
 					{
 						errors << "call to function \"" << temp.name << "\" returned null\n";
 					}
-					loc.clear_front(temp.arg_count, env.garbage);
+					garbage.clean_all_to_front(loc, temp.arg_count);
 					loc.stuff.emplace_back(std::move(tp));
 				}
 			}
@@ -110,22 +92,24 @@ namespace expr
 		{
 			for (auto&& it : std::move(tar.statements))
 			{
-				perform(std::move(it), loc, env, errors);
+				perform(std::move(it), loc, env.variables,env.functions, env.garbage, errors);
 			}
-			loc.clear_front(loc.stuff.size(), env.garbage);
 		}
 
-		void environment::run(executable&& tar, std::ostream& errors)
+		stack environment::run(executable&& tar, std::ostream& errors)
 		{
 			stack loc;
 			perform_all(std::move(tar), loc, *this, errors);
+			return loc;
 		}
 
-		void environment::run(elem&& tar, std::ostream& errors)
+		stack_elem environment::evaluate(elem&& tar, std::ostream& errors)
 		{
 			executable to_run;
 			std::move(tar).into_executable(to_run);
-			run(std::move(to_run), errors);
+			stack v = run(std::move(to_run), errors);
+			assert(v.stuff.size() == 1);
+			return std::move(*v.stuff.begin());
 		}
 
 	}

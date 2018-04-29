@@ -247,6 +247,29 @@ namespace expr
 				return ret;
 			}
 
+			void clean_to_front(stack_elem& from)
+			{
+				if (!from.is_nullval() && from->is_object())
+				{
+					auto to_push = std::move(std::move(from).downcast<any_object>());
+					if (!to_push->can_trivially_destruct())
+					{
+						push_front(std::move(to_push));
+					}
+				}
+			}
+
+			void clean_all_to_front(stack& from, size_t count)
+			{
+				assert(count <= from.stuff.size());
+
+				for (int i = 0; i != count; ++i)
+				{
+					clean_to_front(*from.stuff.rbegin());
+					from.stuff.pop_back();
+				}
+			}
+
 		private:
 			std::vector<value_holder> values;
 		};
@@ -307,36 +330,119 @@ namespace expr
 		template<typename t>
 		std::string fs_name();
 
+
+		struct option_set
+		{
+			friend class environment;
+			option_set()
+			{
+				default_final_operation = std::nullopt;
+				whether_to_reprint_input_as_parsed = true;
+				whether_to_print_error_messages = true;
+			}
+
+			void auto_call(std::optional<std::string>&& a)
+			{
+				if (a)
+				{
+					default_final_operation = name_checker{ std::move(*a) };
+				}
+				else
+				{
+					default_final_operation = std::nullopt;
+				}
+			}
+
+			void input_reprint(bool a)
+			{
+				whether_to_reprint_input_as_parsed = a;
+			}
+
+			void error_print(bool a)
+			{
+				whether_to_print_error_messages = a;
+			}
+
+		private:
+			std::optional<name_checker> default_final_operation;
+			bool whether_to_reprint_input_as_parsed;
+			bool whether_to_print_error_messages;
+		};
+
+
 		class environment
 		{
-			friend void perform(statement&& todo, stack& loc, environment& env, std::ostream& errors);
+			friend void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors);
 			friend void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors);
 		public:
 
 
 
-			void run(executable&& a, std::ostream& errors);
+			stack run(executable&& a, std::ostream& errors);
 
-			void run(elem&& a, std::ostream& errors);
+			stack_elem evaluate(elem&& a, std::ostream& errors);
 
-			void attach(std::istream& input, std::ostream& output)
+			void attach(std::istream& input, std::ostream& output, option_set&& settings = option_set{})
 			{
+				function_set special_functions;
 				while (true)
 				{
 					output << "\\\\\\\n" << std::flush;
-					elem n;
-					input >> n;
-					if (settings.whether_to_reprint_input_as_parsed)
+					std::string unparsed;
+					std::getline(input, unparsed);
+					std::optional<statement> special_call;
+					executable to_run;
+					if (unparsed.begin() != unparsed.end() && *unparsed.begin() == '_')
 					{
-						output << "|||\n" << n.str() << "\n";
+						elem n = elem::parse(unparsed.begin()+1, unparsed.end()).value_or(elem::make_empty());
+						if (n.get_function() == nullptr)
+						{
+							if (settings.whether_to_reprint_input_as_parsed)
+							{
+								output << "|||\n_\n";
+							}
+							
+							to_run.statements.push_back(statement::val_type::make_nullval());
+						}
+						else
+						{
+							if (settings.whether_to_reprint_input_as_parsed)
+							{
+								output << "|||\n_" << n.str() << "\n";
+							}
+							std::move(n).into_executable(to_run);
+							special_call = std::make_optional(std::move(*to_run.statements.rbegin()));
+							to_run.statements.pop_back();
+						}
 					}
-					if (settings.default_final_operation)
+					else
 					{
-						n = elem::make(function_value{ settings.default_final_operation->get_copy(), std::vector<elem>{ std::move(n) } });
+						elem n = elem::parse(unparsed.begin(), unparsed.end()).value_or(elem::make_empty());
+
+						if (settings.whether_to_reprint_input_as_parsed)
+						{
+							output << "|||\n" << n.str() << "\n";
+						}
+
+						std::move(n).into_executable(to_run);
 					}
+
 					output << "///" << std::endl;
 					std::stringstream errors;
-					run(std::move(n),errors);
+					stack result = run(std::move(to_run), errors);
+					if (special_call)
+					{
+						perform(std::move(*special_call), result, variables, special_functions, garbage, errors);
+					}
+					else if (settings.default_final_operation)
+					{
+						perform(statement::val_type::make<function_call>(settings.default_final_operation->get_copy(), 1 ), result, variables, functions, garbage, errors);
+					}
+
+					assert(result.stuff.size() == 1);
+
+					garbage.clean_all_to_front(result,1);
+					
 					if (settings.whether_to_print_error_messages)
 					{
 						output << "|||\n" << errors.str() << std::flush;
@@ -514,45 +620,6 @@ namespace expr
 				});
 			}
 
-			struct option_set
-			{
-				friend class environment;
-				option_set()
-				{
-					default_final_operation = std::nullopt;
-					whether_to_reprint_input_as_parsed = true;
-					whether_to_print_error_messages = true;
-				}
-
-				void auto_call(std::optional<std::string>&& a)
-				{
-					if (a)
-					{
-						default_final_operation = name_checker{ std::move(*a) };
-					}
-					else
-					{
-						default_final_operation = std::nullopt;
-					}
-				}
-
-				void input_reprint(bool a)
-				{
-					whether_to_reprint_input_as_parsed = a;
-				}
-
-				void error_print(bool a)
-				{
-					whether_to_print_error_messages = a;
-				}
-
-			private:
-				std::optional<name_checker> default_final_operation;
-				bool whether_to_reprint_input_as_parsed;
-				bool whether_to_print_error_messages;
-			};
-
-			option_set settings;
 
 		private:
 			function_set functions;

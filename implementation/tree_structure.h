@@ -709,7 +709,7 @@ namespace expr
 
 			literal_value* get_literal()
 			{
-				if (val.is_nullval() && val->is_literal())
+				if (!val.is_nullval() && val->is_literal())
 				{
 					return &val.downcast_get<literal>()->data;
 				}
@@ -721,7 +721,7 @@ namespace expr
 
 			variable_value* get_variable()
 			{
-				if (val.is_nullval() && val->is_variable())
+				if (!val.is_nullval() && val->is_variable())
 				{
 					return &val.downcast_get<variable>()->data;
 				}
@@ -733,7 +733,7 @@ namespace expr
 
 			function_value* get_function()
 			{
-				if (val.is_nullval() && val->is_function())
+				if (!val.is_nullval() && val->is_function())
 				{
 					return &val.downcast_get<function>()->data;
 				}
@@ -746,7 +746,7 @@ namespace expr
 
 			literal_value const* get_literal() const
 			{
-				if (val.is_nullval() && val->is_literal())
+				if (!val.is_nullval() && val->is_literal())
 				{
 					return &val.downcast_get<literal>()->data;
 				}
@@ -758,7 +758,7 @@ namespace expr
 
 			variable_value const* get_variable() const
 			{
-				if (val.is_nullval() && val->is_variable())
+				if (!val.is_nullval() && val->is_variable())
 				{
 					return &val.downcast_get<variable>()->data;
 				}
@@ -770,7 +770,7 @@ namespace expr
 
 			function_value const* get_function() const
 			{
-				if (val.is_nullval() && val->is_function())
+				if (!val.is_nullval() && val->is_function())
 				{
 					return &val.downcast_get<function>()->data;
 				}
