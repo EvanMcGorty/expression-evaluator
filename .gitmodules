@@ -1,3 +1,3 @@
 [submodule "virtual-function-utilities"]
-	path = virtual-function-utilities
+	path = implementation/virtual-function-utilities
 	url = https://github.com/EvanMcGorty/virtual-function-utilities.git

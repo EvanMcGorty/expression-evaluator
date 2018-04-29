@@ -1,12 +1,8 @@
-#include"expression.h"
+#include"evaluator.h"
+#include"element.h"
 
 namespace expr
 {
-	using impl::literal_value;
-	using impl::variable_value;
-	using impl::function_value;
-	using impl::empty_elem;
-	using impl::sc;
 	using impl::executable;
 	using impl::as_function;
 	using impl::manual;
