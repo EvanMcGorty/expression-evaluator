@@ -47,13 +47,6 @@ namespace expr
 			}
 		};
 
-		class value_elem_val : public any_elem_val
-		{
-			virtual bool has_value() const final override
-			{
-				return true;
-			}
-		};
 
 
 		//on a stack, this is what a literal pushes.
@@ -94,6 +87,15 @@ namespace expr
 			}
 
 			std::string value;
+		};
+
+
+		class value_elem_val : public any_elem_val
+		{
+			virtual bool has_value() const final override
+			{
+				return true;
+			}
 		};
 
 
