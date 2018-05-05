@@ -224,7 +224,7 @@ namespace expr
 				}
 			}
 
-			std::string string_view() const
+			std::string string_view(name_set const& from) const
 			{
 				if (values.size() == 0)
 				{
@@ -239,7 +239,7 @@ namespace expr
 					}
 					else
 					{
-						ret.append(it->string_view());
+						ret.append(it->string_view(from));
 					}
 					ret.push_back(',');
 				}
@@ -311,11 +311,11 @@ namespace expr
 				}
 			}
 
-			void put_values(std::ostream& to) const
+			void put_values(std::ostream& to, name_set const& from) const
 			{
 				for (auto const& it : map)
 				{
-					to << it.first << "= "<< it.second.string_view() << '\n';
+					to << it.first << "= "<< it.second.string_view(from) << '\n';
 				}
 				to << std::flush;
 			}
@@ -328,7 +328,7 @@ namespace expr
 		template<typename t>
 		function_set fs_functs();
 		template<typename t>
-		std::string fs_name();
+		std::string fs_name(name_set const& names);
 
 
 		struct option_set
@@ -369,20 +369,24 @@ namespace expr
 			bool whether_to_print_error_messages;
 		};
 
+		class environment;
+
+		void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors);
+		void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors);
+		
 
 		class environment
 		{
-			friend void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors);
 			friend void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors);
+			friend void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors);
 		public:
-
 
 
 			stack run(executable&& a, std::ostream& errors);
 
 			stack_elem evaluate(elem&& a, std::ostream& errors);
 
-			void attach(std::istream& input, std::ostream& output, option_set&& settings = option_set{})
+			void attach(std::istream& input = std::cin, std::ostream& output = std::cout, option_set&& settings = option_set{})
 			{
 				function_set special_functions;
 				while (true)
@@ -394,7 +398,7 @@ namespace expr
 					executable to_run;
 					if (unparsed.begin() != unparsed.end() && *unparsed.begin() == '_')
 					{
-						elem n = elem::parse(unparsed.begin()+1, unparsed.end()).value_or(elem::make_empty());
+						elem n = elem::make(std::string{unparsed.begin()+1, unparsed.end()});
 						if (n.get_function() == nullptr)
 						{
 							if (settings.whether_to_reprint_input_as_parsed)
@@ -417,7 +421,7 @@ namespace expr
 					}
 					else
 					{
-						elem n = elem::parse(unparsed.begin(), unparsed.end()).value_or(elem::make_empty());
+						elem n = elem::make(std::string{unparsed.begin(), unparsed.end()});
 
 						if (settings.whether_to_reprint_input_as_parsed)
 						{
@@ -457,7 +461,7 @@ namespace expr
 			}
 
 			template<typename string_convertible>
-			environment& rebind(string_convertible&& name, held_callable&& target)
+			environment& rbind(string_convertible&& name, held_callable&& target)
 			{
 				if (!target.is_nullval())
 				{
@@ -531,7 +535,7 @@ namespace expr
 			}
 
 			template<typename t = void, typename string_convertible = std::string>
-			environment& sbind(string_convertible&& name = fs_name<t>(), function_set&& set = fs_functs<t>())
+			environment& sbind(string_convertible&& name = fs_name<t>(global_type_renames), function_set&& set = fs_functs<t>())
 			{
 				functions.use(std::move(set), std::forward<string_convertible>(name));
 				return *this;
@@ -539,13 +543,13 @@ namespace expr
 
 
 
-			held_callable info_printer(std::ostream& to)
+			held_callable info_printer(std::ostream& to = std::cout, name_set const& from = global_type_renames)
 			{
-				return manual(std::function<value_holder(std::vector<stack_elem>&)>{[to = &to](std::vector<stack_elem>& a) -> value_holder
+				return manual(std::function<value_holder(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> value_holder
 					{
 						if (a.size() == 1 && !a[0].is_nullval())
 						{
-							*to << a[0]->string_view() << std::endl;
+							*to << a[0]->string_view(*from) << std::endl;
 							return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 						}
 						else
@@ -556,7 +560,7 @@ namespace expr
 			}
 
 
-			held_callable value_printer(std::ostream& to)
+			held_callable value_printer(std::ostream& to = std::cout)
 			{
 				return manual(std::function<value_holder(std::vector<stack_elem>&)>{[to = &to](std::vector<stack_elem>& a) -> value_holder
 				{
@@ -577,6 +581,13 @@ namespace expr
 				return manual(std::function<value_holder(std::vector<stack_elem>&)>{
 					[g = &garbage](std::vector<stack_elem>& a) -> value_holder
 					{
+						if (a.size() != 1 || a[0].is_nullval() || !a[0]->is_reference())
+						{
+							return value_holder::make_nullval();
+						}
+
+						value_holder& ret = *a[0].downcast_get<value_reference>()->ref;
+
 						std::optional<value_holder> f = std::move(g->take_front());
 						while (f)
 						{
@@ -587,7 +598,8 @@ namespace expr
 							}
 							else
 							{
-								return std::move(*f);
+								std::swap(*f,ret);
+								return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 							}
 						}
 						return value_holder::make_nullval();
@@ -595,27 +607,27 @@ namespace expr
 				});
 			}
 
-			held_callable functions_printer(std::ostream& to)
+			held_callable functions_printer(std::ostream& to = std::cout, name_set const& names = global_type_renames)
 			{
 				return callable(std::function<void()>{
-					[to = &to,fs =&functions]() -> void
+					[to = &to,fs = &functions, names = &names]() -> void
 					{
 						for (auto const& it : fs->view())
 						{
 							*to << it.first;
-							it.second->put_type(*to);
+							it.second->put_type(*to,*names);
 							*to << '\n' << std::flush;
 						}
 					}
 				});
 			}
 
-			held_callable variables_printer(std::ostream& to)
+			held_callable variables_printer(std::ostream& to = std::cout, name_set const& names = global_type_renames)
 			{
 				return callable(std::function<void()>{
-					[to = &to, vs = &variables]() -> void
+					[to = &to, vs = &variables,names = &names]() -> void
 					{
-						vs->put_values(*to);
+						vs->put_values(*to,*names);
 					}
 				});
 			}

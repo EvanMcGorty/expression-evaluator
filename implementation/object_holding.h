@@ -34,7 +34,7 @@ namespace expr
 
 			virtual std::string convert_into_string() const = 0;
 
-			virtual std::string string_view() const = 0;
+			virtual std::string string_view(name_set const& names) const = 0;
 
 			//returns true if this is an object and the held value was moved.
 			virtual bool get(any_type_ask* tar) = 0;
@@ -76,7 +76,7 @@ namespace expr
 				return std::string{ value };
 			}
 
-			std::string string_view() const override
+			std::string string_view(name_set const& names) const override
 			{
 				literal temp{ literal_value{std::string{value}} };
 				return std::string("unparsed{") + temp.make_string() + "}";
@@ -137,7 +137,7 @@ namespace expr
 				return "";
 			}
 			
-			std::string string_view() const override
+			std::string string_view(name_set const& names) const override
 			{
 				return "void_object{}";
 			}
@@ -180,9 +180,9 @@ namespace expr
 				return converter<t>::print(val);
 			}
 
-			std::string string_view() const override
+			std::string string_view(name_set const& names) const override
 			{
-				return std::string("object_of{") + name_of<t>() + "(" + converter<t>::print(val) + ")" + "}";
+				return std::string("object_of{") + name_of<t>(names) + "(" + converter<t>::print(val) + ")" + "}";
 			}
 
 			bool can_trivially_destruct() const override
@@ -336,7 +336,7 @@ namespace expr
 				}
 			}
 
-			std::string string_view() const override
+			std::string string_view(name_set const& names) const override
 			{
 				if (ref->is_nullval())
 				{
@@ -344,7 +344,7 @@ namespace expr
 				}
 				else
 				{
-					return "variable_with_" + (**ref).string_view();
+					return "variable_with_" + (**ref).string_view(names);
 				}
 			}
 

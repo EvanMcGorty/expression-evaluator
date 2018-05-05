@@ -47,35 +47,41 @@ namespace expr
 {
 	namespace impl
 	{
-		std::unordered_map<std::type_index, std::string> renamed_types;
+
+		struct name_set
+		{
+			std::unordered_map<std::type_index, std::string> data;
+		};
+
+		name_set global_type_renames;
 
 		template<typename type>
-		void rename(std::string&& new_name)
+		void rename(std::string&& new_name, name_set& names = global_type_renames)
 		{
 			static_assert(!(std::is_const_v<type>||std::is_pointer_v<type>||std::is_reference_v<type>), "can only rename a raw class/struct/union");
 
-			renamed_types[std::type_index{ typeid(type) }] = std::move(new_name);
+			names.data[std::type_index{ typeid(type) }] = std::move(new_name);
 			
 		}
 		
 		template<typename type>
-		std::string name_of()
+		std::string name_of(name_set const& names = global_type_renames)
 		{
 			if constexpr(std::is_reference_v<type>)
 			{
-				return name_of<std::remove_reference_t<type>*>();
+				return name_of<std::remove_reference_t<type>*>(names);
 			}
 			else if constexpr(std::is_const_v<type>)
 			{
-				return name_of<std::remove_const_t<type>>() + "-const";
+				return name_of<std::remove_const_t<type>>(names) + "-const";
 			}
 
-			auto g = renamed_types.find(std::type_index{ typeid(type) });
-			if (g == renamed_types.end())
+			auto g = names.data.find(std::type_index{ typeid(type) });
+			if (g == names.data.end())
 			{
 				if constexpr(std::is_pointer_v<type>)
 				{
-					return name_of<std::remove_pointer_t<type>>() + "-ref";
+					return name_of<std::remove_pointer_t<type>>(names) + "-ref";
 				}
 				else
 				{

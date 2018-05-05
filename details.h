@@ -18,7 +18,9 @@ namespace expr
 	using impl::object_of;
 	using impl::value_reference;
 	using impl::converter;
+	using impl::name_set;
 	using impl::name_of;
+	using impl::global_type_renames;
 
 
 }

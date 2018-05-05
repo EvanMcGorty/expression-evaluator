@@ -15,7 +15,7 @@ namespace expr
 				static_assert("no overloaded instance of fs_info exists for this class");
 			}
 
-			static std::string get_name()
+			static std::string get_name(name_set const& names)
 			{
 				static_assert("no overloaded instance of fs_info exists for this class");
 			}
@@ -27,9 +27,9 @@ namespace expr
 			return fs_info<t>::get_functions();
 		}
 		template<typename t>
-		std::string fs_name()
+		std::string fs_name(name_set const& names)
 		{
-			return fs_info<t>::get_name();
+			return fs_info<t>::get_name(names);
 		}
 
 		struct core
@@ -88,7 +88,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name()
+			static std::string get_name(name_set const& names)
 			{
 				return "core";
 			}
@@ -140,7 +140,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name()
+			static std::string get_name(name_set const& names)
 			{
 				return "cpp";
 			}
@@ -274,9 +274,9 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name()
+			static std::string get_name(name_set const& from)
 			{
-				return name_of<t>();
+				return name_of<t>(from);
 			}
 		};
 

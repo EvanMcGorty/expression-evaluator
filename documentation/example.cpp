@@ -90,13 +90,13 @@ int main()
         .sbind<expr::util<std::vector<double>>>()
         .sbind<expr::util<double>>()
 
-        .rebind("gar",env.garbage_getter())
-        .rebind("view",env.info_printer(std::cout))
-        .rebind("vars",env.variables_printer(std::cout))
-        .rebind("functs",env.functions_printer(std::cout));
+        .rbind("gar",env.garbage_getter())
+        .rbind("view",env.info_printer(std::cout))
+        .rbind("vars",env.variables_printer(std::cout))
+        .rbind("functs",env.functions_printer(std::cout));
 
+	expr::option_set options;
+	options.auto_call("view");
 
-    env.settings.auto_call("view");
-
-    env.attach(std::cin,std::cout);
+	env.attach(std::cin, std::cout, std::move(options));
 }

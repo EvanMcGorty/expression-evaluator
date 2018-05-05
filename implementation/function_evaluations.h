@@ -148,7 +148,7 @@ namespace expr
 		{
 		public:
 			virtual value_holder try_perform(stack& a, size_t args_to_take) = 0;
-			virtual void put_type(std::ostream& target) const = 0;
+			virtual void put_type(std::ostream& target, name_set const& from) const = 0;
 			virtual mu::virt<any_callable> add_layer(mu::virt<any_callable>&& layer) && = 0;
 			virtual ~any_callable()
 			{}
@@ -157,16 +157,16 @@ namespace expr
 		using held_callable = mu::virt<any_callable>;
 
 		template<typename t,typename...ts>
-		void put_types(std::ostream& target)
+		void put_types(std::ostream& target, name_set const& from)
 		{
 			if constexpr(sizeof...(ts) > 0)
 			{
-				target << name_of<t>() << ", ";
-				put_types<ts...>(target);
+				target << name_of<t>(from) << ", ";
+				put_types<ts...>(target,from);
 			}
 			else
 			{
-				target << name_of<t>();
+				target << name_of<t>(from);
 			}
 		}
 
@@ -192,14 +192,14 @@ namespace expr
 
 			held_callable add_layer(held_callable&& layer) && override;
 
-			void put_type(std::ostream& target) const override
+			void put_type(std::ostream& target, name_set const& from) const override
 			{
 				target << '(';
 				if constexpr(sizeof...(args) > 0)
 				{
-					put_types<store_t<args>...>(target);
+					put_types<store_t<args>...>(target,from);
 				}
-				target << ") -> " << name_of<returned_t<ret_t>>();
+				target << ") -> " << name_of<returned_t<ret_t>>(from);
 			}
 
 			//when the stack is not popped from, it is the callers responsibility to manage garbage variables
@@ -300,7 +300,7 @@ namespace expr
 				target = a;
 			}
 
-			void put_type(std::ostream& target) const override
+			void put_type(std::ostream& target, name_set const& from) const override
 			{
 				target << "(...)->?";
 			}
@@ -375,12 +375,12 @@ namespace expr
 			}
 
 
-			void put_type(std::ostream& target) const override
+			void put_type(std::ostream& target, name_set const& from) const override
 			{
 				target << "\\ ";
-				callable_of<ret_t, args...>::put_type(target);
+				callable_of<ret_t, args...>::put_type(target,from);
 				target << " | ";
-				next->put_type(target);
+				next->put_type(target,from);
 			}
 
 		private:

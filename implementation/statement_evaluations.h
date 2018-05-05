@@ -6,7 +6,7 @@ namespace expr
 	namespace impl
 	{
 
-		void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors)
+		inline void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors)
 		{
 			if (todo.val.is_nullval())
 			{
@@ -88,7 +88,7 @@ namespace expr
 			}
 		}
 
-		void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors)
+		inline void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors)
 		{
 			for (auto&& it : std::move(tar.statements))
 			{
@@ -96,14 +96,14 @@ namespace expr
 			}
 		}
 
-		stack environment::run(executable&& tar, std::ostream& errors)
+		inline stack environment::run(executable&& tar, std::ostream& errors)
 		{
 			stack loc;
 			perform_all(std::move(tar), loc, *this, errors);
 			return loc;
 		}
 
-		stack_elem environment::evaluate(elem&& tar, std::ostream& errors)
+		inline stack_elem environment::evaluate(elem&& tar, std::ostream& errors)
 		{
 			executable to_run;
 			std::move(tar).into_executable(to_run);
