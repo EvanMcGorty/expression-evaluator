@@ -9,8 +9,9 @@ namespace expr
 	using impl::option_set;
 
 	using impl::core;
-	using impl::util;
 	using impl::cpp_core;
+	using impl::terminal;
+	using impl::util;
 
 	using impl::rename;
 }

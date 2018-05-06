@@ -210,7 +210,11 @@ namespace expr
 		{
 			static std::optional<t> parse(std::string const& tar)
 			{
-				if constexpr(std::is_arithmetic_v<t>)
+				if constexpr(std::is_pointer_v<t>)
+				{
+					return std::nullopt;
+				}
+				else if constexpr(std::is_arithmetic_v<t>)
 				{
 					auto p = parse_string_to_number(tar);
 					if (!p)
@@ -269,7 +273,11 @@ namespace expr
 
 			static std::string print(t const& tar)
 			{
-				if constexpr(std::is_arithmetic_v<t>)
+				if constexpr(std::is_pointer_v<t>)
+				{
+					return converter<std::remove_pointer_t<t>>::print(*tar);
+				}
+				else if constexpr(std::is_arithmetic_v<t>)
 				{
 					std::stringstream s;
 					s << tar;

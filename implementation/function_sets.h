@@ -127,6 +127,7 @@ namespace expr
 				}
 				return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 			}
+
 		};
 
 		template<>
@@ -236,6 +237,69 @@ namespace expr
 
 		};
 
+
+		struct terminal
+		{
+
+			static void exit()
+			{
+				terminate();
+			}
+
+			static void sys(std::string a)
+			{
+				system(a.c_str());
+			}
+
+			static void print(std::string a)
+			{
+				std::cout << a << std::flush;
+			}
+
+			static void println(std::string a)
+			{
+				std::cout << a << std::endl;
+			}
+
+			static std::string read()
+			{
+				std::string ret;
+				std::getline(std::cin, ret);
+				return ret;
+			}
+
+			static std::string input(std::string msg)
+			{
+				std::cout << msg << std::flush;
+				std::string ret;
+				std::getline(std::cin, ret);
+				return ret;
+			}
+
+		};
+
+		template<>
+		struct fs_info<terminal>
+		{
+			static function_set get_functions()
+			{
+				function_set ret;
+				ret
+					.add(callable(as_function(&terminal::exit)), "quit")
+					.add(callable(as_function(&terminal::sys)), "system")
+					.add(callable(as_function(&terminal::print)), "print")
+					.add(callable(as_function(&terminal::println)), "println")
+					.add(callable(as_function(&terminal::read)), "read")
+					.add(callable(as_function(&terminal::input)), "input");
+				return std::move(ret);
+			}
+
+			static std::string get_name(name_set const& names)
+			{
+				return "sys";
+			}
+		};
+
 		template<typename t>
 		struct fs_info<basic_util<t>>
 		{
@@ -327,6 +391,11 @@ namespace expr
 		template<>
 		struct extended_util<std::string>
 		{
+			static std::string from_char_vector(std::vector<char> const& a)
+			{
+				return std::string{ a.begin(),a.end() };
+			}
+
 			static std::string from_c_str(char const* from)
 			{
 				return std::string{ from };
@@ -371,11 +440,13 @@ namespace expr
 			{
 				function_set ret;
 				ret
+					.add(callable(as_function(&extended_util<std::string>::from_char_vector)), "char-vec-make")
+					.add(callable(as_function(&extended_util<std::string>::from_char_vector)), "make")
 					.add(callable(as_function(&extended_util<std::string>::as_c_str)), "as-c_str")
 					.add(callable(as_function(&extended_util<std::string>::from_c_str)), "c_str-make")
 					.add(callable(as_function(&extended_util<std::string>::from_c_str)), "make")
 					.add(callable(as_function(&extended_util<std::string>::index)), "at")
-					.add(callable(as_function(&extended_util<std::string>::const_index)), "const-at")
+					.add(callable(as_function(&extended_util<std::string>::const_index)), "at")
 					.add(callable(as_function(&extended_util<std::string>::append)), "append")
 					.add(callable(as_function(&extended_util<std::string>::resize)), "resize")
 					.add(callable(as_function(&extended_util<std::string>::size)), "len");
@@ -385,6 +456,88 @@ namespace expr
 			static std::string get_name(name_set const& from)
 			{
 				return name_of<std::string>(from);
+			}
+		};
+
+		
+		template<typename t>
+		struct extended_util<std::vector<t>>
+		{
+			static value_holder from_list(std::vector<stack_elem>& a)
+			{
+				std::vector<t> ret;
+				for (auto& v : a)
+				{
+					std::optional<t> g = take_elem<t>(v);
+					if (g)
+					{
+						ret.emplace_back(std::move(*g));
+					}
+				}
+				return value_holder::make<object_of<std::vector<t>>>(std::move(ret));
+			}
+
+			static t& index(std::vector<t>& tar, size_t at)
+			{
+				return tar[at];
+			}
+
+			static t const& const_index(std::vector<t> const& tar, size_t at)
+			{
+				return tar[at];
+			}
+
+			static void append(std::vector<t>& a, std::vector<t>&& b)
+			{
+				a.reserve(a.size() + b.size());
+				for (auto&& i : std::move(b))
+				{
+					a.emplace_back(std::move(i));
+				}
+			}
+
+			static void resize(std::vector<t>& a, size_t to)
+			{
+				if constexpr(std::is_default_constructible_v<t>)
+				{
+					a.resize(to);
+				}
+				else
+				{
+					assert(false);
+				}
+			}
+
+			static size_t size(std::vector<t> const& a)
+			{
+				return a.size();
+			}
+
+		};
+
+		template<typename t>
+		struct fs_info<extended_util<std::vector<t>>>
+		{
+			static function_set get_functions()
+			{
+				function_set ret;
+				ret
+					.add(manual(&extended_util<std::vector<t>>::from_list), "make")
+					.add(manual(&extended_util<std::vector<t>>::from_list), "list-make")
+					.add(callable(as_function(&extended_util<std::vector<t>>::index)), "at")
+					.add(callable(as_function(&extended_util<std::vector<t>>::const_index)), "at")
+					.add(callable(as_function(&extended_util<std::vector<t>>::append)), "append")
+					.add(callable(as_function(&extended_util<std::vector<t>>::size)), "size");
+				if constexpr(std::is_default_constructible_v<t>)
+				{
+					ret.add(callable(as_function(&extended_util<std::vector<t>>::size)), "resize");
+				}
+				return std::move(ret);
+			}
+
+			static std::string get_name(name_set const& from)
+			{
+				return name_of<std::vector<t>>(from);
 			}
 		};
 

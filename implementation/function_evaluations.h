@@ -55,51 +55,69 @@ namespace expr
 
 		class variable_value_stack;
 
-		class stack
+		template<typename t>
+		std::optional<t> take_elem(stack_elem& cur)
 		{
-			template<typename tup_t, size_t ind, typename t, typename...ts>
-			void set_rest(tup_t& a)
+			if (cur.is_nullval())
 			{
-				if (stuff[stuff.size() + ind - std::tuple_size<tup_t>::value].is_nullval())
+				return std::nullopt;
+			}
+			else
+			{
+				type_ask_of<t> ask;
+				bool has_moved = cur->get(&ask);
+				if (has_moved)
 				{
-					std::get<ind>(a) = std::nullopt;
-				}
-				else
-				{
-					stack_elem& cur = stuff[stuff.size() + ind - std::tuple_size<tup_t>::value];
-					type_ask_of<t> ask;
-					bool has_moved = cur->get(&ask);
-					if (has_moved)
+					cur = stack_elem::make_nullval();
+					if (ask.gotten)
 					{
-						cur = stack_elem::make_nullval();
-						if (ask.gotten)
-						{
-							std::get<ind>(a).emplace(std::move(*ask.gotten));
-						}
+						return std::optional<t>{std::move(*ask.gotten)};
 					}
-					else if constexpr (std::is_pointer_v<t>)
+					else
 					{
-						if (ask.pointed_to_value)
-						{
-							cur = stack_elem::make<object_of<std::remove_const_t<typename std::remove_pointer_t<t>>>>(std::move(ask.pointed_to_value->val));
-							std::get<ind>(a) = &cur.downcast_get<object_of<std::remove_const_t<typename std::remove_pointer_t<t>>>>()->val;
-						}
-						else
-						{
-							if (ask.gotten)
-							{
-								std::get<ind>(a).emplace(std::move(*ask.gotten));
-							}
-						}
+						return std::nullopt;
+					}
+				}
+				else if constexpr (std::is_pointer_v<t>)
+				{
+					if (ask.pointed_to_value)
+					{
+						cur = stack_elem::make<object_of<std::remove_const_t<typename std::remove_pointer_t<t>>>>(std::move(ask.pointed_to_value->val));
+						return &cur.downcast_get<object_of<std::remove_const_t<typename std::remove_pointer_t<t>>>>()->val;
 					}
 					else
 					{
 						if (ask.gotten)
 						{
-							std::get<ind>(a).emplace(std::move(*ask.gotten));
+							return std::optional<t>{std::move(*ask.gotten)};
+						}
+						else
+						{
+							return std::nullopt;
 						}
 					}
 				}
+				else
+				{
+					if (ask.gotten)
+					{
+						return std::optional<t>{std::move(*ask.gotten)};
+					}
+					else
+					{
+						return std::nullopt;
+					}
+				}
+			}
+		}
+
+		class stack
+		{
+			template<typename tup_t, size_t ind, typename t, typename...ts>
+			void set_rest(tup_t& a)
+			{
+				std::get<ind>(a) = take_elem<t>(stuff[stuff.size() + ind - std::tuple_size<tup_t>::value]);
+				
 				if constexpr(sizeof...(ts) > 0)
 				{
 					set_rest<tup_t, ind + 1, ts...>(a);

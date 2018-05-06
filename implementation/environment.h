@@ -68,16 +68,24 @@ namespace expr
 				{
 					settings.auto_call("_info");
 				}
+
+				bool to_continue = true;
+
 				function_set special_functions;
 				special_functions
 					.add(garbage_getter(), "garb")
 					.add(info_printer(output, names), "info")
-					.add(value_printer(output),"view")
+					.add(value_printer(output), "view")
 					.add(variables_printer(output, names), "vars")
 					.add(functions_printer(output, names), "funcs")
-					.add(manual(&core::swap),"swap")
-					.add(manual(&cpp_core::drop), "drop");
-				while (true)
+					.add(manual(&core::swap), "swap")
+					.add(manual(&cpp_core::drop), "drop")
+					.add(callable(std::function<void()>{
+					[to_continue = &to_continue]() {*to_continue = false; }
+					}), "exit");
+
+				output << "/|\\" << std::endl;
+				while (to_continue)
 				{
 					output << "\\\\\\\n" << std::flush;
 					std::string unparsed;
@@ -150,6 +158,7 @@ namespace expr
 						output << "|||\n" << errors.str() << std::flush;
 					}
 				}
+				output << "\\|/" << std::endl;
 			}
 
 			environment& unbind(std::string const& name)
