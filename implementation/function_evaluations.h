@@ -149,7 +149,7 @@ namespace expr
 		public:
 			virtual value_holder try_perform(stack& a, size_t args_to_take) = 0;
 			virtual void put_type(std::ostream& target, name_set const& from) const = 0;
-			virtual mu::virt<any_callable> add_layer(mu::virt<any_callable>&& layer) && = 0;
+			virtual mu::virt<any_callable> add_layer(mu::virt<any_callable>&& tail) && = 0;
 			virtual ~any_callable()
 			{}
 		};
@@ -190,7 +190,7 @@ namespace expr
 				target = std::move(f);
 			}
 
-			held_callable add_layer(held_callable&& layer) && override;
+			held_callable add_layer(held_callable&& tail) && override;
 
 			void put_type(std::ostream& target, name_set const& from) const override
 			{
@@ -337,19 +337,20 @@ namespace expr
 		class multi_callable_of : public callable_of<ret_t, args...>
 		{
 		public:
-			multi_callable_of(std::function<ret_t(args...)>&& f, held_callable&& old) :
-				next(std::move(old)),
+			multi_callable_of(std::function<ret_t(args...)>&& f, held_callable&& tail) :
+				next(std::move(tail)),
 				callable_of<ret_t, args...>(std::move(f))
 			{}
 
-			multi_callable_of(dummy_argument,std::function<returned_t<ret_t>(store_t<args>&&...)>&& f, held_callable&& old) :
-				next(std::move(old)),
+			multi_callable_of(dummy_argument,std::function<returned_t<ret_t>(store_t<args>&&...)>&& f, held_callable&& tail) :
+				next(std::move(tail)),
 				callable_of<ret_t, args...>(dummy_argument{},std::move(f))
 			{}
 
-			held_callable add_layer(held_callable&& layer) && override
+			held_callable add_layer(held_callable&& tail) && override
 			{
-				return std::move(*next).add_layer(std::move(layer));
+				next = std::move(*next).add_layer(std::move(tail));
+				return held_callable::make<multi_callable_of<ret_t, args...>>(dummy_argument{}, std::move(target), std::move(next));
 			}
 
 			value_holder try_perform(stack& a, size_t args_to_take) override
@@ -388,9 +389,9 @@ namespace expr
 		};
 
 		template<typename ret_t,typename...args>
-		inline held_callable callable_of<ret_t,args...>::add_layer(held_callable&& layer) &&
+		inline held_callable callable_of<ret_t,args...>::add_layer(held_callable&& tail) &&
 		{
-			return held_callable::make<multi_callable_of<ret_t, args...>>(dummy_argument{},std::move(target), std::move(layer));
+			return held_callable::make<multi_callable_of<ret_t, args...>>(dummy_argument{},std::move(target), std::move(tail));
 		}
 
 	}

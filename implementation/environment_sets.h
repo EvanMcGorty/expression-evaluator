@@ -177,7 +177,7 @@ namespace expr
 				auto g = map.find(std::move(a.first));
 				if (g!=map.end())
 				{
-					g->second = std::move(*a.second).add_layer(std::move(g->second));
+					g->second = std::move(*g->second).add_layer(std::move(a.second));
 				}
 				else
 				{

@@ -314,7 +314,7 @@ namespace expr
 			{
 				function_set basic = fs_info<basic_util<t>>::get_functions();
 				function_set extended = fs_info<extended_util<t>>::get_functions();
-				return std::move(extended.merge(std::move(basic)));
+				return std::move(basic.merge(std::move(extended)));
 			}
 
 			static std::string get_name(name_set const& from)
