@@ -147,7 +147,7 @@ namespace expr
 		};
 
 		template<typename t>
-		struct util
+		struct basic_util
 		{
 			static t default_construct()
 			{
@@ -237,40 +237,40 @@ namespace expr
 		};
 
 		template<typename t>
-		struct fs_info<util<t>>
+		struct fs_info<basic_util<t>>
 		{
 			static function_set get_functions()
 			{
 				function_set ret;
 				if constexpr(std::is_default_constructible<t>::value)
 				{
-					ret.add(callable(as_function(&util<t>::default_construct)), "make");
+					ret.add(callable(as_function(&basic_util<t>::default_construct)), "make");
 				}
 				if constexpr(std::is_move_constructible<t>::value)
 				{
-					ret.add(callable(as_function(&util<t>::move_construct)), "make");
-					ret.add(callable(as_function(&util<t>::move_construct)), "move-make");
+					ret.add(callable(as_function(&basic_util<t>::move_construct)), "make");
+					ret.add(callable(as_function(&basic_util<t>::move_construct)), "move-make");
 				}
 				if constexpr(std::is_copy_constructible<t>::value)
 				{
-					ret.add(callable(as_function(&util<t>::copy_construct)), "make");
-					ret.add(callable(as_function(&util<t>::copy_construct)), "copy-make");
+					ret.add(callable(as_function(&basic_util<t>::copy_construct)), "make");
+					ret.add(callable(as_function(&basic_util<t>::copy_construct)), "copy-make");
 				}
 				if constexpr(std::is_move_assignable<t>::value)
 				{
-					ret.add(callable(as_function(&util<t>::move_assign)), "give");
-					ret.add(callable(as_function(&util<t>::move_assign)), "move-give");
+					ret.add(callable(as_function(&basic_util<t>::move_assign)), "give");
+					ret.add(callable(as_function(&basic_util<t>::move_assign)), "move-give");
 				}
 				if constexpr(std::is_copy_assignable<t>::value)
 				{
-					ret.add(callable(as_function(&util<t>::copy_assign)), "give");
-					ret.add(callable(as_function(&util<t>::copy_assign)), "copy-give");
+					ret.add(callable(as_function(&basic_util<t>::copy_assign)), "give");
+					ret.add(callable(as_function(&basic_util<t>::copy_assign)), "copy-give");
 				}
-				ret.add(callable(as_function(&util<t>::swap)), "swap");
-				ret.add(callable(as_function(&util<t>::destruct)),"drop");
-				ret.add(callable(as_function(&util<t>::temporary_reference)), "tref");
-				ret.add(callable(as_function(&util<t>::mutable_reference)), "mref");
-				ret.add(callable(as_function(&util<t>::const_reference)), "cref");
+				ret.add(callable(as_function(&basic_util<t>::swap)), "swap");
+				ret.add(callable(as_function(&basic_util<t>::destruct)),"drop");
+				ret.add(callable(as_function(&basic_util<t>::temporary_reference)), "tref");
+				ret.add(callable(as_function(&basic_util<t>::mutable_reference)), "mref");
+				ret.add(callable(as_function(&basic_util<t>::const_reference)), "cref");
 				return ret;
 			}
 
@@ -279,6 +279,115 @@ namespace expr
 				return name_of<t>(from);
 			}
 		};
+
+
+		template<typename t>
+		struct extended_util
+		{};
+
+		template<typename t>
+		struct fs_info<extended_util<t>>
+		{
+			static function_set get_functions()
+			{
+				return function_set{};
+			}
+
+			static std::string get_name(name_set const& from)
+			{
+				return name_of<t>(from);
+			}
+		};
+
+
+		template<typename t>
+		struct util
+		{
+			typedef basic_util<t> basic;
+			typedef extended_util<t> extended;
+		};
+
+		template<typename t>
+		struct fs_info<util<t>>
+		{
+			static function_set get_functions()
+			{
+				function_set basic = fs_info<basic_util<t>>::get_functions();
+				function_set extended = fs_info<extended_util<t>>::get_functions();
+				return std::move(extended.merge(std::move(basic)));
+			}
+
+			static std::string get_name(name_set const& from)
+			{
+				return name_of<t>(from);
+			}
+		};
+
+
+		template<>
+		struct extended_util<std::string>
+		{
+			static std::string from_c_str(char const* from)
+			{
+				return std::string{ from };
+			}
+
+			static char const* as_c_str(std::string const& tar)
+			{
+				return tar.c_str();
+			}
+
+			static char& index(std::string& tar, size_t at)
+			{
+				return tar[at];
+			}
+
+			static char const& const_index(std::string const& tar, size_t at)
+			{
+				return tar[at];
+			}
+
+			static void append(std::string& a, std::string const& b)
+			{
+				a.append(b);
+			}
+
+			static void resize(std::string& a, size_t to)
+			{
+				a.resize(to);
+			}
+
+			static size_t size(std::string const& a)
+			{
+				return a.size();
+			}
+
+		};
+
+		template<>
+		struct fs_info<extended_util<std::string>>
+		{
+			static function_set get_functions()
+			{
+				function_set ret;
+				ret
+					.add(callable(as_function(&extended_util<std::string>::as_c_str)), "as-c_str")
+					.add(callable(as_function(&extended_util<std::string>::from_c_str)), "c_str-make")
+					.add(callable(as_function(&extended_util<std::string>::from_c_str)), "make")
+					.add(callable(as_function(&extended_util<std::string>::index)), "at")
+					.add(callable(as_function(&extended_util<std::string>::const_index)), "const-at")
+					.add(callable(as_function(&extended_util<std::string>::append)), "append")
+					.add(callable(as_function(&extended_util<std::string>::resize)), "resize")
+					.add(callable(as_function(&extended_util<std::string>::size)), "len");
+				return std::move(ret);
+			}
+
+			static std::string get_name(name_set const& from)
+			{
+				return name_of<std::string>(from);
+			}
+		};
+
 
 	}
 
