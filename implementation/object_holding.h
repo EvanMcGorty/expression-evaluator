@@ -107,6 +107,8 @@ namespace expr
 			virtual std::type_info const& get_type() const = 0;
 
 
+			virtual mu::virt<any_object> as_non_trivially_destructible() && = 0;
+
 			virtual bool can_trivially_destruct() const = 0;
 
 			template<typename t>
@@ -144,6 +146,11 @@ namespace expr
 				return "void_object{}";
 			}
 
+			mu::virt<any_object> as_non_trivially_destructible() &&
+			{
+				return mu::virt<any_object>::make<void_object>();
+			}
+
 			bool can_trivially_destruct() const override
 			{
 				return true;
@@ -159,6 +166,38 @@ namespace expr
 				return false;
 			}
 
+		};
+
+
+		template <typename t>
+		struct pointer
+		{
+			static constexpr bool is()
+			{
+				return false;
+			}
+		};
+
+		template <typename t>
+		struct pointer<t*>
+		{
+			static constexpr bool is()
+			{
+				return true;
+			}
+
+			typedef t deref;
+		};
+
+		template <typename t>
+		struct pointer<std::unique_ptr<t>>
+		{
+			static constexpr bool is()
+			{
+				return true;
+			}
+
+			typedef t deref;
 		};
 
 		template<typename t>
@@ -185,6 +224,18 @@ namespace expr
 			std::string string_view(name_set const& names) const override
 			{
 				return std::string("object_of{") + name_of<t>(names) + "(" + converter<t>::print(val) + ")" + "}";
+			}
+
+			mu::virt<any_object> as_non_trivially_destructible() && override
+			{
+				if constexpr(std::is_trivially_destructible_v<t>)
+				{
+					return mu::virt<any_object>::make<object_of<std::unique_ptr<t>>>(std::make_unique<t>(std::move(val)));
+				}
+				else
+				{
+					return mu::virt<any_object>::make<object_of<t>>(std::move(val));
+				}
 			}
 
 			bool can_trivially_destruct() const override
@@ -224,16 +275,19 @@ namespace expr
 						return true;
 					}
 				}
-				else if constexpr (std::is_pointer_v<t>) //to return a t*/t& as a t&& or t const&
+				else if constexpr (pointer<t>::is()) //to return a t*/t& as a t&& or t const&
 				{
-					if (tar->get_type() == typeid(std::remove_pointer_t<t> const*))
+					if (tar->get_type() == typeid(typename pointer<t>::deref const*))
 					{
-						static_cast<type_ask_of<std::remove_pointer_t<t> const*>*>(tar)->gotten.emplace(std::move(val));
-						//normally here  this should return true, but a pointer is always still valid/untouched after it is std::moved, it is trivially copy/move constructible and trivially destructible
+						static_cast<type_ask_of<typename pointer<t>::deref const*>*>(tar)->gotten.emplace(std::move(&*val));
 					}
-					else if (tar->get_type() == typeid(std::remove_pointer_t<t>))
+					else if (tar->get_type() == typeid(typename pointer<t>::deref*))
 					{
-						static_cast<type_ask_of<std::remove_pointer_t<t>>*>(tar)->gotten.emplace(std::move(*val));
+						static_cast<type_ask_of<typename pointer<t>::deref*>*>(tar)->gotten.emplace(std::move(&*val));
+					}
+					else if (tar->get_type() == typeid(typename pointer<t>::deref))
+					{
+						static_cast<type_ask_of<typename pointer<t>::deref>*>(tar)->gotten.emplace(std::move(*val));
 					}
 					return false;
 				}

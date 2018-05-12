@@ -96,6 +96,18 @@ namespace expr
 
 		struct cpp_core
 		{
+			static value_holder strengthen(std::vector<stack_elem>& a)
+			{
+				if (a.size() == 1 && !a[0].is_nullval() && a[0]->is_object())
+				{
+					return std::move(*get_value(a[0])).as_non_trivially_destructible();
+					
+				}
+				else
+				{
+					return value_holder::make_nullval();
+				}
+			}
 
 			static value_holder to_string(std::vector<stack_elem>& a)
 			{
@@ -137,7 +149,8 @@ namespace expr
 			{
 				function_set ret;
 				ret.add(manual(cpp_core::drop), "drop")
-					.add(manual(cpp_core::to_string), "to_string");
+					.add(manual(cpp_core::to_string), "to_string")
+					.add(manual(cpp_core::strengthen), "strong");
 				return ret;
 			}
 
