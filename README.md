@@ -25,7 +25,7 @@ a few other notes:
 - when they are passed for a non-const rvalue reference, objects that are trivially copy constructible and trivially move constructible will not be consumed.
 - lvalue references and pointers are interchangable.
 - an object of type "t" can be passed for a t*, t&, t const*, or t const&. 
-- an object of type "t*"/"t&" can be passed for a t const*, t const&, t, or a remove_const_t<t>
+- an object of type "t*"/"t&"/"unique_ptr<<t>t>" can be passed for a t const*, t const&, t*, t&, t, or a remove_const_t<<t>t>
 - (currently) passed objects will not be implicitly upcast or copy/move converted to the type in the function signature.
 - as a workaround, there is a simple overload resolution system that can be used for type conversions.
 - if a function cannot run with the types it has been passed, it will still free resources that it has been passed.
