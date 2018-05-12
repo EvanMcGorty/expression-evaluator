@@ -73,8 +73,20 @@ namespace expr
 				{
 					any_callable& todo = ***optional_todo;
 
-					value_holder tp = todo.try_perform(loc, temp.arg_count);
-					if (tp.is_nullval())
+					value_holder tp = value_holder::make_nullval();
+					bool no_exceptions = true;
+					try
+					{
+						tp = todo.try_perform(loc, temp.arg_count);
+					}
+					catch (std::exception caught)
+					{
+						errors << "call to function \"" << temp.name << "\" threw an exception: " << caught.what() << "\n";
+						tp = value_holder::make_nullval();
+						no_exceptions = false;
+					}
+
+					if (no_exceptions && tp.is_nullval())
 					{
 						errors << "call to function \"" << temp.name << "\" returned null\n";
 					}

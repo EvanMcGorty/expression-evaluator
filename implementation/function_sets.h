@@ -421,11 +421,19 @@ namespace expr
 
 			static char& index(std::string& tar, size_t at)
 			{
+				if (at >= tar.size())
+				{
+					throw std::exception{ "string index out of range" };
+				}
 				return tar[at];
 			}
 
 			static char const& const_index(std::string const& tar, size_t at)
 			{
+				if (at >= tar.size())
+				{
+					throw std::exception{ "string index out of range" };
+				}
 				return tar[at];
 			}
 
@@ -492,11 +500,19 @@ namespace expr
 
 			static t& index(std::vector<t>& tar, size_t at)
 			{
+				if (at >= tar.size())
+				{
+					throw std::exception{ "vector index out of range" };
+				}
 				return tar[at];
 			}
 
 			static t const& const_index(std::vector<t> const& tar, size_t at)
 			{
+				if (at >= tar.size())
+				{
+					throw std::exception{ "vector index out of range" };
+				}
 				return tar[at];
 			}
 
