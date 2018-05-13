@@ -1,4 +1,5 @@
 #pragma once
+#include<exception>
 #include"environment_sets.h"
 
 namespace expr
@@ -256,7 +257,7 @@ namespace expr
 
 			static void exit()
 			{
-				terminate();
+				assert(false);
 			}
 
 			static void sys(std::string a)
@@ -423,7 +424,7 @@ namespace expr
 			{
 				if (at >= tar.size())
 				{
-					throw std::exception{ "string index out of range" };
+					throw std::runtime_error( "string index out of range" );
 				}
 				return tar[at];
 			}
@@ -432,7 +433,7 @@ namespace expr
 			{
 				if (at >= tar.size())
 				{
-					throw std::exception{ "string index out of range" };
+					throw std::runtime_error( "string index out of range" );
 				}
 				return tar[at];
 			}
@@ -502,7 +503,7 @@ namespace expr
 			{
 				if (at >= tar.size())
 				{
-					throw std::exception{ "vector index out of range" };
+					throw std::runtime_error( "vector index out of range" );
 				}
 				return tar[at];
 			}
@@ -511,7 +512,7 @@ namespace expr
 			{
 				if (at >= tar.size())
 				{
-					throw std::exception{ "vector index out of range" };
+					throw std::runtime_error( "vector index out of range" );
 				}
 				return tar[at];
 			}

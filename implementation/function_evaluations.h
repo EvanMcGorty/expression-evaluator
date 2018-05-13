@@ -368,7 +368,7 @@ namespace expr
 			held_callable add_layer(held_callable&& tail) && override
 			{
 				next = std::move(*next).add_layer(std::move(tail));
-				return held_callable::make<multi_callable_of<ret_t, args...>>(dummy_argument{}, std::move(target), std::move(next));
+				return held_callable::make<multi_callable_of<ret_t, args...>>(dummy_argument{}, std::move(this->target), std::move(next));
 			}
 
 			value_holder try_perform(stack& a, size_t args_to_take) override

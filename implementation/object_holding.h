@@ -146,7 +146,7 @@ namespace expr
 				return "void_object{}";
 			}
 
-			mu::virt<any_object> as_non_trivially_destructible() &&
+			mu::virt<any_object> as_non_trivially_destructible() && override
 			{
 				return mu::virt<any_object>::make<void_object>();
 			}

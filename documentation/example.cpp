@@ -4,12 +4,12 @@ this is a simple example use of the evaluator
 compile this with:
 g++ example.cpp -std=c++17
 or
-clang-cl example.cpp /std:c++17
+clang-cl example.cpp /GX /std:c++17
 
-requires c++17 support and runtime type info
+requires c++17 support, runtime type info, and exceptions.
 
 when the terminal opens, try entering the following lines:
-functs
+_funcs
 prod(2,3)
 push(8.4)
 =my_double/
@@ -20,7 +20,7 @@ rotate(=my_double)
 =my_double
 print(glv)
 swap(=my_vec/,vec.copy-make(glv))
-push(=my_vec,12345)
+vec.append(=my_vec,vec.list-make(12345))
 print(=my_vec)
 vec.swap(glv,=my_vec)
 print(=my_vec)
@@ -28,11 +28,21 @@ rotate(=my_double)
 vec.swap(glv,=my_vec)
 print(=my_vec)
 =my_vec\
-gar
-drop(gar)
-gar
+_garb(=g/)
+=g
+drop(=g)
+=g
+_garb(=g)
+=g
 =my_double\
-gar
+_garb(=g)
+=g
+strong(double.make(4))
+_garb(=g)
+=g
+drop(=g\)
+_exit
+
 */
 
 #include<vector>
@@ -72,6 +82,8 @@ void print(std::vector<double> const& w)
 
 int main()
 {
+    std::cout << "this code will run before the evaluator is used" << std::endl;
+
     expr::rename<std::vector<double>>("vec");
 
     expr::environment env;
@@ -79,8 +91,6 @@ int main()
     env .fbind("prod",&multiply)
         .fbind("push",&push)
         .fbind("rotate",&rotate)
-        .fbind("size",&std::vector<double>::size)
-        .fbind("push",&std::vector<double>::emplace_back<double&&>)
         .fbind("print",&print)
 
         .vbind("glv",&global_vector)
@@ -88,15 +98,11 @@ int main()
         .sbind<expr::core>("")
         .sbind<expr::cpp_core>("")
         .sbind<expr::util<std::vector<double>>>()
-        .sbind<expr::util<double>>()
+        .sbind<expr::util<double>>();
 
-        .rbind("gar",env.garbage_getter())
-        .rbind("view",env.info_printer(std::cout))
-        .rbind("vars",env.variables_printer(std::cout))
-        .rbind("functs",env.functions_printer(std::cout));
-
-	expr::option_set options;
-	options.auto_call("view");
-
-	env.attach(std::cin, std::cout, std::move(options));
+	env.attach();
+    
+    std::cout << "this code will run after the user calls _exit from the evaluator" << std::endl;
+    char a;
+    std::cin >> a;
 }
