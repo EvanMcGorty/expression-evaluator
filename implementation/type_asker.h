@@ -52,7 +52,8 @@ namespace expr
 				if constexpr(std::is_pointer_v<t>)
 				{
 					typedef std::remove_const_t<typename std::remove_pointer_t<t>> holdable;
-					std::optional<holdable> temp = converter<holdable>::parse(a.cbegin(),a.cend());
+					auto it = a.cbegin();
+					std::optional<holdable> temp = converter<holdable>::parse(it,a.cend());
 					if (temp)
 					{
 						pointed_to_value.emplace(possible<true, t>{ std::move(*temp) });
@@ -60,7 +61,8 @@ namespace expr
 				}
 				else
 				{
-					auto temp = converter<std::remove_const_t<t>>::parse(a.cbegin(),a.cend());
+					auto it = a.cbegin();
+					auto temp = converter<std::remove_const_t<t>>::parse(it,a.cend());
 					if (temp)
 					{
 						gotten.emplace(std::move(*temp));

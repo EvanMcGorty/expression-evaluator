@@ -389,10 +389,11 @@ namespace expr
 					ret.append(converter<t>::print(it));
 					ret.push_back(',');
 				}
-				if (ret.size() > 1)
+				if (ret.size() == 1)
 				{
-					(*ret.rbegin()) = ']';
+					ret.push_back(' ');
 				}
+				(*ret.rbegin()) = ']';
 				return std::move(ret);
 			}
 		};

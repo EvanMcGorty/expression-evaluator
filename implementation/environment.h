@@ -256,7 +256,10 @@ namespace expr
 					{
 						if (a.size() == 1 && !a[0].is_nullval())
 						{
-							*to << a[0]->string_view(*from) << std::endl;
+							if(!(a[0]->is_object() && a[0].downcast_get<any_object>()->is<void>()))
+							{
+								*to << a[0]->string_view(*from) << std::endl;
+							}
 							return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 						}
 						else
@@ -273,7 +276,10 @@ namespace expr
 				{
 					if (a.size() == 1 && !a[0].is_nullval())
 					{
-						*to << a[0]->convert_into_string() << std::endl;
+						if(!(a[0]->is_object() && a[0].downcast_get<any_object>()->is<void>()))
+						{
+							*to << a[0]->convert_into_string() << std::endl;
+						}
 						return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 					}
 					else
