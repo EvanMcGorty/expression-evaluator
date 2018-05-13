@@ -311,13 +311,17 @@ namespace expr
 				{
 					return true;
 				}
-				else if constexpr(std::is_pointer_v<t>)
+				else if constexpr(pointer<t>::is())
 				{
-					if (tar == typeid(std::remove_pointer_t<t> const*))
+					if (tar == typeid(typename pointer<t>::deref const*))
 					{
 						return true;
 					}
-					else if (tar == typeid(std::remove_pointer_t<t>))
+					else if (tar == typeid(typename pointer<t>::deref*))
+					{
+						return true;
+					}
+					else if (tar == typeid(typename pointer<t>::deref))
 					{
 						return true;
 					}

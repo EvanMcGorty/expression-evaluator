@@ -95,6 +95,7 @@ namespace expr
 				curv = getnum(*start);
 				if (curv < 0)
 				{
+					ret.second = 1;
 					break;
 				}
 				else
@@ -127,7 +128,7 @@ namespace expr
 					curv = getnum(*start);
 					if (curv < -1)
 					{
-						return std::nullopt;
+						return std::make_pair(signret, ret);
 					}
 					else if (curv == -1)
 					{
@@ -158,7 +159,7 @@ namespace expr
 					curv = getnum(*start);
 					if (curv < -1)
 					{
-						return std::nullopt;
+						return std::make_pair(signret, ret);
 					}
 					else if (curv == -1)
 					{
@@ -179,7 +180,7 @@ namespace expr
 			}
 			else if (curv == -4)
 			{
-				return std::nullopt;
+				return std::make_pair(signret,ret);
 			}
 
 			return std::pair<bool, std::pair<big_uint, big_uint>>{signret, ret};
@@ -208,7 +209,8 @@ namespace expr
 		template<typename t>
 		struct converter
 		{
-			static std::optional<t> parse(std::string const& tar)
+			//when successful, start is exactly one place ahead of the last character of the parsed value.
+			static std::optional<t> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
 				if constexpr(std::is_pointer_v<t>)
 				{
@@ -216,7 +218,7 @@ namespace expr
 				}
 				else if constexpr(std::is_arithmetic_v<t>)
 				{
-					auto p = parse_string_to_number(tar);
+					auto p = parse_range_to_number(start,stop);
 					if (!p)
 					{
 						return std::nullopt;
@@ -261,9 +263,9 @@ namespace expr
 
 					return std::optional<t>{std::move(ret)};
 				}
-				else if constexpr(std::is_convertible_v<std::string const&, t>)
+				else if constexpr(std::is_same_v<std::string, t>)
 				{
-					return std::optional<t>(tar);
+					return std::optional<std::string>(std::string{ start,stop });
 				}
 				else
 				{
@@ -299,6 +301,99 @@ namespace expr
 					}
 					return s.str();
 				}
+			}
+		};
+
+		template<typename t>
+		struct converter<std::vector<t>>
+		{
+			static std::optional<std::vector<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			{
+				if (start == stop)
+				{
+					return { std::vector<t>{} };
+				}
+				while (start != stop && *start == ' ')
+				{
+					++start;
+				}
+				if (start == stop)
+				{
+					return { std::vector<t>{} };
+				}
+				if (*start == '[')
+				{
+					std::vector<t> ret;
+					++start;
+					while (start != stop)
+					{
+						while (start != stop && *start == ' ')
+						{
+							++start;
+						}
+
+						if (start == stop)
+						{
+							return std::nullopt;
+						}
+						else if (*start == ']')
+						{
+							++start;
+							return { std::move(ret) };
+						}
+
+						std::optional<t> curelem = converter<t>::parse(start, stop);
+						if (curelem)
+						{
+							ret.emplace_back(std::move(*curelem));
+						}
+						else
+						{
+							return std::nullopt;
+						}
+
+						while (start != stop && *start == ' ')
+						{
+							++start;
+						}
+						if (start == stop)
+						{
+							return std::nullopt;
+						}
+						if (*start == ',')
+						{
+							++start;
+						}
+						else if (*start == ']')
+						{
+							++start;
+							return { std::move(ret) };
+						}
+						continue; //the list does not require commas.
+					}
+					return std::nullopt;
+				}
+				else
+				{
+					return std::nullopt;
+				}
+
+			}
+
+			static std::string print(std::vector<t> const& tar)
+			{
+				std::string ret;
+				ret.push_back('[');
+				for (auto const& it : tar)
+				{
+					ret.append(converter<t>::print(it));
+					ret.push_back(',');
+				}
+				if (ret.size() > 1)
+				{
+					(*ret.rbegin()) = ']';
+				}
+				return std::move(ret);
 			}
 		};
 
