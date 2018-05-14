@@ -6,6 +6,7 @@
 #include<utility>
 #include<limits>
 #include"parsing_checks.h"
+#include"type_qualities.h"
 
 namespace expr
 {
@@ -212,7 +213,7 @@ namespace expr
 			//when successful, start is exactly one place ahead of the last character of the parsed value.
 			static std::optional<t> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
-				if constexpr(std::is_pointer_v<t>)
+				if constexpr(pointer<t>::is())
 				{
 					return std::nullopt;
 				}
@@ -275,9 +276,9 @@ namespace expr
 
 			static std::string print(t const& tar)
 			{
-				if constexpr(std::is_pointer_v<t>)
+				if constexpr(pointer<t>::is())
 				{
-					return converter<std::remove_pointer_t<t>>::print(*tar);
+					return converter<typename pointer<t>::deref>::print(*tar);
 				}
 				else if constexpr(std::is_arithmetic_v<t>)
 				{
@@ -287,7 +288,7 @@ namespace expr
 				}
 				else if constexpr(std::is_convertible_v<t const&, std::string>)
 				{
-					return tar;
+					return { tar };
 				}
 				else
 				{

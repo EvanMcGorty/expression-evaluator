@@ -2,7 +2,6 @@
 #include"literal_conversions.h"
 
 #include<typeinfo>
-#include<any>
 
 namespace expr
 {

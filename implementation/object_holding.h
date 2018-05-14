@@ -169,36 +169,8 @@ namespace expr
 		};
 
 
-		template <typename t>
-		struct pointer
-		{
-			static constexpr bool is()
-			{
-				return false;
-			}
-		};
+		
 
-		template <typename t>
-		struct pointer<t*>
-		{
-			static constexpr bool is()
-			{
-				return true;
-			}
-
-			typedef t deref;
-		};
-
-		template <typename t>
-		struct pointer<std::unique_ptr<t>>
-		{
-			static constexpr bool is()
-			{
-				return true;
-			}
-
-			typedef t deref;
-		};
 
 		template<typename t>
 		class object_of final : public any_object
@@ -230,7 +202,7 @@ namespace expr
 			{
 				if constexpr(std::is_trivially_destructible_v<t>)
 				{
-					return mu::virt<any_object>::make<object_of<std::unique_ptr<t>>>(std::make_unique<t>(std::move(val)));
+					return mu::virt<any_object>::make<object_of<strong<t>>>(strong<t>(std::move(val)));
 				}
 				else
 				{

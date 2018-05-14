@@ -1,3 +1,5 @@
+*this was origionally a submodule of another repository but that was too complicated
+
 # virtual-function-utilities
 a bunch of random virtual function utilities
 

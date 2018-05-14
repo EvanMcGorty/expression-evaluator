@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <typeindex>
 
+#include "type_qualities.h"
+
 #ifdef __GNUG__
 
 #include <cxxabi.h>
@@ -58,7 +60,7 @@ namespace expr
 		template<typename type>
 		void rename(std::string&& new_name, name_set& names = global_type_renames)
 		{
-			static_assert(!(std::is_const_v<type>||std::is_pointer_v<type>||std::is_reference_v<type>), "can only rename a raw class/struct/union");
+			static_assert(!(std::is_const_v<type>||pointer<type>::is()||std::is_reference_v<type>), "can only rename a raw class/struct/union");
 
 			names.data[std::type_index{ typeid(type) }] = std::move(new_name);
 			
@@ -79,9 +81,9 @@ namespace expr
 			auto g = names.data.find(std::type_index{ typeid(type) });
 			if (g == names.data.end())
 			{
-				if constexpr(std::is_pointer_v<type>)
+				if constexpr(pointer<type>::is())
 				{
-					return name_of<std::remove_pointer_t<type>>(names) + "-ref";
+					return name_of<typename pointer<type>::deref>(names) + pointer<type>::suffix();
 				}
 				else
 				{
