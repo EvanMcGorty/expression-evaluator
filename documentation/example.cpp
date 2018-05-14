@@ -5,6 +5,12 @@ compile this with:
 g++ example.cpp -std=c++17
 or
 clang-cl example.cpp /GX /std:c++17
+or
+clang++ source.cpp -std=c++17 -Xclang -flto-visibility-public-std
+
+on windows g++ might need -Os to optimize for size
+
+for msvc, cpp files may need to be set with "bigobj" in their properties.
 
 requires c++17 support, runtime type info, and exceptions.
 
