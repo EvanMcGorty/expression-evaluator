@@ -230,7 +230,7 @@ namespace expr
 					t ret;
 
 
-					if constexpr(!std::is_signed<t>::value)
+					if constexpr(!std::is_signed_v<t>)
 					{
 						if (is_negative)
 						{
@@ -239,7 +239,7 @@ namespace expr
 					}
 
 
-					if constexpr(std::is_integral<t>::value)
+					if constexpr(std::is_integral_v<t>)
 					{
 						big_uint tm = (numerator / denomenator);
 						if (tm > std::numeric_limits<t>::max())

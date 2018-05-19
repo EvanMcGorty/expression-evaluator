@@ -8,67 +8,100 @@ namespace expr
 	namespace impl
 	{
 
-		template<typename ret, typename...args>
-		held_callable callable(std::function<ret(args...)>&& target, std::optional<held_callable>&& old = std::nullopt)
+		template<typename t>
+		t* pick(t* a)
 		{
-			if (old)
-			{
-				return held_callable::make<multi_callable_of<ret, args...>>(std::move(target), std::move(*old));
-			}
-			else
-			{
-				return held_callable::make<callable_of<ret, args...>>(std::move(target));
-			}
+			return a;
 		}
 
 		template<typename ret, typename...args>
-		auto as_function(ret(*target)(args...))
+		held_callable sfn(std::function<ret(args...)>&& target)
 		{
-			return std::function<ret(args...)>{target};
+			return held_callable::make<callable_of<ret, args...>>(std::move(target));
+		}
+
+		template<typename ret, typename...args>
+		held_callable sfn(ret(*target)(args...))
+		{
+			return sfn( std::function<ret(args...)>{target} );
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		auto as_function(ret(member_holders_type::*target)(args...))
+		held_callable sfn(ret(member_holders_type::*target)(args...))
 		{
 			typedef member_holders_type& real_type;
-			return std::function<ret(real_type, args...)>{ target };
+			return sfn( std::function<ret(real_type, args...)>{ target } );
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		auto as_function(ret(member_holders_type::*target)(args...) const)
+		held_callable sfn(ret(member_holders_type::*target)(args...) const)
 		{
 			typedef member_holders_type const& real_type;
-			return std::function<ret(real_type, args...)>{ target };
+			return sfn( std::function<ret(real_type, args...)>{ target } );
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		auto as_function(ret(member_holders_type::*target)(args...) &&)
+		held_callable sfn(ret(member_holders_type::*target)(args...) &&)
 		{
 			typedef member_holders_type&& real_type;
-			return  std::function<ret(real_type, args...)>{ target };
+			return  sfn(std::function<ret(real_type, args...)>{ target });
 		}
 
 		template<typename member_holders_type, typename ret, typename...args>
-		auto as_function(ret(member_holders_type::*target)(args...) const&&)
+		held_callable sfn(ret(member_holders_type::*target)(args...) const&&)
 		{
 			typedef member_holders_type const&& real_type;
-			return std::function<ret(real_type, args...)>{ target };
+			return sfn(std::function<ret(real_type, args...)>{ target });
 		}
 
-		held_callable manual(std::function<value_holder(std::vector<stack_elem>&)>&& target)
+		template<typename member_holders_type, typename members_type>
+		held_callable mbr(members_type member_holders_type::*mbr)
+		{
+			held_callable constant_version = sfn(std::function<members_type const&(member_holders_type const&)>{[pmember = mbr](member_holders_type const& a) -> members_type const&
+			{
+				return a.*pmember;
+			}
+			});
+
+			held_callable mutable_version = sfn(std::function<members_type&(member_holders_type&)>{[pmember = mbr](member_holders_type& a) -> members_type&
+			{
+				return a.*pmember;
+			}
+			});
+			return std::move(*mutable_version).add_layer(std::move(constant_version));
+		}
+
+		template<typename t>
+		held_callable val(t&& a)
+		{
+			return sfn(std::function<t()>{[val = std::move(a)]() -> t {return t{ val }; }});
+		}
+
+		held_callable mfn(std::function<value_holder(std::vector<stack_elem>&)>&& target)
 		{
 			return held_callable::make<manual_callable>(std::move(target));
 		}
 
-		held_callable manual(value_holder(*target)(std::vector<stack_elem>&))
+		held_callable mfn(value_holder(*target)(std::vector<stack_elem>&))
 		{
 			return held_callable::make<manual_callable>(std::function<value_holder(std::vector<stack_elem>&)>{target});
 		}
 
+		class function_insertion;
+
+		class function_set;
+
+		template<typename t>
+		std::string fs_name(const name_set &names);
+
+		template<typename t>
+		function_set fs_functs();
 
 		class function_set
 		{
 		public:
+
+			function_insertion operator<<(std::string name);
 
 			function_set& remove(std::string const& b)
 			{
@@ -76,66 +109,35 @@ namespace expr
 				return *this;
 			}
 
-			function_set& add(held_callable&& f, std::string&& n)
+			template<typename string_convertible>
+			function_set& add(held_callable&& f, string_convertible&& n)
 			{
-				assert(name_checker::is_valid(n));
-				add_to_map(std::make_pair(std::move(n), std::move(f)));
+				assert(name_checker::is_valid(std::string{ n }));
+				add_to_map(std::make_pair(std::move(std::string{ n }), std::move(f)));
 				return *this;
 			}
 
-			function_set& add(held_callable&& f, std::string const& n)
-			{
-				assert(name_checker::is_valid(n));
-				add_to_map(std::make_pair(n, std::move(f)));
-				return *this;
-			}
-			
-			function_set& add(held_callable&& f, char const* n)
-			{
-				assert(name_checker::is_valid(n));
-				add_to_map(std::make_pair(std::string{n}, std::move(f)));
-				return *this;
-			}
 
-			function_set& use(function_set&& w, std::string const& n)
+			template<typename t = void, typename string_convertible = std::string>
+			function_set& use(string_convertible&& n = fs_name<t>(global_type_renames), function_set&& set = fs_functs<t>())
 			{
-				if (n == "")
+				std::string name{ n };
+				if (name == "")
 				{
-					return merge(std::move(w));
+					for (auto it = set.map.begin(); it != set.map.end(); ++it)
+					{
+						add_to_map(std::move(*it));
+					}
+					return *this;
 				}
-				assert(name_checker::is_valid(n));
-				for (auto it = w.map.begin(); it != w.map.end(); ++it)
+				assert(name_checker::is_valid(std::string{ name }));
+				for (auto it = set.map.begin(); it != set.map.end(); ++it)
 				{
 					auto cur = std::move(*it);
-					add_to_map(std::make_pair(std::string{ n + "." + cur.first }, std::move(cur.second)));
+					add_to_map(std::make_pair(std::string{ name + "." + cur.first }, std::move(cur.second)));
 				}
 				return *this;
 			}
-
-			function_set& use(function_set&& w, char const* n)
-			{
-				if (std::string(n) == "")
-				{
-					return merge(std::move(w));
-				}
-				assert(name_checker::is_valid(n));
-				for (auto it = w.map.begin(); it != w.map.end(); ++it)
-				{
-					auto cur = std::move(*it);
-					add_to_map(std::make_pair(std::string{ std::string{n} +"." + cur.first }, std::move(cur.second)));
-				}
-				return *this;
-			}
-
-			function_set& merge(function_set&& w)
-			{
-				for (auto it = w.map.begin(); it != w.map.end(); ++it)
-				{
-					add_to_map(std::move(*it));
-				}
-				return *this;
-			}
-
 
 			std::optional<held_callable*> get(std::string const& a)
 			{
@@ -187,6 +189,42 @@ namespace expr
 
 			std::unordered_map<std::string, held_callable> map;
 		};
+
+		class function_insertion
+		{
+		public:
+
+			function_insertion(std::string&& a, function_set& b) :
+				to(b),
+				at(std::move(a))
+			{}
+
+			function_insertion operator<<(function_set&& to_import)
+			{
+				to.use(at, std::move(to_import));
+				return function_insertion{ std::move(at), to };
+			}
+
+			function_insertion operator<<(held_callable&& to_insert) &&
+			{
+				to.add(std::move(to_insert), at);
+				return function_insertion{ std::move(at), to };
+			}
+
+			function_insertion operator<<(std::string name) &&
+			{
+				return function_insertion{std::move(name), to};
+			}
+
+		private:
+			std::string at;
+			function_set& to;
+		};
+
+		inline function_insertion function_set::operator<<(std::string name)
+		{
+			return function_insertion{ std::move(name),*this };
+		}
 
 
 		class variable_value_stack

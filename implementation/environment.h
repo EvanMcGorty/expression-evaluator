@@ -53,8 +53,6 @@ namespace expr
 
 		class environment
 		{
-			friend void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors);
-			friend void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors);
 		public:
 
 
@@ -78,9 +76,9 @@ namespace expr
 					.add(value_printer(output), "view")
 					.add(variables_printer(output, names), "vars")
 					.add(functions_printer(output, names), "funcs")
-					.add(manual(&core::swap), "swap")
-					.add(manual(&cpp_core::drop), "drop")
-					.add(callable(std::function<void()>{
+					.add(mfn(&core::swap), "swap")
+					.add(mfn(&cpp_core::drop), "drop")
+					.add(sfn(std::function<void()>{
 					[to_continue = &to_continue]() {*to_continue = false; }
 					}), "exit");
 
@@ -161,98 +159,9 @@ namespace expr
 				output << "\\|/" << std::endl;
 			}
 
-			environment& unbind(std::string const& name)
-			{
-				functions.remove(name);
-				return *this;
-			}
-
-			template<typename string_convertible>
-			environment& rbind(string_convertible&& name, held_callable&& target)
-			{
-				if (!target.is_nullval())
-				{
-					functions.add(std::move(target), std::forward<string_convertible>(name));
-				}
-				return *this;
-			}
-			
-			template<typename string_convertible, typename ret, typename...args>
-			environment& fbind(string_convertible&& name, std::function<ret(args...)>&& target)
-			{
-				functions.add(callable(std::move(target), functions.take(std::string(name))),std::forward<string_convertible>(name));
-				return *this;
-			}
-
-			template<typename string_convertible, typename ret, typename...args>
-			environment& fbind(string_convertible&& name, ret(*target)(args...))
-			{
-				functions.add(callable(as_function(target), functions.take(std::string(name))), std::forward<string_convertible>(name));
-				return *this;
-			}
-
-			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
-			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...))
-			{
-				functions.add(callable(as_function(target), functions.take(std::string(name))), std::forward<string_convertible>(name));
-				return *this;
-			}
-			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
-			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...) const)
-			{
-				functions.add(callable(as_function(target), functions.take(std::string(name))), std::forward<string_convertible>(name));
-				return *this;
-			}
-			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
-			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...) &&)
-			{
-				functions.add(callable(as_function(target), functions.take(std::string(name))), std::forward<string_convertible>(name));
-				return *this;
-			}
-			template<typename string_convertible, typename member_holders_type, typename ret, typename...args>
-			environment& fbind(string_convertible&& name, ret(member_holders_type::*target)(args...) const&&)
-			{
-				functions.add(callable(as_function(target), functions.take(std::string(name))), std::forward<string_convertible>(name));
-				return *this;
-			}
-
-			template<typename string_convertible, typename member_holders_type, typename members_type>
-			environment& mbind(string_convertible&& name, members_type member_holders_type::*member)
-			{
-				held_callable constant_version = callable(std::function<members_type const&(member_holders_type const&)>{[pmember = member](member_holders_type const& a) -> members_type const&
-				{
-					return a.*pmember;
-				}
-				}, functions.take(std::string(name)));
-
-				functions.add(callable(std::function<members_type&(member_holders_type&)>{[pmember = member](member_holders_type& a) -> members_type&
-				{
-					return a.*pmember;
-				}
-				}, std::optional<held_callable*>{&constant_version}), std::forward<string_convertible>(name));
-				return *this;
-			}
-
-
-			template<typename t, typename string_convertible>
-			environment& vbind(string_convertible&& name, t&& a)
-			{
-				functions.add(callable(std::function<t()>{[val = std::move(a)]() {return t{ val }; }}, functions.take(std::string(name))), std::forward<string_convertible>(name));
-				return *this;
-			}
-
-			template<typename t = void, typename string_convertible = std::string>
-			environment& sbind(string_convertible&& name = fs_name<t>(global_type_renames), function_set&& set = fs_functs<t>())
-			{
-				functions.use(std::move(set), std::forward<string_convertible>(name));
-				return *this;
-			}
-
-
-
 			held_callable info_printer(std::ostream& to = std::cout, name_set const& from = global_type_renames)
 			{
-				return manual(std::function<value_holder(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> value_holder
+				return mfn(std::function<value_holder(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> value_holder
 					{
 						if (a.size() == 1 && !a[0].is_nullval())
 						{
@@ -272,7 +181,7 @@ namespace expr
 
 			held_callable value_printer(std::ostream& to = std::cout)
 			{
-				return manual(std::function<value_holder(std::vector<stack_elem>&)>{[to = &to](std::vector<stack_elem>& a) -> value_holder
+				return mfn(std::function<value_holder(std::vector<stack_elem>&)>{[to = &to](std::vector<stack_elem>& a) -> value_holder
 				{
 					if (a.size() == 1 && !a[0].is_nullval())
 					{
@@ -291,7 +200,7 @@ namespace expr
 			
 			held_callable garbage_getter()
 			{
-				return manual(std::function<value_holder(std::vector<stack_elem>&)>{
+				return mfn(std::function<value_holder(std::vector<stack_elem>&)>{
 					[g = &garbage](std::vector<stack_elem>& a) -> value_holder
 					{
 						if (a.size() != 1 || a[0].is_nullval() || !a[0]->is_reference())
@@ -322,7 +231,7 @@ namespace expr
 
 			held_callable functions_printer(std::ostream& to = std::cout, name_set const& names = global_type_renames)
 			{
-				return callable(std::function<void()>{
+				return sfn(std::function<void()>{
 					[to = &to,fs = &functions, names = &names]() -> void
 					{
 						for (auto const& it : fs->view())
@@ -337,7 +246,7 @@ namespace expr
 
 			held_callable variables_printer(std::ostream& to = std::cout, name_set const& names = global_type_renames)
 			{
-				return callable(std::function<void()>{
+				return sfn(std::function<void()>{
 					[to = &to, vs = &variables,names = &names]() -> void
 					{
 						vs->put_values(*to,*names);
@@ -346,7 +255,6 @@ namespace expr
 			}
 
 
-		private:
 			function_set functions;
 
 			variable_set variables;

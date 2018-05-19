@@ -23,12 +23,12 @@ namespace expr
 		};
 
 		template<typename t>
-		function_set fs_functs()
+		inline function_set fs_functs()
 		{
 			return fs_info<t>::get_functions();
 		}
 		template<typename t>
-		std::string fs_name(name_set const& names)
+		inline std::string fs_name(name_set const& names)
 		{
 			return fs_info<t>::get_name(names);
 		}
@@ -83,9 +83,9 @@ namespace expr
 			static function_set get_functions()
 			{
 				function_set ret;
-				ret.add(manual(core::swap), "swap")
-					.add(manual(core::first), "first")
-					.add(manual(core::last), "last");
+				ret.add(mfn(core::swap), "swap")
+					.add(mfn(core::first), "first")
+					.add(mfn(core::last), "last");
 				return ret;
 			}
 
@@ -149,9 +149,9 @@ namespace expr
 			static function_set get_functions()
 			{
 				function_set ret;
-				ret.add(manual(cpp_core::drop), "drop")
-					.add(manual(cpp_core::to_string), "to_string")
-					.add(manual(cpp_core::strengthen), "strong");
+				ret.add(mfn(cpp_core::drop), "drop")
+					.add(mfn(cpp_core::to_string), "to_string")
+					.add(mfn(cpp_core::strengthen), "strong");
 				return ret;
 			}
 
@@ -166,7 +166,7 @@ namespace expr
 		{
 			static t default_construct()
 			{
-				if constexpr(std::is_default_constructible<t>::value)
+				if constexpr(std::is_default_constructible_v<t>)
 				{
 					return t{};
 				}
@@ -178,7 +178,7 @@ namespace expr
 
 			static t copy_construct(t const& a)
 			{
-				if constexpr(std::is_copy_constructible<t>::value)
+				if constexpr(std::is_copy_constructible_v<t>)
 				{
 					return a;
 				}
@@ -190,7 +190,7 @@ namespace expr
 
 			static t move_construct(t&& a)
 			{
-				if constexpr(std::is_move_constructible<t>::value)
+				if constexpr(std::is_move_constructible_v<t>)
 				{
 					return std::move(a);
 				}
@@ -202,7 +202,7 @@ namespace expr
 
 			static void move_assign(t& a, t&& b)
 			{
-				if constexpr(std::is_move_assignable<t>::value)
+				if constexpr(std::is_move_assignable_v<t>)
 				{
 					a = std::move(b);
 				}
@@ -214,7 +214,7 @@ namespace expr
 
 			static void copy_assign(t& a, t const& b)
 			{
-				if constexpr(std::is_copy_assignable<t>::value)
+				if constexpr(std::is_copy_assignable_v<t>)
 				{
 					a = b;
 				}
@@ -299,12 +299,12 @@ namespace expr
 			{
 				function_set ret;
 				ret
-					.add(callable(as_function(&terminal::exit)), "quit")
-					.add(callable(as_function(&terminal::sys)), "system")
-					.add(callable(as_function(&terminal::print)), "print")
-					.add(callable(as_function(&terminal::println)), "println")
-					.add(callable(as_function(&terminal::read)), "read")
-					.add(callable(as_function(&terminal::input)), "input");
+					.add(sfn(&terminal::exit), "quit")
+					.add(sfn(&terminal::sys), "system")
+					.add(sfn(&terminal::print), "print")
+					.add(sfn(&terminal::println), "println")
+					.add(sfn(&terminal::read), "read")
+					.add(sfn(&terminal::input), "input");
 				return std::move(ret);
 			}
 
@@ -320,35 +320,35 @@ namespace expr
 			static function_set get_functions()
 			{
 				function_set ret;
-				if constexpr(std::is_default_constructible<t>::value)
+				if constexpr(std::is_default_constructible_v<t>)
 				{
-					ret.add(callable(as_function(&basic_util<t>::default_construct)), "make");
+					ret.add(sfn(&basic_util<t>::default_construct), "make");
 				}
-				if constexpr(std::is_move_constructible<t>::value)
+				if constexpr(std::is_move_constructible_v<t>)
 				{
-					ret.add(callable(as_function(&basic_util<t>::move_construct)), "make");
-					ret.add(callable(as_function(&basic_util<t>::move_construct)), "move-make");
+					ret.add(sfn(&basic_util<t>::move_construct), "make");
+					ret.add(sfn(&basic_util<t>::move_construct), "move-make");
 				}
-				if constexpr(std::is_copy_constructible<t>::value)
+				if constexpr(std::is_copy_constructible_v<t>)
 				{
-					ret.add(callable(as_function(&basic_util<t>::copy_construct)), "make");
-					ret.add(callable(as_function(&basic_util<t>::copy_construct)), "copy-make");
+					ret.add(sfn(&basic_util<t>::copy_construct), "make");
+					ret.add(sfn(&basic_util<t>::copy_construct), "copy-make");
 				}
-				if constexpr(std::is_move_assignable<t>::value)
+				if constexpr(std::is_move_assignable_v<t>)
 				{
-					ret.add(callable(as_function(&basic_util<t>::move_assign)), "give");
-					ret.add(callable(as_function(&basic_util<t>::move_assign)), "move-give");
+					ret.add(sfn(&basic_util<t>::move_assign), "give");
+					ret.add(sfn(&basic_util<t>::move_assign), "move-give");
 				}
-				if constexpr(std::is_copy_assignable<t>::value)
+				if constexpr(std::is_copy_assignable_v<t>)
 				{
-					ret.add(callable(as_function(&basic_util<t>::copy_assign)), "give");
-					ret.add(callable(as_function(&basic_util<t>::copy_assign)), "copy-give");
+					ret.add(sfn(&basic_util<t>::copy_assign), "give");
+					ret.add(sfn(&basic_util<t>::copy_assign), "copy-give");
 				}
-				ret.add(callable(as_function(&basic_util<t>::swap)), "swap");
-				ret.add(callable(as_function(&basic_util<t>::destruct)),"drop");
-				ret.add(callable(as_function(&basic_util<t>::temporary_reference)), "tref");
-				ret.add(callable(as_function(&basic_util<t>::mutable_reference)), "mref");
-				ret.add(callable(as_function(&basic_util<t>::const_reference)), "cref");
+				ret.add(sfn(&basic_util<t>::swap), "swap");
+				ret.add(sfn(&basic_util<t>::destruct),"drop");
+				ret.add(sfn(&basic_util<t>::temporary_reference), "tref");
+				ret.add(sfn(&basic_util<t>::mutable_reference), "mref");
+				ret.add(sfn(&basic_util<t>::const_reference), "cref");
 				return ret;
 			}
 
@@ -392,7 +392,7 @@ namespace expr
 			{
 				function_set basic = fs_info<basic_util<t>>::get_functions();
 				function_set extended = fs_info<extended_util<t>>::get_functions();
-				return std::move(basic.merge(std::move(extended)));
+				return std::move(basic.use("",std::move(extended)));
 			}
 
 			static std::string get_name(name_set const& from)
@@ -462,16 +462,16 @@ namespace expr
 			{
 				function_set ret;
 				ret
-					.add(callable(as_function(&extended_util<std::string>::from_char_vector)), "char-vec-make")
-					.add(callable(as_function(&extended_util<std::string>::from_char_vector)), "make")
-					.add(callable(as_function(&extended_util<std::string>::as_c_str)), "as-c_str")
-					.add(callable(as_function(&extended_util<std::string>::from_c_str)), "c_str-make")
-					.add(callable(as_function(&extended_util<std::string>::from_c_str)), "make")
-					.add(callable(as_function(&extended_util<std::string>::index)), "at")
-					.add(callable(as_function(&extended_util<std::string>::const_index)), "at")
-					.add(callable(as_function(&extended_util<std::string>::append)), "append")
-					.add(callable(as_function(&extended_util<std::string>::resize)), "resize")
-					.add(callable(as_function(&extended_util<std::string>::size)), "len");
+					.add(sfn(&extended_util<std::string>::from_char_vector), "char-vec-make")
+					.add(sfn(&extended_util<std::string>::from_char_vector), "make")
+					.add(sfn(&extended_util<std::string>::as_c_str), "as-c_str")
+					.add(sfn(&extended_util<std::string>::from_c_str), "c_str-make")
+					.add(sfn(&extended_util<std::string>::from_c_str), "make")
+					.add(sfn(&extended_util<std::string>::index), "at")
+					.add(sfn(&extended_util<std::string>::const_index), "at")
+					.add(sfn(&extended_util<std::string>::append), "append")
+					.add(sfn(&extended_util<std::string>::resize), "resize")
+					.add(sfn(&extended_util<std::string>::size), "len");
 				return std::move(ret);
 			}
 
@@ -490,7 +490,7 @@ namespace expr
 				std::vector<t> ret;
 				for (auto& v : a)
 				{
-					std::optional<t> g = take_elem<t>(v);
+					std::optional<t> g = smart_take_elem<t>(v);
 					if (g)
 					{
 						ret.emplace_back(std::move(*g));
@@ -552,15 +552,15 @@ namespace expr
 			{
 				function_set ret;
 				ret
-					.add(manual(&extended_util<std::vector<t>>::from_list), "make")
-					.add(manual(&extended_util<std::vector<t>>::from_list), "list-make")
-					.add(callable(as_function(&extended_util<std::vector<t>>::index)), "at")
-					.add(callable(as_function(&extended_util<std::vector<t>>::const_index)), "at")
-					.add(callable(as_function(&extended_util<std::vector<t>>::append)), "append")
-					.add(callable(as_function(&extended_util<std::vector<t>>::size)), "size");
+					.add(mfn(&extended_util<std::vector<t>>::from_list), "make")
+					.add(mfn(&extended_util<std::vector<t>>::from_list), "list-make")
+					.add(sfn(&extended_util<std::vector<t>>::index), "at")
+					.add(sfn(&extended_util<std::vector<t>>::const_index), "at")
+					.add(sfn(&extended_util<std::vector<t>>::append), "append")
+					.add(sfn(&extended_util<std::vector<t>>::size), "size");
 				if constexpr(std::is_default_constructible_v<t>)
 				{
-					ret.add(callable(as_function(&extended_util<std::vector<t>>::size)), "resize");
+					ret.add(sfn(&extended_util<std::vector<t>>::size), "resize");
 				}
 				return std::move(ret);
 			}

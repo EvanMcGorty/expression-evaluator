@@ -56,7 +56,7 @@ namespace expr
 
 			unparsed(literal&& a)
 			{
-				value = std::move(a.data.value);
+				val = std::move(a.data.val);
 			}
 
 			bool is_unparsed() const override
@@ -66,18 +66,18 @@ namespace expr
 
 			std::string convert_into_string() const override
 			{
-				return std::string{ value };
+				return std::string{ val };
 			}
 
 			std::string string_view(name_set const& names) const override
 			{
-				literal temp{ literal_value{std::string{value}} };
+				literal temp{ literal_value{std::string{val}} };
 				return std::string("unparsed{") + temp.make_string() + "}";
 			}
 
 			bool get(any_type_ask* tar) override
 			{
-				tar->parse(value);
+				tar->parse(val);
 				return false;
 			}
 
@@ -86,7 +86,7 @@ namespace expr
 				return true;
 			}
 
-			std::string value;
+			std::string val;
 		};
 
 

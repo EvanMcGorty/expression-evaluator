@@ -56,7 +56,7 @@ namespace expr
 		class variable_value_stack;
 
 		template<typename t>
-		std::optional<t> take_elem(stack_elem& cur)
+		std::optional<t> smart_take_elem(stack_elem& cur)
 		{
 			if (cur.is_nullval())
 			{
@@ -114,13 +114,13 @@ namespace expr
 		class stack
 		{
 			template<typename tup_t, size_t ind, typename t, typename...ts>
-			void set_rest(tup_t& a)
+			void smart_set_rest(tup_t& a)
 			{
-				std::get<ind>(a) = take_elem<t>(stuff[stuff.size() + ind - std::tuple_size<tup_t>::value]);
+				std::get<ind>(a) = smart_take_elem<t>(stuff[stuff.size() + ind - std::tuple_size_v<tup_t>]);
 				
 				if constexpr(sizeof...(ts) > 0)
 				{
-					set_rest<tup_t, ind + 1, ts...>(a);
+					smart_set_rest<tup_t, ind + 1, ts...>(a);
 				}
 			}
 
@@ -130,14 +130,14 @@ namespace expr
 			std::vector<stack_elem> stuff;
 
 			template<typename tup_t, typename...ts>
-			void set_from_front(tup_t& a)
+			void smart_set_from_front(tup_t& a)
 			{
 				static_assert(std::is_same_v<tup_t, std::tuple<std::optional<ts>...>>);
-				set_rest<tup_t, 0, ts...>(a); //easier not to have this all in one function
+				smart_set_rest<tup_t, 0, ts...>(a); //easier not to have this all in one function
 			}
 
 			template<size_t ind, typename t, typename...ts>
-			bool check_from_front() const
+			bool smart_check_from_front() const
 			{
 				if (stuff[stuff.size() - 1 - sizeof...(ts)].is_nullval())
 				{
@@ -153,7 +153,7 @@ namespace expr
 					}
 					else
 					{
-						return ret && check_from_front<ind+1,ts...>();
+						return ret && smart_check_from_front<ind+1,ts...>();
 					}
 				}
 			}
@@ -232,7 +232,7 @@ namespace expr
 				if constexpr(sizeof...(args) > 0)
 				{
 					arg_tuple_type to_use;
-					a.set_from_front<arg_tuple_type, store_t<args>...>(to_use);
+					a.smart_set_from_front<arg_tuple_type, store_t<args>...>(to_use);
 					std::optional<use_tuple_type> might_use = can_perform<0, args...>(std::move(to_use));
 
 					if (might_use)
@@ -383,7 +383,7 @@ namespace expr
 				{
 					return callable_of<ret_t, args...>::try_perform(a, args_to_take);
 				}
-				else if (a.check_from_front<0, args...>())
+				else if (a.smart_check_from_front<0, args...>())
 				{
 					return callable_of<ret_t, args...>::try_perform(a, args_to_take);
 				}

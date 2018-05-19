@@ -4,11 +4,9 @@
 namespace expr
 {
 	using impl::executable;
-	using impl::as_function;
-	using impl::manual;
-	using impl::callable;
 	using impl::held_callable;
 	using impl::fs_info;
+	using impl::fs_name;
 	using impl::get_value;
 	using impl::set_value;
 	using impl::value_holder;
@@ -17,7 +15,7 @@ namespace expr
 	using impl::any_object;
 	using impl::object_of;
 	using impl::value_reference;
-	using impl::take_elem;
+	using impl::smart_take_elem;
 	using impl::converter;
 	using impl::name_set;
 	using impl::name_of;

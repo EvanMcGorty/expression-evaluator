@@ -57,10 +57,10 @@ namespace expr
 		{
 			literal_value(std::string&& a)
 			{
-				value = a;
+				val = a;
 			}
 
-			std::string value;
+			std::string val;
 		};
 
 		class literal : public node
@@ -84,16 +84,16 @@ namespace expr
 
 			bool is_equal(node const* a) const override
 			{
-				return a->is_literal() && static_cast<literal const*>(a)->data.value == data.value;
+				return a->is_literal() && static_cast<literal const*>(a)->data.val == data.val;
 			}
 
 
 			std::string make_string() const override
 			{
 				std::string ret("\"");
-				ret.reserve(size_t(float(data.value.length()) * 1.1) + 10);
+				ret.reserve(size_t(float(data.val.length()) * 1.1) + 10);
 				bool in_text = true;
-				for (auto it = data.value.cbegin(); it != data.value.cend(); ++it)
+				for (auto it = data.val.cbegin(); it != data.val.cend(); ++it)
 				{
 					switch (*it)
 					{

@@ -56,6 +56,7 @@ _exit
 
 #include "../evaluator.h"
 
+using namespace expr;
 
 double multiply(double a, double b)
 {
@@ -90,21 +91,18 @@ int main()
 {
     std::cout << "this code will run before the evaluator is used" << std::endl;
 
-    expr::rename<std::vector<double>>("vec");
+    rename<std::vector<double>>("vec");
 
-    expr::environment env;
+    environment env;
 
-    env .fbind("prod",&multiply)
-        .fbind("push",&push)
-        .fbind("rotate",&rotate)
-        .fbind("print",&print)
+    
+    env.functions.use<core>("").use<cpp_core>("").use<util<std::vector<double>>>().use<util<double>>()
+    << "prod" << sfn(multiply) 
+    << "push" << sfn(push) 
+    << "rotate" << sfn(rotate) 
+    << "print" << sfn(print) 
+    << "glv" << val(&global_vector);
 
-        .vbind("glv",&global_vector)
-
-        .sbind<expr::core>("")
-        .sbind<expr::cpp_core>("")
-        .sbind<expr::util<std::vector<double>>>()
-        .sbind<expr::util<double>>();
 
 	env.attach();
     
