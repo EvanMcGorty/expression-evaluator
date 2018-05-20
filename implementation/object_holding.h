@@ -89,13 +89,18 @@ namespace expr
 			std::string val;
 		};
 
+		class any_object;
 
 		class value_elem_val : public any_elem_val
 		{
+		public:
+
 			virtual bool has_value() const final override
 			{
 				return true;
 			}
+
+			virtual mu::virt<any_object> make_clone() const = 0;
 		};
 
 
@@ -147,6 +152,11 @@ namespace expr
 			}
 
 			mu::virt<any_object> as_non_trivially_destructible() && override
+			{
+				return mu::virt<any_object>::make<void_object>();
+			}
+
+			mu::virt<any_object> make_clone() const override
 			{
 				return mu::virt<any_object>::make<void_object>();
 			}
@@ -215,6 +225,22 @@ namespace expr
 				return std::is_trivially_destructible_v<t>;
 			}
 
+			mu::virt<any_object> make_clone() const override
+			{
+				if constexpr(std::is_copy_constructible<t>::value)
+				{
+					//t{ val };
+					//std::cout << "test" << std::endl;
+					//return mu::virt<any_object>::make_nullval();
+					t clone = t{ val };
+					return mu::virt<any_object>::make<object_of<t>,t&&>(std::move(clone));
+				}
+				else
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
+			}
+
 			std::type_info const& get_type() const override
 			{
 				return type();
@@ -249,17 +275,23 @@ namespace expr
 				}
 				else if constexpr (pointer<t>::is()) //to return a t*/t& as a t&& or t const&
 				{
-					if (tar->get_type() == typeid(typename pointer<t>::deref const*))
-					{
-						static_cast<type_ask_of<typename pointer<t>::deref const*>*>(tar)->gotten.emplace(std::move(&*val));
-					}
-					else if (tar->get_type() == typeid(typename pointer<t>::deref*))
+					if (tar->get_type() == typeid(typename pointer<t>::deref*))
 					{
 						static_cast<type_ask_of<typename pointer<t>::deref*>*>(tar)->gotten.emplace(std::move(&*val));
+						return false;
 					}
-					else if (tar->get_type() == typeid(typename pointer<t>::deref))
+					if constexpr(!std::is_const_v<typename pointer<t>::deref>)
 					{
-						static_cast<type_ask_of<typename pointer<t>::deref>*>(tar)->gotten.emplace(std::move(*val));
+						if (tar->get_type() == typeid(typename pointer<t>::deref const*))
+						{
+							static_cast<type_ask_of<typename pointer<t>::deref const*>*>(tar)->gotten.emplace(std::move(&*val));
+							return false;
+						}
+						if (tar->get_type() == typeid(typename pointer<t>::deref))
+						{
+							static_cast<type_ask_of<typename pointer<t>::deref>*>(tar)->gotten.emplace(std::move(*val));
+							return false;
+						}
 					}
 					return false;
 				}
@@ -321,6 +353,7 @@ namespace expr
 		{
 		public:
 
+
 			value_reference(value_holder* a)
 			{
 				ref = a;
@@ -329,6 +362,19 @@ namespace expr
 			bool is_reference() const override
 			{
 				return true;
+			}
+
+
+			mu::virt<any_object> make_clone() const override
+			{
+				if (!ref->is_nullval())
+				{
+					return (**ref).make_clone();
+				}
+				else
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
 			}
 
 			bool get(any_type_ask* tar) override
@@ -343,6 +389,7 @@ namespace expr
 
 				return false;
 			}
+
 
 			bool can(std::type_info const& tar) const override
 			{

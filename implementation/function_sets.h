@@ -102,7 +102,6 @@ namespace expr
 				if (a.size() == 1 && !a[0].is_nullval() && a[0]->is_object())
 				{
 					return std::move(*get_value(a[0])).as_non_trivially_destructible();
-					
 				}
 				else
 				{
@@ -141,6 +140,18 @@ namespace expr
 				return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 			}
 
+			static value_holder clone(std::vector<stack_elem>& a)
+			{
+				if (a.size() == 1 && !a[0].is_nullval() && a[0]->is_object())
+				{
+					return a[0].downcast_get<value_elem_val>()->make_clone();
+				}
+				else
+				{
+					return value_holder::make_nullval();
+				}
+			}
+
 		};
 
 		template<>
@@ -151,6 +162,7 @@ namespace expr
 				function_set ret;
 				ret.add(mfn(cpp_core::drop), "drop")
 					.add(mfn(cpp_core::to_string), "to_string")
+					.add(mfn(cpp_core::clone), "clone")
 					.add(mfn(cpp_core::strengthen), "strong");
 				return ret;
 			}

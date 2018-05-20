@@ -278,7 +278,14 @@ namespace expr
 			{
 				if constexpr(pointer<t>::is())
 				{
-					return converter<typename pointer<t>::deref>::print(*tar);
+					if (&*tar == nullptr)
+					{
+						return "NULL";
+					}
+					else
+					{
+						return converter<typename pointer<t>::deref>::print(*tar);
+					}
 				}
 				else if constexpr(std::is_arithmetic_v<t>)
 				{
