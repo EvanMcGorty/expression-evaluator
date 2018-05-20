@@ -152,6 +152,18 @@ namespace expr
 				}
 			}
 
+			static value_holder take(std::vector<stack_elem>& a)
+			{
+				if (a.size() == 1 && !a[0].is_nullval() && a[0]->is_object())
+				{
+					return a[0].downcast_get<value_elem_val>()->take_referenced();
+				}
+				else
+				{
+					return value_holder::make_nullval();
+				}
+			}
+
 		};
 
 		template<>
@@ -163,6 +175,7 @@ namespace expr
 				ret.add(mfn(cpp_core::drop), "drop")
 					.add(mfn(cpp_core::to_string), "to_string")
 					.add(mfn(cpp_core::clone), "clone")
+					.add(mfn(cpp_core::take), "take")
 					.add(mfn(cpp_core::strengthen), "strong");
 				return ret;
 			}
@@ -241,15 +254,6 @@ namespace expr
 				std::swap(a, b);
 			}
 
-			static void destruct(t&& a)
-			{
-				//let evaluator call destructor naturally
-			}
-
-			static t&& temporary_reference(t& a)
-			{
-				return std::move(a);
-			}
 
 			static t& mutable_reference(t& a)
 			{
@@ -261,6 +265,72 @@ namespace expr
 				return a;
 			}
 
+			static std::unique_ptr<t> mutable_unique(t&& a)
+			{
+				return std::make_unique<t>(std::move(a));
+			}
+
+			static std::unique_ptr<t const> const_unique(t&& a)
+			{
+				return std::make_unique<t const>(std::move(a));
+			}
+
+			static std::shared_ptr<t> mutable_shared(t&& a)
+			{
+				return std::make_shared<t>(std::move(a));
+			}
+
+			static std::shared_ptr<t const> const_shared(t&& a)
+			{
+				return std::make_shared<t const>(std::move(a));
+			}
+
+		};
+
+		template<typename t>
+		struct fs_info<basic_util<t>>
+		{
+			static function_set get_functions()
+			{
+				function_set ret;
+				if constexpr(std::is_default_constructible_v<t>)
+				{
+					ret.add(sfn(&basic_util<t>::default_construct), "make");
+				}
+				if constexpr(std::is_move_constructible_v<t>)
+				{
+					ret.add(sfn(&basic_util<t>::move_construct), "make");
+					ret.add(sfn(&basic_util<t>::move_construct), "move-make");
+					ret.add(sfn(&basic_util<t>::mutable_unique), "make-unique");
+					ret.add(sfn(&basic_util<t>::const_unique), "make-const-unique");
+					ret.add(sfn(&basic_util<t>::mutable_shared), "make-shared");
+					ret.add(sfn(&basic_util<t>::const_shared), "make-const-shared");
+				}
+				if constexpr(std::is_copy_constructible_v<t>)
+				{
+					ret.add(sfn(&basic_util<t>::copy_construct), "make");
+					ret.add(sfn(&basic_util<t>::copy_construct), "copy-make");
+				}
+				if constexpr(std::is_move_assignable_v<t>)
+				{
+					ret.add(sfn(&basic_util<t>::move_assign), "give");
+					ret.add(sfn(&basic_util<t>::move_assign), "move-give");
+				}
+				if constexpr(std::is_copy_assignable_v<t>)
+				{
+					ret.add(sfn(&basic_util<t>::copy_assign), "give");
+					ret.add(sfn(&basic_util<t>::copy_assign), "copy-give");
+				}
+				ret.add(sfn(&basic_util<t>::swap), "swap");
+				ret.add(sfn(&basic_util<t>::mutable_reference), "make-ref");
+				ret.add(sfn(&basic_util<t>::const_reference), "make-const-ref");
+				return ret;
+			}
+
+			static std::string get_name(name_set const& from)
+			{
+				return name_of<t>(from);
+			}
 		};
 
 
@@ -326,50 +396,7 @@ namespace expr
 			}
 		};
 
-		template<typename t>
-		struct fs_info<basic_util<t>>
-		{
-			static function_set get_functions()
-			{
-				function_set ret;
-				if constexpr(std::is_default_constructible_v<t>)
-				{
-					ret.add(sfn(&basic_util<t>::default_construct), "make");
-				}
-				if constexpr(std::is_move_constructible_v<t>)
-				{
-					ret.add(sfn(&basic_util<t>::move_construct), "make");
-					ret.add(sfn(&basic_util<t>::move_construct), "move-make");
-				}
-				if constexpr(std::is_copy_constructible_v<t>)
-				{
-					ret.add(sfn(&basic_util<t>::copy_construct), "make");
-					ret.add(sfn(&basic_util<t>::copy_construct), "copy-make");
-				}
-				if constexpr(std::is_move_assignable_v<t>)
-				{
-					ret.add(sfn(&basic_util<t>::move_assign), "give");
-					ret.add(sfn(&basic_util<t>::move_assign), "move-give");
-				}
-				if constexpr(std::is_copy_assignable_v<t>)
-				{
-					ret.add(sfn(&basic_util<t>::copy_assign), "give");
-					ret.add(sfn(&basic_util<t>::copy_assign), "copy-give");
-				}
-				ret.add(sfn(&basic_util<t>::swap), "swap");
-				ret.add(sfn(&basic_util<t>::destruct),"drop");
-				ret.add(sfn(&basic_util<t>::temporary_reference), "tref");
-				ret.add(sfn(&basic_util<t>::mutable_reference), "mref");
-				ret.add(sfn(&basic_util<t>::const_reference), "cref");
-				return ret;
-			}
-
-			static std::string get_name(name_set const& from)
-			{
-				return name_of<t>(from);
-			}
-		};
-
+		
 
 		template<typename t>
 		struct extended_util

@@ -101,6 +101,8 @@ namespace expr
 			}
 
 			virtual mu::virt<any_object> make_clone() const = 0;
+
+			virtual mu::virt<any_object> take_referenced() const = 0;
 		};
 
 
@@ -158,7 +160,12 @@ namespace expr
 
 			mu::virt<any_object> make_clone() const override
 			{
-				return mu::virt<any_object>::make<void_object>();
+				return mu::virt<any_object>::make_nullval();
+			}
+
+			mu::virt<any_object> take_referenced() const override
+			{
+				return mu::virt<any_object>::make_nullval();
 			}
 
 			bool can_trivially_destruct() const override
@@ -229,11 +236,19 @@ namespace expr
 			{
 				if constexpr(std::is_copy_constructible<t>::value)
 				{
-					//t{ val };
-					//std::cout << "test" << std::endl;
-					//return mu::virt<any_object>::make_nullval();
-					t clone = t{ val };
-					return mu::virt<any_object>::make<object_of<t>,t&&>(std::move(clone));
+					return mu::virt<any_object>::make<object_of<t>>(t{ val });
+				}
+				else
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
+			}
+
+			mu::virt<any_object> take_referenced() const override
+			{
+				if constexpr(pointer<t>::is())
+				{
+					return mu::virt<any_object>::make<object_of<typename pointer<t>::deref>>(std::move(*val));
 				}
 				else
 				{
@@ -246,31 +261,66 @@ namespace expr
 				return type();
 			}
 
+			bool may_live()
+			{
+				if constexpr(std::is_trivially_copy_constructible_v<t> && std::is_trivially_move_constructible_v<t> && std::is_trivially_destructible_v<t>)
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}
+
 			bool get(any_type_ask* tar) override
 			{
+				if (tar->get_type() == typeid(t))
+				{
+					static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
+					//if copying does the same as moving but leaves behind the old copy, then the origional doesn't need to be destroyed on the spot.
+					//it must be trivially destructible though, otherwise the copy will be sent to the garbage and an extra destructor could end up running.
+					return may_live();
+				}
 				if (tar->get_type() == typeid(t*))
 				{
 					static_cast<type_ask_of<t*>*>(tar)->gotten.emplace(&val);
 					return false;
 				}
-				else if (tar->get_type() == typeid(t const*))
+				if (tar->get_type() == typeid(std::unique_ptr<t>))
 				{
-					static_cast<type_ask_of<t const*>*>(tar)->gotten.emplace(&val);
-					return false;
-				}
-				else if (tar->get_type() == typeid(t))
-				{
-					//if copying does the same as moving but leaves behind the old copy, then it should be done instead
+					static_cast<type_ask_of<std::unique_ptr<t>>*>(tar)->gotten.emplace(std::make_unique<t>(std::move(val)));
+					//if copying does the same as moving but leaves behind the old copy, then the origional doesn't need to be destroyed on the spot.
 					//it must be trivially destructible though, otherwise the copy will be sent to the garbage and an extra destructor could end up running.
-					if constexpr(std::is_trivially_copy_constructible_v<t> && std::is_trivially_move_constructible_v<t> && std::is_trivially_destructible_v<t>)
+					return may_live();
+				}
+				if (tar->get_type() == typeid(std::shared_ptr<t>))
+				{
+					static_cast<type_ask_of<std::shared_ptr<t>>*>(tar)->gotten.emplace(std::make_shared<t>(std::move(val)));
+					//if copying does the same as moving but leaves behind the old copy, then the origional doesn't need to be destroyed on the spot.
+					//it must be trivially destructible though, otherwise the copy will be sent to the garbage and an extra destructor could end up running.
+					return may_live();
+				}
+				if constexpr(!std::is_const_v<t>)
+				{
+					if (tar->get_type() == typeid(t const*))
 					{
-						static_cast<type_ask_of<t>*>(tar)->gotten.emplace(val);
+						static_cast<type_ask_of<t const*>*>(tar)->gotten.emplace(&val);
 						return false;
 					}
-					else
+					if (tar->get_type() == typeid(std::unique_ptr<t const>))
 					{
-						static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
-						return true;
+						static_cast<type_ask_of<std::unique_ptr<t const>>*>(tar)->gotten.emplace(std::make_unique<t const>(std::move(val)));
+						//if copying does the same as moving but leaves behind the old copy, then the origional doesn't need to be destroyed on the spot.
+						//it must be trivially destructible though, otherwise the copy will be sent to the garbage and an extra destructor could end up running.
+						return may_live();
+					}
+					if (tar->get_type() == typeid(std::shared_ptr<t const>))
+					{
+						static_cast<type_ask_of<std::shared_ptr<t const>>*>(tar)->gotten.emplace(std::make_shared<t const>(std::move(val)));
+						//if copying does the same as moving but leaves behind the old copy, then the origional doesn't need to be destroyed on the spot.
+						//it must be trivially destructible though, otherwise the copy will be sent to the garbage and an extra destructor could end up running.
+						return may_live();
 					}
 				}
 				else if constexpr (pointer<t>::is()) //to return a t*/t& as a t&& or t const&
@@ -287,57 +337,58 @@ namespace expr
 							static_cast<type_ask_of<typename pointer<t>::deref const*>*>(tar)->gotten.emplace(std::move(&*val));
 							return false;
 						}
-						if (tar->get_type() == typeid(typename pointer<t>::deref))
-						{
-							static_cast<type_ask_of<typename pointer<t>::deref>*>(tar)->gotten.emplace(std::move(*val));
-							return false;
-						}
 					}
 					return false;
 				}
-				else
-				{
-					return false;
-				}
+				return false;
 			}
 
 			bool can(std::type_info const& tar) const override
 			{
+				if (tar == typeid(t))
+				{
+					return true;
+				}
 				if (tar == typeid(t*))
 				{
 					return true;
 				}
-				else if (tar == typeid(t const*))
+				if (tar == typeid(t const*))
 				{
 					return true;
 				}
-				else if (tar == typeid(t))
+				if (tar == typeid(std::unique_ptr<t>))
 				{
 					return true;
 				}
-				else if constexpr(pointer<t>::is())
+				if (tar == typeid(std::unique_ptr<t const>))
 				{
-					if (tar == typeid(typename pointer<t>::deref const*))
-					{
-						return true;
-					}
-					else if (tar == typeid(typename pointer<t>::deref*))
-					{
-						return true;
-					}
-					else if (tar == typeid(typename pointer<t>::deref))
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
+					return true;
 				}
-				else
+				if (tar == typeid(std::shared_ptr<t>))
 				{
+					return true;
+				}
+				if (tar == typeid(std::shared_ptr<t const>))
+				{
+					return true;
+				}
+				if constexpr(pointer<t>::is())
+				{
+					if (tar == typeid(typename pointer<t>::deref*))
+					{
+						return true;
+					}
+					if constexpr(!std::is_const_v<typename pointer<t>::deref>)
+					{
+						if (tar == typeid(typename pointer<t>::deref const*))
+						{
+							return true;
+						}
+					}
 					return false;
 				}
+				return false;
 			}
 
 
@@ -370,6 +421,18 @@ namespace expr
 				if (!ref->is_nullval())
 				{
 					return (**ref).make_clone();
+				}
+				else
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
+			}
+
+			mu::virt<any_object> take_referenced() const override
+			{
+				if (!ref->is_nullval())
+				{
+					return (**ref).take_referenced();
 				}
 				else
 				{

@@ -67,7 +67,7 @@ namespace expr
 		class strong
 		{
 		private:
-			mutable t val;
+			std::remove_const_t<t> mutable val;
 			
 			strong() = delete;
 			strong(strong<t> const&) = delete;
@@ -77,16 +77,15 @@ namespace expr
 
 
 
-			strong(t&& a)
+			strong(t&& a) :
+				val(std::move(a))
 			{
 				static_assert(std::is_trivially_destructible_v<t>, "strong should only be used for types that are trivially destructible");
-				val = std::move(a);
 			}
 
-			strong(strong<t>&& a)
-			{
-				val = std::move(a.val);
-			}
+			strong(strong<t>&& a) :
+				val(std::move(a.val))
+			{}
 
 			~strong()
 			{
@@ -97,6 +96,11 @@ namespace expr
 			{
 				return val;
 			}
+
+			/*t const& operator*() const
+			{
+				return val;
+			}*/
 		};
 
 		template <typename t>
