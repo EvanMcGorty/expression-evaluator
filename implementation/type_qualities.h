@@ -68,19 +68,25 @@ namespace expr
 		{
 		private:
 			mutable t val;
+			
+			strong() = delete;
+			strong(strong<t> const&) = delete;
+			void operator=(strong<t> const&) = delete;
 
-			strong() {}
-
-			void operator=(t const&) {}
-			strong(t const&) {}
 		public:
+
 
 
 			strong(t&& a)
 			{
+				static_assert(std::is_trivially_destructible_v<t>, "strong should only be used for types that are trivially destructible");
 				val = std::move(a);
 			}
 
+			strong(strong<t>&& a)
+			{
+				val = std::move(a.val);
+			}
 
 			~strong()
 			{
