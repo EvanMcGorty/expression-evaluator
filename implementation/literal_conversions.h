@@ -213,7 +213,7 @@ namespace expr
 			//when successful, start is exactly one place ahead of the last character of the parsed value.
 			static std::optional<t> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
-				if constexpr(pointer<t>::is())
+				if constexpr(type_wrap_info<t>::is())
 				{
 					return std::nullopt;
 				}
@@ -276,15 +276,15 @@ namespace expr
 
 			static std::string print(t const& tar)
 			{
-				if constexpr(pointer<t>::is())
+				if constexpr(type_wrap_info<t>::is())
 				{
-					if (&*tar == nullptr)
+					if (type_wrap_info<t>::get(tar) == nullptr)
 					{
 						return "NULL";
 					}
 					else
 					{
-						return converter<typename pointer<t>::deref>::print(*tar);
+						return converter<typename type_wrap_info<t>::deref>::print(*tar);
 					}
 				}
 				else if constexpr(std::is_arithmetic_v<t>)

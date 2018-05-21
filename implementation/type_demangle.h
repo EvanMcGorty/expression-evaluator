@@ -60,7 +60,7 @@ namespace expr
 		template<typename type>
 		void rename(std::string&& new_name, name_set& names = global_type_renames)
 		{
-			static_assert(!(std::is_const_v<type>||pointer<type>::is()||std::is_reference_v<type>), "can only rename a raw class/struct/union");
+			static_assert(!(std::is_const_v<type>||type_wrap_info<type>::is()||std::is_reference_v<type>), "can only rename a raw class/struct/union");
 
 			names.data[std::type_index{ typeid(type) }] = std::move(new_name);
 			
@@ -81,9 +81,9 @@ namespace expr
 			auto g = names.data.find(std::type_index{ typeid(type) });
 			if (g == names.data.end())
 			{
-				if constexpr(pointer<type>::is())
+				if constexpr(type_wrap_info<type>::is())
 				{
-					return name_of<typename pointer<type>::deref>(names) + pointer<type>::suffix();
+					return name_of<typename type_wrap_info<type>::deref>(names) + type_wrap_info<type>::suffix();
 				}
 				else
 				{

@@ -7,7 +7,7 @@ namespace expr
 	{
 
 		template <typename t>
-		struct pointer
+		struct type_wrap_info
 		{
 			static constexpr bool is()
 			{
@@ -16,7 +16,7 @@ namespace expr
 		};
 
 		template <typename t>
-		struct pointer<t*>
+		struct type_wrap_info<t*>
 		{
 			static constexpr bool is()
 			{
@@ -29,10 +29,16 @@ namespace expr
 			}
 
 			typedef t deref;
+
+			static deref* get(t* const& a)
+			{
+				return a;
+			}
+
 		};
 
 		template <typename t>
-		struct pointer<std::unique_ptr<t>>
+		struct type_wrap_info<std::unique_ptr<t>>
 		{
 			static constexpr bool is()
 			{
@@ -45,10 +51,15 @@ namespace expr
 			}
 
 			typedef t deref;
+
+			static deref* get(std::unique_ptr<t> const& a)
+			{
+				return a.get();
+			}
 		};
 
 		template <typename t>
-		struct pointer<std::shared_ptr<t>>
+		struct type_wrap_info<std::shared_ptr<t>>
 		{
 			static constexpr bool is()
 			{
@@ -61,6 +72,11 @@ namespace expr
 			}
 
 			typedef t deref;
+
+			static deref* get(std::shared_ptr<t> const& a)
+			{
+				return a.get();
+			}
 		};
 
 		template<typename t>
@@ -104,7 +120,7 @@ namespace expr
 		};
 
 		template <typename t>
-		struct pointer<strong<t>>
+		struct type_wrap_info<strong<t>>
 		{
 			static constexpr bool is()
 			{
@@ -117,6 +133,11 @@ namespace expr
 			}
 
 			typedef t deref;
+
+			static deref* get(strong<t> const& a)
+			{
+				return &*a;
+			}
 		};
 
 	}
