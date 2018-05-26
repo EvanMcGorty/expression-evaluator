@@ -203,6 +203,7 @@ namespace expr
 			object_of(t&& a) :
 				val(std::move(a))
 			{
+				static_assert(!std::is_const_v<t>,"object_of<t> should not have a const t");
 			}
 
 			std::string convert_into_string() const override
@@ -290,34 +291,12 @@ namespace expr
 					static_cast<type_ask_of<t*>*>(tar)->gotten.emplace(&val);
 					return false;
 				}
-				if (tar->get_type() == typeid(std::unique_ptr<t>))
-				{
-					static_cast<type_ask_of<std::unique_ptr<t>>*>(tar)->gotten.emplace(std::make_unique<t>(std::move(val)));
-					return is_movable();
-				}
-				if (tar->get_type() == typeid(std::shared_ptr<t>))
-				{
-					static_cast<type_ask_of<std::shared_ptr<t>>*>(tar)->gotten.emplace(std::make_shared<t>(std::move(val)));
-					return is_movable();
-				}
 				if constexpr(!std::is_const_v<t>)
 				{
 					if (tar->get_type() == typeid(t const*))
 					{
 						static_cast<type_ask_of<t const*>*>(tar)->gotten.emplace(&val);
 						return false;
-					}
-					if (tar->get_type() == typeid(std::unique_ptr<t const>))
-					{
-						static_cast<type_ask_of<std::unique_ptr<t const>>*>(tar)->gotten.emplace(std::make_unique<t const>(std::move(val)));
-						//if copying does the same as moving but leaves behind the old copy, then the origional doesn't need to be destroyed on the spot.
-						//it must be trivially destructible though, otherwise the copy will be sent to the garbage and an extra destructor could end up running.
-						return is_movable();
-					}
-					if (tar->get_type() == typeid(std::shared_ptr<t const>))
-					{
-						static_cast<type_ask_of<std::shared_ptr<t const>>*>(tar)->gotten.emplace(std::make_shared<t const>(std::move(val)));
-						return is_movable();
 					}
 				}
 				else if constexpr (type_wrap_info<t>::is()) //to return a t*/t& as a t&& or t const&
@@ -350,25 +329,12 @@ namespace expr
 				{
 					return true;
 				}
-				if (tar == typeid(t const*))
+				if constexpr(!std::is_const_v<t>)
 				{
-					return true;
-				}
-				if (tar == typeid(std::unique_ptr<t>))
-				{
-					return true;
-				}
-				if (tar == typeid(std::unique_ptr<t const>))
-				{
-					return true;
-				}
-				if (tar == typeid(std::shared_ptr<t>))
-				{
-					return true;
-				}
-				if (tar == typeid(std::shared_ptr<t const>))
-				{
-					return true;
+					if (tar == typeid(t const*))
+					{
+						return true;
+					}
 				}
 				if constexpr(type_wrap_info<t>::is())
 				{

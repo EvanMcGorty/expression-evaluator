@@ -6,7 +6,7 @@ namespace expr
 {
 	namespace impl
 	{
-		
+
 		template<typename t>
 		class fs_info
 		{
@@ -186,6 +186,69 @@ namespace expr
 			}
 		};
 
+		struct terminal
+		{
+
+			static void exit()
+			{
+				assert(false);
+			}
+
+			static void sys(std::string a)
+			{
+				system(a.c_str());
+			}
+
+			static void print(std::string a)
+			{
+				std::cout << a << std::flush;
+			}
+
+			static void println(std::string a)
+			{
+				std::cout << a << std::endl;
+			}
+
+			static std::string read()
+			{
+				std::string ret;
+				std::getline(std::cin, ret);
+				return ret;
+			}
+
+			static std::string input(std::string msg)
+			{
+				std::cout << msg << std::flush;
+				std::string ret;
+				std::getline(std::cin, ret);
+				return ret;
+			}
+
+		};
+
+		template<>
+		struct fs_info<terminal>
+		{
+			static function_set get_functions()
+			{
+				function_set ret;
+				ret
+					.add(sfn(&terminal::exit), "quit")
+					.add(sfn(&terminal::sys), "system")
+					.add(sfn(&terminal::print), "print")
+					.add(sfn(&terminal::println), "println")
+					.add(sfn(&terminal::read), "read")
+					.add(sfn(&terminal::input), "input");
+				return std::move(ret);
+			}
+
+			static std::string get_name(name_set const& names)
+			{
+				return "sys";
+			}
+		};
+
+
 		template<typename t>
 		struct basic_util
 		{
@@ -254,37 +317,6 @@ namespace expr
 				std::swap(a, b);
 			}
 
-
-			static t& mutable_reference(t& a)
-			{
-				return a;
-			}
-
-			static t const& const_reference(t& a)
-			{
-				return a;
-			}
-
-			static std::unique_ptr<t> mutable_unique(t&& a)
-			{
-				return std::make_unique<t>(std::move(a));
-			}
-
-			static std::unique_ptr<t const> const_unique(t&& a)
-			{
-				return std::make_unique<t const>(std::move(a));
-			}
-
-			static std::shared_ptr<t> mutable_shared(t&& a)
-			{
-				return std::make_shared<t>(std::move(a));
-			}
-
-			static std::shared_ptr<t const> const_shared(t&& a)
-			{
-				return std::make_shared<t const>(std::move(a));
-			}
-
 		};
 
 		template<typename t>
@@ -334,70 +366,6 @@ namespace expr
 		};
 
 
-		struct terminal
-		{
-
-			static void exit()
-			{
-				assert(false);
-			}
-
-			static void sys(std::string a)
-			{
-				system(a.c_str());
-			}
-
-			static void print(std::string a)
-			{
-				std::cout << a << std::flush;
-			}
-
-			static void println(std::string a)
-			{
-				std::cout << a << std::endl;
-			}
-
-			static std::string read()
-			{
-				std::string ret;
-				std::getline(std::cin, ret);
-				return ret;
-			}
-
-			static std::string input(std::string msg)
-			{
-				std::cout << msg << std::flush;
-				std::string ret;
-				std::getline(std::cin, ret);
-				return ret;
-			}
-
-		};
-
-		template<>
-		struct fs_info<terminal>
-		{
-			static function_set get_functions()
-			{
-				function_set ret;
-				ret
-					.add(sfn(&terminal::exit), "quit")
-					.add(sfn(&terminal::sys), "system")
-					.add(sfn(&terminal::print), "print")
-					.add(sfn(&terminal::println), "println")
-					.add(sfn(&terminal::read), "read")
-					.add(sfn(&terminal::input), "input");
-				return std::move(ret);
-			}
-
-			static std::string get_name(name_set const& names)
-			{
-				return "sys";
-			}
-		};
-
-		
-
 		template<typename t>
 		struct extended_util
 		{};
@@ -431,7 +399,7 @@ namespace expr
 			{
 				function_set basic = fs_info<basic_util<t>>::get_functions();
 				function_set extended = fs_info<extended_util<t>>::get_functions();
-				return std::move(basic.use("",std::move(extended)));
+				return std::move(basic.use("", std::move(extended)));
 			}
 
 			static std::string get_name(name_set const& from)
@@ -440,6 +408,53 @@ namespace expr
 			}
 		};
 
+		template<typename t>
+		struct pointer_util<t>
+		{
+			static t& mutable_reference(t& a)
+			{
+				return a;
+			}
+
+			static t const& const_reference(t& a)
+			{
+				return a;
+			}
+
+			static std::unique_ptr<t> mutable_unique(t&& a)
+			{
+				return std::make_unique<t>(std::move(a));
+			}
+
+			static std::unique_ptr<t const> const_unique(t&& a)
+			{
+				return std::make_unique<t const>(std::move(a));
+			}
+
+			static std::shared_ptr<t> mutable_shared(t&& a)
+			{
+				return std::make_shared<t>(std::move(a));
+			}
+
+			static std::shared_ptr<t const> const_shared(t&& a)
+			{
+				return std::make_shared<t const>(std::move(a));
+			}
+		};
+
+		template<typename t>
+		struct fs_info<pointer_util<t>>
+		{
+			static function_set get_functions()
+			{
+
+			}
+
+			static std::string get_name(name_set const& from)
+			{
+				return "ptr";
+			}
+		};
 
 		template<>
 		struct extended_util<std::string>
