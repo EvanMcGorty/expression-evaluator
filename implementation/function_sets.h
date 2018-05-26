@@ -35,7 +35,7 @@ namespace expr
 
 		struct core
 		{
-			static value_holder swap(std::vector<stack_elem>& a)
+			static object_holder swap(std::vector<stack_elem>& a)
 			{
 				if (a.size() == 2 && (a[0].is_nullval() || a[0]->has_value()) && (a[1].is_nullval() || a[1]->has_value()))
 				{
@@ -43,19 +43,19 @@ namespace expr
 					auto o1 = get_value(a[1]);
 					set_value(a[0], std::move(o1));
 					set_value(a[1], std::move(o0));
-					return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
+					return object_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 				}
 				else
 				{
-					return value_holder::make_nullval();
+					return object_holder::make_nullval();
 				}
 			}
 
-			static value_holder first(std::vector<stack_elem>& a)
+			static object_holder first(std::vector<stack_elem>& a)
 			{
 				if (a.size() == 0 || (*a.begin()).is_nullval() || !(*a.begin())->has_value())
 				{
-					return value_holder::make_nullval();
+					return object_holder::make_nullval();
 				}
 				else
 				{
@@ -63,11 +63,11 @@ namespace expr
 				}
 			}
 
-			static value_holder last(std::vector<stack_elem>& a)
+			static object_holder last(std::vector<stack_elem>& a)
 			{
 				if (a.size() == 0 || (*a.rbegin()).is_nullval() || !(*a.rbegin())->has_value())
 				{
-					return value_holder::make_nullval();
+					return object_holder::make_nullval();
 				}
 				else
 				{
@@ -97,7 +97,7 @@ namespace expr
 
 		struct cpp_core
 		{
-			static value_holder strengthen(std::vector<stack_elem>& a)
+			static object_holder strengthen(std::vector<stack_elem>& a)
 			{
 				if (a.size() == 1 && !a[0].is_nullval() && a[0]->is_object())
 				{
@@ -105,23 +105,23 @@ namespace expr
 				}
 				else
 				{
-					return value_holder::make_nullval();
+					return object_holder::make_nullval();
 				}
 			}
 
-			static value_holder to_string(std::vector<stack_elem>& a)
+			static object_holder to_string(std::vector<stack_elem>& a)
 			{
 				if (a.size() == 1 && !a[0].is_nullval())
 				{
-					return value_holder::make<object_of<std::string>>(a[0]->convert_into_string());
+					return object_holder::make<object_of<std::string>>(a[0]->convert_into_string());
 				}
 				else
 				{
-					return value_holder::make_nullval();
+					return object_holder::make_nullval();
 				}
 			}
 
-			static value_holder drop(std::vector<stack_elem>& a)
+			static object_holder drop(std::vector<stack_elem>& a)
 			{
 				for (auto& it : a)
 				{
@@ -137,10 +137,10 @@ namespace expr
 						}
 					}
 				}
-				return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
+				return object_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 			}
 
-			static value_holder clone(std::vector<stack_elem>& a)
+			static object_holder clone(std::vector<stack_elem>& a)
 			{
 				if (a.size() == 1 && !a[0].is_nullval() && a[0]->is_object())
 				{
@@ -148,11 +148,11 @@ namespace expr
 				}
 				else
 				{
-					return value_holder::make_nullval();
+					return object_holder::make_nullval();
 				}
 			}
 
-			static value_holder take(std::vector<stack_elem>& a)
+			static object_holder take(std::vector<stack_elem>& a)
 			{
 				if (a.size() == 1 && !a[0].is_nullval() && a[0]->is_object())
 				{
@@ -160,7 +160,7 @@ namespace expr
 				}
 				else
 				{
-					return value_holder::make_nullval();
+					return object_holder::make_nullval();
 				}
 			}
 
@@ -545,7 +545,7 @@ namespace expr
 		template<typename t>
 		struct extended_util<std::vector<t>>
 		{
-			static value_holder from_list(std::vector<stack_elem>& a)
+			static object_holder from_list(std::vector<stack_elem>& a)
 			{
 				std::vector<t> ret;
 				for (auto& v : a)
@@ -556,7 +556,7 @@ namespace expr
 						ret.emplace_back(std::move(*g));
 					}
 				}
-				return value_holder::make<object_of<std::vector<t>>>(std::move(ret));
+				return object_holder::make<object_of<std::vector<t>>>(std::move(ret));
 			}
 
 			static t& index(std::vector<t>& tar, size_t at)

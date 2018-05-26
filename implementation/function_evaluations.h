@@ -14,12 +14,12 @@ namespace expr
 		using stack_elem = mu::virt<any_elem_val>;
 
 
-		value_holder get_value(stack_elem& a)
+		object_holder get_value(stack_elem& a)
 		{
 			assert(a.is_nullval() || a->has_value());
 			if (a.is_nullval())
 			{
-				return value_holder::make_nullval();
+				return object_holder::make_nullval();
 			}
 			else if (a->is_reference())
 			{
@@ -32,11 +32,11 @@ namespace expr
 			else
 			{
 				assert(false);
-				return value_holder::make_nullval();
+				return object_holder::make_nullval();
 			}
 		}
 
-		void set_value(stack_elem& a, value_holder&& b)
+		void set_value(stack_elem& a, object_holder&& b)
 		{
 			assert(a.is_nullval() || a->has_value());
 			if (a.is_nullval() || a->is_object())
@@ -165,7 +165,7 @@ namespace expr
 		class any_callable
 		{
 		public:
-			virtual value_holder try_perform(stack& a, size_t args_to_take) = 0;
+			virtual object_holder try_perform(stack& a, size_t args_to_take) = 0;
 			virtual void put_type(std::ostream& target, name_set const& from) const = 0;
 			virtual mu::virt<any_callable> add_layer(mu::virt<any_callable>&& tail) && = 0;
 			virtual ~any_callable()
@@ -221,11 +221,11 @@ namespace expr
 			}
 
 			//when the stack is not popped from, it is the callers responsibility to manage garbage variables
-			value_holder try_perform(stack& a, size_t args_to_take) override
+			object_holder try_perform(stack& a, size_t args_to_take) override
 			{
 				if (sizeof...(args) != args_to_take)
 				{
-					return value_holder::make_nullval();
+					return object_holder::make_nullval();
 				}
 				assert(a.stuff.size() >= sizeof...(args));
 
@@ -240,16 +240,16 @@ namespace expr
 						if constexpr(!can_return<ret_t>())
 						{
 							do_call(std::move(*might_use));
-							return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
+							return object_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 						}
 						else
 						{
-							return value_holder::make<object_of<returned_t<ret_t>>>(do_call(std::move(*might_use)));
+							return object_holder::make<object_of<returned_t<ret_t>>>(do_call(std::move(*might_use)));
 						}
 					}
 					else
 					{
-						return value_holder::make_nullval();
+						return object_holder::make_nullval();
 					}
 				}
 				else
@@ -257,11 +257,11 @@ namespace expr
 					if constexpr (!can_return<ret_t>())
 					{
 						target();
-						return value_holder::make<void_object>(); //indicates a successful function call even though the return type is void
+						return object_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 					}
 					else
 					{
-						return value_holder::make<object_of<returned_t<ret_t>>>(do_call(use_tuple_type{}));
+						return object_holder::make<object_of<returned_t<ret_t>>>(do_call(use_tuple_type{}));
 					}
 				}
 			}
@@ -313,7 +313,7 @@ namespace expr
 		class manual_callable : public any_callable
 		{
 		public:
-			manual_callable(std::function<value_holder(std::vector<stack_elem>&)>&& a)
+			manual_callable(std::function<object_holder(std::vector<stack_elem>&)>&& a)
 			{
 				target = a;
 			}
@@ -329,7 +329,7 @@ namespace expr
 				return held_callable::make<manual_callable>(std::move(target));
 			}
 
-			value_holder try_perform(stack& a, size_t args_to_take) override
+			object_holder try_perform(stack& a, size_t args_to_take) override
 			{
 				assert(a.stuff.size() >= args_to_take);
 				std::vector<stack_elem> to_call;
@@ -347,7 +347,7 @@ namespace expr
 			}
 
 		private:
-			std::function<value_holder(std::vector<stack_elem>&)> target;
+			std::function<object_holder(std::vector<stack_elem>&)> target;
 		};
 
 
@@ -371,7 +371,7 @@ namespace expr
 				return held_callable::make<multi_callable_of<ret_t, args...>>(dummy_argument{}, std::move(this->target), std::move(next));
 			}
 
-			value_holder try_perform(stack& a, size_t args_to_take) override
+			object_holder try_perform(stack& a, size_t args_to_take) override
 			{
 				if (sizeof...(args) != args_to_take)
 				{

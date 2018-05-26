@@ -9,8 +9,9 @@ namespace expr
 	using impl::fs_name;
 	using impl::get_value;
 	using impl::set_value;
-	using impl::value_holder;
+	using impl::object_holder;
 	using impl::value_elem_val;
+	using impl::any_value;
 	using impl::any_elem_val;
 	using impl::any_object;
 	using impl::object_of;

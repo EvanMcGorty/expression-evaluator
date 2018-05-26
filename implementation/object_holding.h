@@ -359,7 +359,7 @@ namespace expr
 		};
 
 
-		using value_holder = mu::virt<any_object>;
+		using object_holder = mu::virt<any_object>;
 
 
 		//on a stack, this is what a variable pushes (unless if the variable is also being popped).
@@ -368,7 +368,7 @@ namespace expr
 		public:
 
 
-			value_reference(value_holder* a)
+			value_reference(object_holder* a)
 			{
 				ref = a;
 			}
@@ -409,7 +409,7 @@ namespace expr
 				{
 					if ((**ref).get(tar))
 					{
-						*ref = value_holder::make_nullval();
+						*ref = object_holder::make_nullval();
 					}
 				}
 
@@ -453,8 +453,10 @@ namespace expr
 				}
 			}
 
-			value_holder* ref;
+			object_holder* ref;
 		};
+
+		using any_value = mu::virt<any_elem_val>;
 
 
 

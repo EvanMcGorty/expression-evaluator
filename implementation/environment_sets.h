@@ -77,14 +77,14 @@ namespace expr
 			return sfn(std::function<t()>{[val = std::move(a)]() -> t {return t{ val }; }});
 		}
 
-		held_callable mfn(std::function<value_holder(std::vector<stack_elem>&)>&& target)
+		held_callable mfn(std::function<object_holder(std::vector<stack_elem>&)>&& target)
 		{
 			return held_callable::make<manual_callable>(std::move(target));
 		}
 
-		held_callable mfn(value_holder(*target)(std::vector<stack_elem>&))
+		held_callable mfn(object_holder(*target)(std::vector<stack_elem>&))
 		{
-			return held_callable::make<manual_callable>(std::function<value_holder(std::vector<stack_elem>&)>{target});
+			return held_callable::make<manual_callable>(std::function<object_holder(std::vector<stack_elem>&)>{target});
 		}
 
 		class function_insertion;
@@ -231,13 +231,13 @@ namespace expr
 		{
 		public:
 
-			value_holder * push_front(value_holder&& a)
+			object_holder * push_front(object_holder&& a)
 			{
 				values.emplace_back(std::move(a));
 				return &*values.rbegin();
 			}
 
-			std::optional<value_holder*> get_front()
+			std::optional<object_holder*> get_front()
 			{
 				if (values.size() == 0)
 				{
@@ -249,7 +249,7 @@ namespace expr
 				}
 			}
 
-			std::optional<value_holder> take_front()
+			std::optional<object_holder> take_front()
 			{
 				if (values.size() == 0)
 				{
@@ -259,7 +259,7 @@ namespace expr
 				{
 					auto ret = std::move(*values.rbegin());
 					values.pop_back();
-					return std::optional<value_holder>{std::move(ret)};
+					return std::optional<object_holder>{std::move(ret)};
 				}
 			}
 
@@ -310,7 +310,7 @@ namespace expr
 			}
 
 		private:
-			std::deque<value_holder> values;
+			std::deque<object_holder> values;
 			//deque instead of vector because references must not be invalidated after a push.
 		};
 
@@ -320,12 +320,12 @@ namespace expr
 		public:
 
 
-			value_holder* push_var(std::string&& a)
+			object_holder* push_var(std::string&& a)
 			{
-				return map[a].push_front(value_holder::make_nullval());
+				return map[a].push_front(object_holder::make_nullval());
 			}
 
-			std::optional<value_holder*> get_var(std::string const& a)
+			std::optional<object_holder*> get_var(std::string const& a)
 			{
 				auto it = map.find(a);
 				if (it == map.end())
@@ -338,7 +338,7 @@ namespace expr
 				}
 			}
 
-			std::optional<value_holder> take_var(std::string const& a)
+			std::optional<object_holder> take_var(std::string const& a)
 			{
 				auto it = map.find(a);
 				if (it == map.end())
@@ -347,7 +347,7 @@ namespace expr
 				}
 				else
 				{
-					return std::optional<value_holder>{it->second.take_front()};
+					return std::optional<object_holder>{it->second.take_front()};
 				}
 			}
 
