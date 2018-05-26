@@ -161,7 +161,7 @@ namespace expr
 
 			held_callable info_printer(std::ostream& to = std::cout, name_set const& from = global_type_renames)
 			{
-				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> object_holder
+				return mfn(std::function<any_value(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> any_value
 					{
 						if (a.size() == 1 && !a[0].is_nullval())
 						{
@@ -169,11 +169,11 @@ namespace expr
 							{
 								*to << a[0]->string_view(*from) << std::endl;
 							}
-							return object_holder::make<void_object>(); //indicates a successful function call even though the return type is void
+							return any_value::make<void_object>(); //indicates a successful function call even though the return type is void
 						}
 						else
 						{
-							return object_holder::make_nullval();
+							return any_value::make_nullval();
 						}
 					}});
 			}
@@ -181,7 +181,7 @@ namespace expr
 
 			held_callable value_printer(std::ostream& to = std::cout)
 			{
-				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{[to = &to](std::vector<stack_elem>& a) -> object_holder
+				return mfn(std::function<any_value(std::vector<stack_elem>&)>{[to = &to](std::vector<stack_elem>& a) -> any_value
 				{
 					if (a.size() == 1 && !a[0].is_nullval())
 					{
@@ -189,23 +189,23 @@ namespace expr
 						{
 							*to << a[0]->convert_into_string() << std::endl;
 						}
-						return object_holder::make<void_object>(); //indicates a successful function call even though the return type is void
+						return any_value::make<void_object>(); //indicates a successful function call even though the return type is void
 					}
 					else
 					{
-						return object_holder::make_nullval();
+						return any_value::make_nullval();
 					}
 				}});
 			}
 			
 			held_callable garbage_getter()
 			{
-				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{
-					[g = &garbage](std::vector<stack_elem>& a) -> object_holder
+				return mfn(std::function<any_value(std::vector<stack_elem>&)>{
+					[g = &garbage](std::vector<stack_elem>& a) -> any_value
 					{
 						if (a.size() != 1 || a[0].is_nullval() || !a[0]->is_reference())
 						{
-							return object_holder::make_nullval();
+							return any_value::make_nullval();
 						}
 
 						object_holder& ret = *a[0].downcast_get<value_reference>()->ref;
@@ -221,10 +221,10 @@ namespace expr
 							else
 							{
 								std::swap(*f,ret);
-								return object_holder::make<void_object>(); //indicates a successful function call even though the return type is void
+								return any_value::make<void_object>(); //indicates a successful function call even though the return type is void
 							}
 						}
-						return object_holder::make_nullval();
+						return any_value::make_nullval();
 					}
 				});
 			}

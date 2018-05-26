@@ -77,14 +77,14 @@ namespace expr
 			return sfn(std::function<t()>{[val = std::move(a)]() -> t {return t{ val }; }});
 		}
 
-		held_callable mfn(std::function<object_holder(std::vector<stack_elem>&)>&& target)
+		held_callable mfn(std::function<any_value(std::vector<stack_elem>&)>&& target)
 		{
 			return held_callable::make<manual_callable>(std::move(target));
 		}
 
-		held_callable mfn(object_holder(*target)(std::vector<stack_elem>&))
+		held_callable mfn(any_value(*target)(std::vector<stack_elem>&))
 		{
-			return held_callable::make<manual_callable>(std::function<object_holder(std::vector<stack_elem>&)>{target});
+			return held_callable::make<manual_callable>(std::function<any_value(std::vector<stack_elem>&)>{target});
 		}
 
 		class function_insertion;

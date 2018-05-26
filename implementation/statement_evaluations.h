@@ -73,7 +73,7 @@ namespace expr
 				{
 					any_callable& todo = ***optional_todo;
 
-					object_holder tp = object_holder::make_nullval();
+					any_value tp = any_value::make_nullval();
 					bool no_exceptions = true;
 					try
 					{
@@ -82,7 +82,7 @@ namespace expr
 					catch (std::exception caught)
 					{
 						errors << "call to function \"" << temp.name << "\" threw an exception: " << caught.what() << "\n";
-						tp = object_holder::make_nullval();
+						tp = any_value::make_nullval();
 						no_exceptions = false;
 					}
 

@@ -39,7 +39,17 @@ namespace expr
 			//returns true if this is an object and the held value was moved.
 			virtual bool get(any_type_ask* tar) = 0;
 
+			virtual bool smart_get(any_type_ask* tar)
+			{
+				return get(tar);
+			}
+
 			virtual bool can(std::type_info const& tar) const = 0;
+
+			virtual bool smart_can(std::type_info const& tar) const
+			{
+				return can(tar);
+			}
 
 			virtual ~any_elem_val()
 			{
@@ -286,20 +296,7 @@ namespace expr
 					static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
 					return is_movable();
 				}
-				if (tar->get_type() == typeid(t*))
-				{
-					static_cast<type_ask_of<t*>*>(tar)->gotten.emplace(&val);
-					return false;
-				}
-				if constexpr(!std::is_const_v<t>)
-				{
-					if (tar->get_type() == typeid(t const*))
-					{
-						static_cast<type_ask_of<t const*>*>(tar)->gotten.emplace(&val);
-						return false;
-					}
-				}
-				else if constexpr (type_wrap_info<t>::is()) //to return a t*/t& as a t&& or t const&
+				else if constexpr (type_wrap_info<t>::is()) //for implicit conversions
 				{
 					if (tar->get_type() == typeid(typename type_wrap_info<t>::deref*))
 					{
@@ -319,22 +316,30 @@ namespace expr
 				return false;
 			}
 
+			bool smart_get(any_type_ask* tar) override
+			{
+				if (tar->get_type() == typeid(t*))
+				{
+					static_cast<type_ask_of<t*>*>(tar)->gotten.emplace(&val);
+					return false;
+				}
+				if constexpr(!std::is_const_v<t>)
+				{
+					if (tar->get_type() == typeid(t const*))
+					{
+						static_cast<type_ask_of<t const*>*>(tar)->gotten.emplace(&val);
+						return false;
+					}
+				}
+				return get(tar);
+			}
+			
+
 			bool can(std::type_info const& tar) const override
 			{
 				if (tar == typeid(t))
 				{
 					return true;
-				}
-				if (tar == typeid(t*))
-				{
-					return true;
-				}
-				if constexpr(!std::is_const_v<t>)
-				{
-					if (tar == typeid(t const*))
-					{
-						return true;
-					}
 				}
 				if constexpr(type_wrap_info<t>::is())
 				{
@@ -352,6 +357,22 @@ namespace expr
 					return false;
 				}
 				return false;
+			}
+
+			bool smart_can(std::type_info const& tar) const override
+			{
+				if (tar == typeid(t*))
+				{
+					return true;
+				}
+				if constexpr(!std::is_const_v<t>)
+				{
+					if (tar == typeid(t const*))
+					{
+						return true;
+					}
+				}
+				return can(tar);
 			}
 
 
@@ -379,7 +400,7 @@ namespace expr
 			}
 
 
-			mu::virt<any_object> make_clone() const override
+			object_holder make_clone() const override
 			{
 				if (!ref->is_nullval())
 				{
@@ -391,7 +412,7 @@ namespace expr
 				}
 			}
 
-			mu::virt<any_object> take_referenced() const override
+			object_holder take_referenced() const override
 			{
 				if (!ref->is_nullval())
 				{
@@ -407,7 +428,7 @@ namespace expr
 			{
 				if (!ref->is_nullval())
 				{
-					if ((**ref).get(tar))
+					if ((**ref).smart_get(tar))
 					{
 						*ref = object_holder::make_nullval();
 					}
@@ -425,7 +446,7 @@ namespace expr
 				}
 				else
 				{
-					return (**ref).can(tar);
+					return (**ref).smart_can(tar);
 				}
 			}
 
@@ -445,11 +466,11 @@ namespace expr
 			{
 				if (ref->is_nullval())
 				{
-					return "empty_variable";
+					return "reference_to_empty_object";
 				}
 				else
 				{
-					return "variable_with_" + (**ref).string_view(names);
+					return "reference_to_" + (**ref).string_view(names);
 				}
 			}
 
