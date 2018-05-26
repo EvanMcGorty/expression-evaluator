@@ -333,10 +333,6 @@ namespace expr
 				{
 					ret.add(sfn(&basic_util<t>::move_construct), "make");
 					ret.add(sfn(&basic_util<t>::move_construct), "move-make");
-					ret.add(sfn(&basic_util<t>::mutable_unique), "make-unique");
-					ret.add(sfn(&basic_util<t>::const_unique), "make-const-unique");
-					ret.add(sfn(&basic_util<t>::mutable_shared), "make-shared");
-					ret.add(sfn(&basic_util<t>::const_shared), "make-const-shared");
 				}
 				if constexpr(std::is_copy_constructible_v<t>)
 				{
@@ -354,8 +350,6 @@ namespace expr
 					ret.add(sfn(&basic_util<t>::copy_assign), "copy-give");
 				}
 				ret.add(sfn(&basic_util<t>::swap), "swap");
-				ret.add(sfn(&basic_util<t>::mutable_reference), "make-ref");
-				ret.add(sfn(&basic_util<t>::const_reference), "make-const-ref");
 				return ret;
 			}
 
@@ -408,8 +402,9 @@ namespace expr
 			}
 		};
 
+
 		template<typename t>
-		struct pointer_util<t>
+		struct wrapper_util
 		{
 			static t& mutable_reference(t& a)
 			{
@@ -443,18 +438,29 @@ namespace expr
 		};
 
 		template<typename t>
-		struct fs_info<pointer_util<t>>
+		struct fs_info<wrapper_util<t>>
 		{
 			static function_set get_functions()
 			{
-
+				function_set ret;
+				if constexpr(std::is_move_constructible_v<t>)
+				{
+					ret.add(sfn(&wrapper_util<t>::mutable_unique), "unique");
+					ret.add(sfn(&wrapper_util<t>::const_unique), "const-unique");
+					ret.add(sfn(&wrapper_util<t>::mutable_shared), "shared");
+					ret.add(sfn(&wrapper_util<t>::const_shared), "const-shared");
+				}
+				ret.add(sfn(&wrapper_util<t>::mutable_reference), "ref");
+				ret.add(sfn(&wrapper_util<t>::const_reference), "const-ref");
+				return std::move(ret);
 			}
 
 			static std::string get_name(name_set const& from)
 			{
-				return "ptr";
+				return name_of<t>(from) + "-ptr";
 			}
 		};
+
 
 		template<>
 		struct extended_util<std::string>

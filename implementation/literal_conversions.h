@@ -217,7 +217,7 @@ namespace expr
 				{
 					return std::nullopt;
 				}
-				else if constexpr(std::is_arithmetic_v<t>)
+				else if constexpr(std::is_arithmetic_v<t> && !std::is_same_v<t,bool>)
 				{
 					auto p = parse_range_to_number(start,stop);
 					if (!p)

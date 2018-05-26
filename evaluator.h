@@ -20,6 +20,7 @@ namespace expr
 	using impl::cpp_core;
 	using impl::terminal;
 	using impl::util;
+	using impl::wrapper_util;
 
 	using impl::rename;
 }
