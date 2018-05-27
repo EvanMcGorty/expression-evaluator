@@ -17,7 +17,7 @@ namespace expr
 		template<typename ret, typename...args>
 		held_callable sfn(std::function<ret(args...)>&& target)
 		{
-			return held_callable::make<callable_of<ret, args...>>(std::move(target));
+			return held_callable::make<smart_callable<ret, args...>>(make_storable_call(std::move(target)));
 		}
 
 		template<typename ret, typename...args>

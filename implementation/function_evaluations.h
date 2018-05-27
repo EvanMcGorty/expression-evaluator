@@ -166,6 +166,7 @@ namespace expr
 		{
 		public:
 			virtual object_holder try_perform(stack& a, size_t args_to_take) = 0;
+			virtual bool can_perform(stack const& a, size_t args_to_take) const = 0;
 			virtual void put_type(std::ostream& target, name_set const& from) const = 0;
 			virtual mu::virt<any_callable> add_layer(mu::virt<any_callable>&& tail) && = 0;
 			virtual ~any_callable()
@@ -173,6 +174,55 @@ namespace expr
 		};
 
 		using held_callable = mu::virt<any_callable>;
+
+		template<class base_callable>
+		class layered : public base_callable
+		{
+		public:
+
+			layered(base_callable&& f, held_callable&& tail) :
+				next(std::move(tail)),
+				base_callable(std::move(f))
+			{
+				static_assert(std::is_base_of_v<any_callable, base_callable>);
+			}
+
+			held_callable add_layer(held_callable&& tail) && override
+			{
+				auto new_next = std::move(*next).add_layer(std::move(tail));
+				return held_callable::make<layered<base_callable>>(std::move(*this), std::move(new_next));
+			}
+
+			object_holder try_perform(stack& a, size_t args_to_take) override
+			{
+				if (base_callable::can_perform(a, args_to_take))
+				{
+					return base_callable::try_perform(a, args_to_take);
+				}
+				else
+				{
+					return next->try_perform(a, args_to_take);
+				}
+			}
+
+			bool can_perform(stack const& a, size_t args_to_take) const override
+			{
+				return base_callable::can_perform(a, args_to_take) || next->can_perform(a, args_to_take);
+			}
+
+
+			void put_type(std::ostream& target, name_set const& from) const override
+			{
+				target << "\\ ";
+				base_callable::put_type(target, from);
+				target << " | ";
+				next->put_type(target, from);
+			}
+
+		private:
+			held_callable next;
+		};
+
 
 		template<typename t,typename...ts>
 		void put_types(std::ostream& target, name_set const& from)
@@ -188,27 +238,24 @@ namespace expr
 			}
 		}
 
-		struct dummy_argument
-		{};
 
 		template<typename ret_t, typename...args>
-		class callable_of : public any_callable
+		class smart_callable : public any_callable
 		{
 			using use_tuple_type = std::tuple<store_t<args>...>;
 			using arg_tuple_type = std::tuple<std::optional<store_t<args>>...>;
 		public:
 
-			callable_of(std::function<ret_t(args...)>&& f)
-			{
-				target = make_storable_call(std::move(f));
-			}
 
-			callable_of(dummy_argument,std::function<returned_t<ret_t>(store_t<args>&&...)>&& f)
+			smart_callable(std::function<returned_t<ret_t>(store_t<args>&&...)>&& f)
 			{
 				target = std::move(f);
 			}
 
-			held_callable add_layer(held_callable&& tail) && override;
+			held_callable add_layer(held_callable&& tail) && override
+			{
+				return held_callable::make<layered<smart_callable<ret_t, args...>>>(smart_callable<ret_t, args...>{std::move(target)}, std::move(tail));
+			}
 
 			void put_type(std::ostream& target, name_set const& from) const override
 			{
@@ -233,7 +280,7 @@ namespace expr
 				{
 					arg_tuple_type to_use;
 					a.smart_set_from_front<arg_tuple_type, store_t<args>...>(to_use);
-					std::optional<use_tuple_type> might_use = can_perform<0, args...>(std::move(to_use));
+					std::optional<use_tuple_type> might_use = prepare_arguments<0, args...>(std::move(to_use));
 
 					if (might_use)
 					{
@@ -266,7 +313,27 @@ namespace expr
 				}
 			}
 
-			~callable_of()
+			bool can_perform(stack const& a, size_t args_to_take) const override
+			{
+				if (sizeof...(args) != args_to_take)
+				{
+					return false;
+				}
+
+				assert(a.stuff.size() >= sizeof...(args));
+				
+				if constexpr(!(sizeof...(args) == 0))
+				{
+					if (a.smart_check_from_front<0, args...>())
+					{
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+			~smart_callable()
 			{
 			}
 
@@ -276,7 +343,7 @@ namespace expr
 		private:
 
 			template<size_t ind = 0, typename t, typename...ts>
-			static std::optional<std::tuple<store_t<t>, store_t<ts>...>> can_perform(arg_tuple_type&& tar)
+			static std::optional<std::tuple<store_t<t>, store_t<ts>...>> prepare_arguments(arg_tuple_type&& tar)
 			{
 				if constexpr(sizeof...(ts) == 0)
 				{
@@ -293,7 +360,7 @@ namespace expr
 				{
 					if (std::get<ind>(tar))
 					{
-						auto rest = can_perform<ind + 1, ts...>(std::move(tar));
+						auto rest = prepare_arguments<ind + 1, ts...>(std::move(tar));
 						if (rest)
 						{
 							return std::tuple_cat(std::tuple<store_t<t>>(std::move(*std::get<ind>(tar))), std::move(*rest));
@@ -346,71 +413,15 @@ namespace expr
 				return ret;
 			}
 
+			bool can_perform(stack const& a, size_t args_to_take) const override
+			{
+				return true;
+			}
+
 		private:
 			std::function<object_holder(std::vector<stack_elem>&)> target;
 		};
 
-
-		template<typename ret_t, typename...args>
-		class multi_callable_of : public callable_of<ret_t, args...>
-		{
-		public:
-			multi_callable_of(std::function<ret_t(args...)>&& f, held_callable&& tail) :
-				next(std::move(tail)),
-				callable_of<ret_t, args...>(std::move(f))
-			{}
-
-			multi_callable_of(dummy_argument,std::function<returned_t<ret_t>(store_t<args>&&...)>&& f, held_callable&& tail) :
-				next(std::move(tail)),
-				callable_of<ret_t, args...>(dummy_argument{},std::move(f))
-			{}
-
-			held_callable add_layer(held_callable&& tail) && override
-			{
-				next = std::move(*next).add_layer(std::move(tail));
-				return held_callable::make<multi_callable_of<ret_t, args...>>(dummy_argument{}, std::move(this->target), std::move(next));
-			}
-
-			object_holder try_perform(stack& a, size_t args_to_take) override
-			{
-				if (sizeof...(args) != args_to_take)
-				{
-					return next->try_perform(a, args_to_take);
-				}
-				assert(a.stuff.size() >= sizeof...(args));
-
-				if constexpr(sizeof...(args) == 0)
-				{
-					return callable_of<ret_t, args...>::try_perform(a, args_to_take);
-				}
-				else if (a.smart_check_from_front<0, args...>())
-				{
-					return callable_of<ret_t, args...>::try_perform(a, args_to_take);
-				}
-				else
-				{
-					return next->try_perform(a, args_to_take);
-				}
-			}
-
-
-			void put_type(std::ostream& target, name_set const& from) const override
-			{
-				target << "\\ ";
-				callable_of<ret_t, args...>::put_type(target,from);
-				target << " | ";
-				next->put_type(target,from);
-			}
-
-		private:
-			held_callable next;
-		};
-
-		template<typename ret_t,typename...args>
-		inline held_callable callable_of<ret_t,args...>::add_layer(held_callable&& tail) &&
-		{
-			return held_callable::make<multi_callable_of<ret_t, args...>>(dummy_argument{},std::move(target), std::move(tail));
-		}
 
 	}
 }

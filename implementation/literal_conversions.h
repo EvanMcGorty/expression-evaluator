@@ -82,10 +82,11 @@ namespace expr
 				++start;
 			}
 
-			if (start == stop)
+			if (start == stop || getnum(*start) == -4)
 			{
 				return std::nullopt;
 			}
+
 
 			ret.first = 0;
 
@@ -263,6 +264,27 @@ namespace expr
 					}
 
 					return std::optional<t>{std::move(ret)};
+				}
+				else if constexpr(std::is_same_v<t, bool>)
+				{
+					if (start == stop)
+					{
+						return std::nullopt;
+					}
+					if (*start == '1')
+					{
+						++start;
+						return std::make_optional(true);
+					}
+					else if (*start == '0')
+					{
+						++start;
+						return std::make_optional(true);
+					}
+					else
+					{
+						return std::nullopt;
+					}
 				}
 				else if constexpr(std::is_same_v<std::string, t>)
 				{
