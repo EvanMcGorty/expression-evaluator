@@ -13,6 +13,7 @@ namespace expr
 	using impl::pick;
 
 	using impl::environment;
+	using impl::interpreter;
 	using impl::function_set;
 	using impl::option_set;
 
