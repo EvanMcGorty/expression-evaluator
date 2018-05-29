@@ -191,7 +191,7 @@ namespace expr
 
 			static void exit()
 			{
-				assert(false);
+				throw 0;
 			}
 
 			static void sys(std::string a)
@@ -260,7 +260,7 @@ namespace expr
 				}
 				else
 				{
-					assert(false);
+					throw_invalid_method_usage(false);
 				}
 			}
 
@@ -272,7 +272,7 @@ namespace expr
 				}
 				else
 				{
-					assert(false);
+					throw_invalid_method_usage(false);
 				}
 			}
 
@@ -284,7 +284,7 @@ namespace expr
 				}
 				else
 				{
-					assert(false);
+					throw_invalid_method_usage(false);
 				}
 			}
 
@@ -296,7 +296,7 @@ namespace expr
 				}
 				else
 				{
-					assert(false);
+					throw_invalid_method_usage(false);
 				}
 			}
 
@@ -308,7 +308,7 @@ namespace expr
 				}
 				else
 				{
-					assert(false);
+					throw_invalid_method_usage(false);
 				}
 			}
 
@@ -482,20 +482,12 @@ namespace expr
 
 			static char& index(std::string& tar, size_t at)
 			{
-				if (at >= tar.size())
-				{
-					throw std::runtime_error( "string index out of range" );
-				}
-				return tar[at];
+				return tar.at(at);
 			}
 
 			static char const& const_index(std::string const& tar, size_t at)
 			{
-				if (at >= tar.size())
-				{
-					throw std::runtime_error( "string index out of range" );
-				}
-				return tar[at];
+				return tar.at(at);
 			}
 
 			static void append(std::string& a, std::string const& b)
@@ -561,20 +553,12 @@ namespace expr
 
 			static t& index(std::vector<t>& tar, size_t at)
 			{
-				if (at >= tar.size())
-				{
-					throw std::runtime_error( "vector index out of range" );
-				}
-				return tar[at];
+				return tar.at(at);
 			}
 
 			static t const& const_index(std::vector<t> const& tar, size_t at)
 			{
-				if (at >= tar.size())
-				{
-					throw std::runtime_error( "vector index out of range" );
-				}
-				return tar[at];
+				return tar.at(at);
 			}
 
 			static void append(std::vector<t>& a, std::vector<t>&& b)
@@ -594,7 +578,7 @@ namespace expr
 				}
 				else
 				{
-					assert(false);
+					throw_invalid_method_usage(false);
 				}
 			}
 

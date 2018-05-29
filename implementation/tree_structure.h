@@ -222,7 +222,7 @@ namespace expr
 
 				std::string ret;
 
-				assert(start != stop);
+				assert_with_generic_logic_error(start != stop);
 
 				if (*start != '"')
 				{
@@ -378,7 +378,7 @@ namespace expr
 
 			static std::optional<variable> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
-				assert(start != stop && *start == '=');
+				assert_with_generic_logic_error(start != stop && *start == '=');
 
 				std::string ret;
 				sc sc_ret;
@@ -842,7 +842,7 @@ namespace expr
 
 		inline std::optional<function> function::parse(std::string::const_iterator& start, std::string::const_iterator stop)
 		{
-			assert(start != stop && (name_checker::isupper(*start) || name_checker::islower(*start)));
+			assert_with_generic_logic_error(start != stop && (name_checker::isupper(*start) || name_checker::islower(*start)));
 
 
 			std::string retname;

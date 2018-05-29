@@ -79,7 +79,7 @@ namespace expr
 					{
 						tp = todo.try_perform(loc, temp.arg_count);
 					}
-					catch (std::exception caught)
+					catch (std::exception const& caught)
 					{
 						errors << "call to function \"" << temp.name << "\" threw an exception: " << caught.what() << "\n";
 						tp = object_holder::make_nullval();
@@ -96,7 +96,7 @@ namespace expr
 			}
 			else
 			{
-				assert(false);
+				assert_with_generic_logic_error(false);
 			}
 		}
 
@@ -120,7 +120,7 @@ namespace expr
 			executable to_run;
 			std::move(tar).into_executable(to_run);
 			stack v = run(std::move(to_run), errors);
-			assert(v.stuff.size() == 1);
+			assert_with_generic_logic_error(v.stuff.size() == 1);
 			return std::move(*v.stuff.begin());
 		}
 

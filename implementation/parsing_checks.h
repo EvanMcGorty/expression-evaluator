@@ -1,11 +1,44 @@
 #pragma once
 #include<string>
-#include<assert.h>
 
 namespace expr
 {
 	namespace impl
 	{
+		using expression_evaluator_internal_logic_error = std::logic_error;
+
+		void assert_with_generic_logic_error(bool a)
+		{
+#ifdef _DEBUG
+			if (!a)
+			{
+				throw expression_evaluator_internal_logic_error("the expression evaluator has an internal logic error");
+			}
+#endif
+		}
+
+		using expression_evaluator_usage_logic_error = std::logic_error;
+
+		void throw_invalid_method_usage(bool a)
+		{
+#ifdef _DEBUG
+			if (!a)
+			{
+				throw expression_evaluator_usage_logic_error("usage of invalid method");
+			}
+#endif
+		}
+
+		void throw_invalid_name_usage(bool a)
+		{
+#ifdef _DEBUG
+			if (!a)
+			{
+				throw expression_evaluator_usage_logic_error("usage of invalid name");
+			}
+#endif
+		}
+
 
 		//for passing a string while ensuring that it is a valid name with assert()
 		//or for checking manually
@@ -20,7 +53,7 @@ namespace expr
 
 			name_checker(std::string&& a)
 			{
-				assert(is_valid(a));
+				assert_with_generic_logic_error(is_valid(a));
 				held = std::move(a);
 			}
 
@@ -31,7 +64,7 @@ namespace expr
 
 			void operator=(std::string&& a)
 			{
-				assert(is_valid(a));
+				assert_with_generic_logic_error(is_valid(a));
 				held = std::move(a);
 			}
 
