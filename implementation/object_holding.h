@@ -299,7 +299,7 @@ namespace expr
 						return false;
 					}
 				}
-				else if constexpr (type_wrap_info<t>::is()) //to return a t*/t& as a t&& or t const&
+				if constexpr (type_wrap_info<t>::is()) //to return a t*/t& as a t&& or t const&
 				{
 					if (tar->get_type() == typeid(typename type_wrap_info<t>::deref*))
 					{
