@@ -8,6 +8,7 @@ namespace expr
 	using impl::mbr;
 	using impl::mfn;
 	using impl::sfn;
+	using impl::cfn;
 	using impl::fs_functs;
 
 	using impl::pick;

@@ -87,6 +87,17 @@ namespace expr
 			return held_callable::make<manual_callable>(std::function<object_holder(std::vector<stack_elem>&)>{target});
 		}
 
+		template<typename into, typename from>
+		held_callable cfn()
+		{
+			return sfn(std::function<into(from&&)>{
+				[](from&& a) -> into
+				{
+					return static_cast<into>(std::forward<from>(a));
+				}
+			});
+		}
+
 		class function_insertion;
 
 		class function_set;
