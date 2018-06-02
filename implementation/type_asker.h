@@ -13,6 +13,8 @@ namespace expr
 		public:
 			virtual void parse(std::string const& a) = 0;
 
+			virtual void lazy_parse(std::string const& a) = 0;
+
 			virtual std::type_info const& get_type() const = 0;
 
 			virtual ~any_type_ask()
@@ -62,6 +64,23 @@ namespace expr
 				{
 					auto it = a.cbegin();
 					auto temp = converter<std::remove_const_t<t>>::parse(it,a.cend());
+					if (temp)
+					{
+						gotten.emplace(std::move(*temp));
+					}
+				}
+			}
+
+			void lazy_parse(std::string const& a) override
+			{
+				if constexpr(std::is_pointer_v<t>)
+				{
+					
+				}
+				else
+				{
+					auto it = a.cbegin();
+					auto temp = converter<std::remove_const_t<t>>::parse(it, a.cend());
 					if (temp)
 					{
 						gotten.emplace(std::move(*temp));

@@ -263,14 +263,14 @@ namespace expr
 				}
 			}
 
-			std::string string_view(name_set const& from) const
+			std::string string_view(name_set const& from)
 			{
 				if (values.size() == 0)
 				{
 					return "[]";
 				}
 				std::string ret{ "[" };
-				for (auto const& it : values)
+				for (auto& it : values)
 				{
 					if (it.is_nullval())
 					{
@@ -351,9 +351,9 @@ namespace expr
 				}
 			}
 
-			void put_values(std::ostream& to, name_set const& from) const
+			void put_values(std::ostream& to, name_set const& from)
 			{
-				for (auto const& it : map)
+				for (auto& it : map)
 				{
 					to << it.first << "= "<< it.second.string_view(from) << '\n';
 				}

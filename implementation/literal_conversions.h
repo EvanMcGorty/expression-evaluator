@@ -296,7 +296,7 @@ namespace expr
 				}
 			}
 
-			static std::string print(t const& tar)
+			static std::string print(t& tar)
 			{
 				if constexpr(type_wrap_info<t>::is())
 				{
@@ -410,11 +410,11 @@ namespace expr
 
 			}
 
-			static std::string print(std::vector<t> const& tar)
+			static std::string print(std::vector<t>& tar)
 			{
 				std::string ret;
 				ret.push_back('[');
-				for (auto const& it : tar)
+				for (auto& it : tar)
 				{
 					ret.append(converter<t>::print(it));
 					ret.push_back(',');

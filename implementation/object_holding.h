@@ -32,14 +32,20 @@ namespace expr
 				return false;
 			}
 
-			virtual std::string convert_into_string() const = 0;
+			virtual std::string convert_into_string() = 0;
 
-			virtual std::string string_view(name_set const& names) const = 0;
+			virtual std::string string_view(name_set const& names) = 0;
 
 			//returns true if this is an object and the held value was moved.
 			virtual bool get(any_type_ask* tar) = 0;
 
 			virtual bool can(std::type_info const& tar) const = 0;
+
+
+			//returns true if this is an object and the held value was moved.
+			virtual bool lazy_get(any_type_ask* tar) = 0;
+
+			virtual bool lazy_can(std::type_info const& tar) const = 0;
 
 			virtual ~any_elem_val()
 			{
@@ -64,21 +70,32 @@ namespace expr
 				return true;
 			}
 
-			std::string convert_into_string() const override
+			std::string convert_into_string() override
 			{
 				return std::string{ val };
 			}
 
-			std::string string_view(name_set const& names) const override
+			std::string string_view(name_set const& names) override
 			{
 				literal temp{ literal_value{std::string{val}} };
 				return std::string("unparsed{") + temp.make_string() + "}";
+			}
+
+			bool lazy_get(any_type_ask* tar) override
+			{
+				tar->lazy_parse(val);
+				return false;
 			}
 
 			bool get(any_type_ask* tar) override
 			{
 				tar->parse(val);
 				return false;
+			}
+
+			bool lazy_can(std::type_info const& tar) const override
+			{
+				return true;
 			}
 
 			bool can(std::type_info const& tar) const override
@@ -102,7 +119,10 @@ namespace expr
 
 			virtual mu::virt<any_object> make_clone() const = 0;
 
-			virtual mu::virt<any_object> take_referenced() const = 0;
+			virtual mu::virt<any_object> take_referenced() = 0;
+			
+			//returns true upon success
+			virtual bool give_reference(any_elem_val&) = 0;
 		};
 
 
@@ -143,12 +163,12 @@ namespace expr
 				return typeid(void);
 			}
 
-			std::string convert_into_string() const override
+			std::string convert_into_string() override
 			{
 				return "";
 			}
 			
-			std::string string_view(name_set const& names) const override
+			std::string string_view(name_set const& names) override
 			{
 				return "void_object{}";
 			}
@@ -163,7 +183,7 @@ namespace expr
 				return mu::virt<any_object>::make_nullval();
 			}
 
-			mu::virt<any_object> take_referenced() const override
+			mu::virt<any_object> take_referenced() override
 			{
 				return mu::virt<any_object>::make_nullval();
 			}
@@ -179,6 +199,22 @@ namespace expr
 			}
 
 			bool can(std::type_info const& tar) const override
+			{
+				return false;
+			}
+
+
+			bool lazy_get(any_type_ask* tar) override
+			{
+				return false;
+			}
+
+			bool lazy_can(std::type_info const& tar) const override
+			{
+				return false;
+			}
+
+			bool give_reference(any_elem_val&) override
 			{
 				return false;
 			}
@@ -206,12 +242,12 @@ namespace expr
 				static_assert(!std::is_const_v<t>,"object_of<t> should not have a const t");
 			}
 
-			std::string convert_into_string() const override
+			std::string convert_into_string() override
 			{
 				return converter<t>::print(val);
 			}
 
-			std::string string_view(name_set const& names) const override
+			std::string string_view(name_set const& names) override
 			{
 				return std::string("object_of{") + name_of<t>(names) + "(" + converter<t>::print(val) + ")" + "}";
 			}
@@ -245,7 +281,7 @@ namespace expr
 				}
 			}
 
-			mu::virt<any_object> take_referenced() const override
+			mu::virt<any_object> take_referenced() override
 			{
 				if constexpr(type_wrap_info<t>::is())
 				{
@@ -258,6 +294,30 @@ namespace expr
 					}
 				}
 				return mu::virt<any_object>::make_nullval();
+			}
+
+
+
+			bool give_reference(any_elem_val& tar) override
+			{
+				if constexpr(type_wrap_info<t>::is())
+				{
+					if constexpr(!std::is_const_v<typename type_wrap_info<t>::deref>)
+					{
+						if (type_wrap_info<t>::get(val) != nullptr)
+						{
+							type_ask_of<typename type_wrap_info<t>::deref> ask;
+							tar.lazy_get(&ask);
+							if (ask.gotten)
+							{
+								*type_wrap_info<t>::get(val) = std::move(*ask.gotten);
+								return true;
+							}
+						}
+					}
+				}
+
+				return false;
 			}
 
 			std::type_info const& get_type() const override
@@ -277,6 +337,16 @@ namespace expr
 				{
 					return true;
 				}
+			}
+
+			bool lazy_get(any_type_ask* tar) override
+			{
+				if (tar->get_type() == typeid(t))
+				{
+					static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
+					return is_movable();
+				}
+				return false;
 			}
 
 			bool get(any_type_ask* tar) override
@@ -315,6 +385,15 @@ namespace expr
 						}
 					}
 					return false;
+				}
+				return false;
+			}
+
+			bool lazy_can(std::type_info const& tar) const override
+			{
+				if (tar == typeid(t))
+				{
+					return true;
 				}
 				return false;
 			}
@@ -391,7 +470,7 @@ namespace expr
 				}
 			}
 
-			mu::virt<any_object> take_referenced() const override
+			mu::virt<any_object> take_referenced() override
 			{
 				if (!ref->is_nullval())
 				{
@@ -400,6 +479,19 @@ namespace expr
 				else
 				{
 					return mu::virt<any_object>::make_nullval();
+				}
+			}
+
+
+			bool give_reference(any_elem_val& tar) override
+			{
+				if (!ref->is_nullval())
+				{
+					return (**ref).give_reference(tar);
+				}
+				else
+				{
+					return false;
 				}
 			}
 
@@ -429,7 +521,33 @@ namespace expr
 				}
 			}
 
-			std::string convert_into_string() const override
+			bool lazy_get(any_type_ask* tar) override
+			{
+				if (!ref->is_nullval())
+				{
+					if ((**ref).lazy_get(tar))
+					{
+						*ref = object_holder::make_nullval();
+					}
+				}
+
+				return false;
+			}
+
+
+			bool lazy_can(std::type_info const& tar) const override
+			{
+				if (ref->is_nullval())
+				{
+					return false;
+				}
+				else
+				{
+					return (**ref).lazy_can(tar);
+				}
+			}
+
+			std::string convert_into_string() override
 			{
 				if (ref->is_nullval())
 				{
@@ -441,7 +559,7 @@ namespace expr
 				}
 			}
 
-			std::string string_view(name_set const& names) const override
+			std::string string_view(name_set const& names) override
 			{
 				if (ref->is_nullval())
 				{

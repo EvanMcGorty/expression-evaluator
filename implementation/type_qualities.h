@@ -30,7 +30,7 @@ namespace expr
 
 			typedef t deref;
 
-			static deref* get(t* const& a)
+			static deref* get(t*& a)
 			{
 				return a;
 			}
@@ -52,7 +52,7 @@ namespace expr
 
 			typedef t deref;
 
-			static deref* get(std::unique_ptr<t> const& a)
+			static deref* get(std::unique_ptr<t>& a)
 			{
 				return a.get();
 			}
@@ -73,9 +73,37 @@ namespace expr
 
 			typedef t deref;
 
-			static deref* get(std::shared_ptr<t> const& a)
+			static deref* get(std::shared_ptr<t>& a)
 			{
 				return a.get();
+			}
+		};
+
+		template <typename t>
+		struct type_wrap_info<std::optional<t>>
+		{
+			static constexpr bool is()
+			{
+				return true;
+			}
+
+			static std::string suffix()
+			{
+				return "-optional";
+			}
+
+			typedef t deref;
+
+			static deref* get(std::optional<t>& a)
+			{
+				if (a)
+				{
+					return *a;
+				}
+				else
+				{
+					return nullptr;
+				}
 			}
 		};
 
@@ -112,11 +140,6 @@ namespace expr
 			{
 				return val;
 			}
-
-			/*t const& operator*() const
-			{
-				return val;
-			}*/
 		};
 
 		template <typename t>
@@ -134,7 +157,7 @@ namespace expr
 
 			typedef t deref;
 
-			static deref* get(strong<t> const& a)
+			static deref* get(strong<t>& a)
 			{
 				return &*a;
 			}
