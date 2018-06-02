@@ -1,12 +1,13 @@
 /*
-this is a simple example use of the evaluator
+this is a simple, minimal example use of the evaluator
 
 compile this with:
-g++ example.cpp -std=c++17
+
+g++ minimal_example.cpp -std=c++17
 or
-clang-cl example.cpp /GX /std:c++17
+clang-cl minimal_example.cpp /GX /std:c++17
 or
-clang++ source.cpp -std=c++17 -Xclang -flto-visibility-public-std
+clang++ minimal_example.cpp -std=c++17 -Xclang -flto-visibility-public-std
 
 on windows g++ might need -Os to optimize for size
 
@@ -60,7 +61,7 @@ using namespace expr;
 
 double multiply(double a, double b)
 {
-    return a*b;
+	return a * b;
 }
 
 std::vector<double> global_vector;
@@ -68,45 +69,45 @@ std::vector<double> global_vector;
 
 void push(double a)
 {
-    global_vector.push_back(a);
+	global_vector.push_back(a);
 }
 
 void rotate(double& a)
 {
-    for(double& i : global_vector)
-    {
-        std::swap(a,i);
-    }
+	for (double& i : global_vector)
+	{
+		std::swap(a, i);
+	}
 }
 
 void print(std::vector<double> const& w)
 {
-    for(auto const& i : w)
-    {
-        std::cout << i << std::endl;
-    }
+	for (auto const& i : w)
+	{
+		std::cout << i << std::endl;
+	}
 }
 
 int main()
 {
-    std::cout << "this code will run before the evaluator is used" << std::endl;
+	std::cout << "this code will run before the evaluator is used" << std::endl;
 
-    rename<std::vector<double>>("vec");
+	rename<std::vector<double>>("vec");
 
-    environment env;
-
-    
-    env.functions.use<core>("").use<cpp_core>("").use<util<std::vector<double>>>().use<util<double>>()
-    << "prod" << sfn(multiply) 
-    << "push" << sfn(push) 
-    << "rotate" << sfn(rotate) 
-    << "print" << sfn(print) 
-    << "glv" << val(&global_vector);
+	interpreter env;
 
 
-	env.attach();
-    
-    std::cout << "this code will run after the user calls _exit from the evaluator" << std::endl;
-    char a;
-    std::cin >> a;
+	env.functions.use<core>("").use<cpp_core>("").use<util<std::vector<double>>>().use<util<double>>()
+		<< "prod" << sfn(multiply)
+		<< "push" << sfn(push)
+		<< "rotate" << sfn(rotate)
+		<< "print" << sfn(print)
+		<< "glv" << val(&global_vector);
+
+
+	env.go();
+
+	std::cout << "this code will run after the user calls _exit from the evaluator" << std::endl;
+	char a;
+	std::cin >> a;
 }
