@@ -32,7 +32,7 @@ public:
 		auto li = coefficients.begin();
 		auto ri = rhs.coefficients.begin();
 
-		while (li!=coefficients.end() && ri!=rhs.coefficients.end())
+		while (li!=coefficients.end() || ri!=rhs.coefficients.end())
 		{
 			ret.coefficients.push_back(0);
 			if (li != coefficients.end())
@@ -40,10 +40,10 @@ public:
 				*ret.coefficients.rbegin() += *li;
 				++li;
 			}
-			if (ri == rhs.coefficients.end())
+			if (ri != rhs.coefficients.end())
 			{
 				*ret.coefficients.rbegin() += *ri;
-				++li;
+				++ri;
 			}
 		}
 
@@ -82,26 +82,18 @@ public:
 		double ret = 0;
 		for (int i = 0; i!=coefficients.size(); ++i)
 		{
-			ret += coefficients[i] * std::pow(x, i + 1);
+			ret += coefficients[i] * std::pow(x, i);
 		}
 		return ret;
 	}
 
-
-	std::vector<double>& data()
-	{
-		return coefficients;
-	}
-
-
-
-private:
 	std::vector<double> coefficients;
 };
 
+
 #include<functional>
 
-#include"../evaluator.h"
+#include"..\evaluator.h"
 
 using namespace expr;
 
@@ -125,8 +117,8 @@ int main()
 		//and also the vector utilities, which comes with some extra functions
 		<< "vec" << fs_functs<util<std::vector<double>>>()
 
-		//then, with the name "poly.vec-make", add a constructor function from vector<double>&& into polynomial
-		<< "poly.vec-make" << cfn<polynomial, std::vector<double>&&>()
+		//then, with the name "poly", add a constructor function from vector<double>&& into polynomial
+		<< "poly" << cfn<polynomial, std::vector<double>&&>()
 
 		//then add some utilities for double math as smart functions and as values
 		<< "sum" << sfn(std::function<double(double, double)>{[](double a, double b) {return a + b; }})
@@ -140,7 +132,10 @@ int main()
 		<< "sum" << sfn(&polynomial::operator+) << "prod" << sfn(&polynomial::operator*)
 
 		//then, as smart functions, add the various utility functions from the polynomial class
-		<< "subst" << sfn(&polynomial::substitute) << "get-data" << sfn(&polynomial::data) << "simp" << sfn(&polynomial::simplify);
+		<< "subst" << sfn(&polynomial::substitute) << "simp" << sfn(&polynomial::simplify)
+
+		//and, finally, add member access to polynomial's coefficients
+		<< "view" << mbr(&polynomial::coefficients);
 
 	
 
@@ -154,14 +149,14 @@ _funcs
 swap(=v/,vec.make(2,3))
 vec.append(=v,clone(=v))
 =v
-swap(=p/,poly.vec-make(=v))
+swap(=p/,poly(=v))
 subst(=p,3)
 subst(=p,7)
-swap(=p,prod(=p,poly.vec-make("[3,2,1,0]")))
-swap(=n/,vec.at(get-data(=p),3))
+swap(=p,prod(=p,poly("[3,2,1,0]")))
+swap(=n/,vec.at(view(=p),3))
 num.give(=n,prod(take(=n),take(=n)))
-get-data(=p)
-subst(sum(=p,poly.vec-make("[0 0 0 0 0 0 0 0 0 1]")),prod(prod(sum(1,2),sum(3,4)),sum(e,pi)))
+view(=p)
+subst(sum(=p,poly("[0 0 0 0 0 0 0 0 0 1]")),prod(prod(sum(1,2),sum(3,4)),sum(e,pi)))
 _vars
 _exit
 
