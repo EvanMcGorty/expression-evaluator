@@ -24,7 +24,7 @@ namespace mu
 	class null_mover
 	{
 	public:
-		static void move_construct(base* from, base* to)
+		static void move_construct(base*, base*)
 		{}
 	};
 

@@ -215,12 +215,12 @@ namespace expr
 			}
 
 
-			void put_type(std::ostream& target, name_set const& from) const override
+			void put_type(std::ostream& into, name_set const& from) const override
 			{
-				target << "\\ ";
-				base_callable::put_type(target, from);
-				target << " | ";
-				next->put_type(target, from);
+				into << "\\ ";
+				base_callable::put_type(into, from);
+				into << " | ";
+				next->put_type(into, from);
 			}
 
 		private:
