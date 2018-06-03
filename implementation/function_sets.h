@@ -14,11 +14,13 @@ namespace expr
 			static function_set get_functions()
 			{
 				static_assert("no overloaded instance of fs_info exists for this class");
+				return function_set{};
 			}
 
 			static std::string get_name(name_set const& names)
 			{
 				static_assert("no overloaded instance of fs_info exists for this class");
+				return "";
 			}
 		};
 
@@ -89,7 +91,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(name_set const& names)
+			static std::string get_name(name_set const&)
 			{
 				return "core";
 			}
@@ -194,7 +196,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(name_set const& names)
+			static std::string get_name(name_set const&)
 			{
 				return "cpp";
 			}
@@ -203,7 +205,7 @@ namespace expr
 		struct terminal
 		{
 
-			static void exit()
+			[[ noreturn ]] static void exit()
 			{
 				throw 0;
 			}
@@ -253,10 +255,10 @@ namespace expr
 					.add(sfn(&terminal::println), "println")
 					.add(sfn(&terminal::read), "read")
 					.add(sfn(&terminal::input), "input");
-				return std::move(ret);
+				return ret;
 			}
 
-			static std::string get_name(name_set const& names)
+			static std::string get_name(name_set const&)
 			{
 				return "sys";
 			}
@@ -538,7 +540,7 @@ namespace expr
 					.add(sfn(&extended_util<std::string>::append), "append")
 					.add(sfn(&extended_util<std::string>::resize), "resize")
 					.add(sfn(&extended_util<std::string>::size), "len");
-				return std::move(ret);
+				return ret;
 			}
 
 			static std::string get_name(name_set const& from)

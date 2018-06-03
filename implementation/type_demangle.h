@@ -55,10 +55,14 @@ namespace expr
 			std::unordered_map<std::type_index, std::string> data;
 		};
 
-		name_set global_type_renames;
+		name_set& global_type_renames()
+		{
+			static name_set* val = new name_set();
+			return *val;
+		}
 
 		template<typename type>
-		void rename(std::string&& new_name, name_set& names = global_type_renames)
+		void rename(std::string&& new_name, name_set& names = global_type_renames())
 		{
 			static_assert(!(std::is_const_v<type>||type_wrap_info<type>::is()||std::is_reference_v<type>), "can only rename a raw class/struct/union");
 
@@ -67,7 +71,7 @@ namespace expr
 		}
 		
 		template<typename type>
-		std::string name_of(name_set const& names = global_type_renames)
+		std::string name_of(name_set const& names = global_type_renames())
 		{
 			if constexpr(std::is_reference_v<type>)
 			{

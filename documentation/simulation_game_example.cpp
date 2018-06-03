@@ -1,9 +1,6 @@
 #include<vector>
 #include<random>
 
-#include"../details.h"
-using namespace expr;
-
 
 std::vector<int> player;
 
@@ -152,6 +149,11 @@ std::string random_event()
 
 	return "";//this should never happen
 }
+
+
+#include"../details.h"
+using namespace expr;
+
 
 int main()
 {

@@ -71,13 +71,13 @@ namespace expr
 				}
 				else
 				{
-					any_callable& todo = ***optional_todo;
+					any_callable& ctodo = ***optional_todo;
 
 					object_holder tp = object_holder::make_nullval();
 					bool no_exceptions = true;
 					try
 					{
-						tp = todo.try_perform(loc, temp.arg_count);
+						tp = ctodo.try_perform(loc, temp.arg_count);
 					}
 					catch (std::exception const& caught)
 					{

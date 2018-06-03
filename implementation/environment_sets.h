@@ -124,13 +124,13 @@ namespace expr
 			function_set& add(held_callable&& f, string_convertible&& n)
 			{
 				throw_invalid_name_usage(name_checker::is_valid(std::string{ n }));
-				add_to_map(std::make_pair(std::move(std::string{ n }), std::move(f)));
+				add_to_map(std::make_pair(std::string{ n }, std::move(f)));
 				return *this;
 			}
 
 
 			template<typename t = void, typename string_convertible = std::string>
-			function_set& use(string_convertible&& n = fs_name<t>(global_type_renames), function_set&& set = fs_functs<t>())
+			function_set& use(string_convertible&& n = fs_name<t>(global_type_renames()), function_set&& set = fs_functs<t>())
 			{
 				std::string name{ n };
 				if (name == "")
@@ -174,7 +174,7 @@ namespace expr
 				{
 					auto ret = std::optional<held_callable>{std::move(g->second)};
 					map.erase(g);
-					return std::move(ret);
+					return ret;
 				}
 			}
 
@@ -228,8 +228,8 @@ namespace expr
 			}
 
 		private:
-			std::string at;
 			function_set& to;
+			std::string at;
 		};
 
 		inline function_insertion function_set::operator<<(std::string name)
@@ -301,7 +301,7 @@ namespace expr
 			{
 				if (!from.is_nullval() && from->is_object())
 				{
-					auto to_push = std::move(std::move(from).downcast<any_object>());
+					auto to_push = std::move(from).downcast<any_object>();
 					if (!to_push->can_trivially_destruct())
 					{
 						push_front(std::move(to_push));
@@ -313,7 +313,7 @@ namespace expr
 			{
 				assert_with_generic_logic_error(count <= from.stuff.size());
 
-				for (int i = 0; i != count; ++i)
+				for (size_t i = 0; i != count; ++i)
 				{
 					clean_to_front(*from.stuff.rbegin());
 					from.stuff.pop_back();

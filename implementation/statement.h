@@ -10,6 +10,10 @@ namespace expr
 		{
 		public:
 
+			operation() = default;
+			operation(operation const&) = default;
+			operation(operation&&) = default;
+
 			virtual ~operation()
 			{ }
 

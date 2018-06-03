@@ -20,6 +20,10 @@ namespace expr
 		{
 		public:
 
+			node() = default;
+			node(node const&) = default;
+			node(node&&) = default;
+
 			virtual bool is_literal() const
 			{
 				return false;
@@ -91,7 +95,7 @@ namespace expr
 			std::string make_string() const override
 			{
 				std::string ret("\"");
-				ret.reserve(size_t(float(data.val.length()) * 1.1) + 10);
+				ret.reserve(size_t(double(data.val.length()) * 1.1) + 10);
 				bool in_text = true;
 				for (auto it = data.val.cbegin(); it != data.val.cend(); ++it)
 				{
@@ -195,6 +199,7 @@ namespace expr
 						{
 							ret.push_back('f');
 						}
+						break;
 					default:
 						if (in_text)
 						{
@@ -792,8 +797,6 @@ namespace expr
 			{}
 		};
 
-		const elem empty_elem = elem::make_empty();
-
 		std::ostream& operator<<(std::ostream& stream, elem const& expression)
 		{
 			stream << expression.str();
@@ -937,7 +940,7 @@ namespace expr
 				{
 					return false;
 				}
-				for (int i = 0; i != data.arguments.size(); ++i)
+				for (size_t i = 0; i != data.arguments.size(); ++i)
 				{
 					if (r[i] != data.arguments[i])
 					{

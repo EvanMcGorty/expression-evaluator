@@ -22,7 +22,7 @@ namespace expr
 
 			stack_elem evaluate(elem&& a, std::ostream& errors);
 
-			held_callable info_printer(std::ostream& to = std::cout, name_set const& from = global_type_renames)
+			held_callable info_printer(std::ostream& to = std::cout, name_set const& from = global_type_renames())
 			{
 				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> object_holder
 					{
@@ -73,12 +73,12 @@ namespace expr
 
 						object_holder& ret = *a[0].downcast_get<value_reference>()->ref;
 
-						std::optional<object_holder> f = std::move(g->take_front());
+						std::optional<object_holder> f = g->take_front();
 						while (f)
 						{
 							if (f->is_nullval())
 							{
-								f = std::move(g->take_front());
+								f = g->take_front();
 								continue;
 							}
 							else
@@ -92,7 +92,7 @@ namespace expr
 				});
 			}
 
-			held_callable functions_printer(std::ostream& to = std::cout, name_set const& names = global_type_renames)
+			held_callable functions_printer(std::ostream& to = std::cout, name_set const& names = global_type_renames())
 			{
 				return sfn(std::function<void()>{
 					[to = &to,fs = &functions, names = &names]() -> void
@@ -107,7 +107,7 @@ namespace expr
 				});
 			}
 
-			held_callable variables_printer(std::ostream& to = std::cout, name_set const& names = global_type_renames)
+			held_callable variables_printer(std::ostream& to = std::cout, name_set const& names = global_type_renames())
 			{
 				return sfn(std::function<void()>{
 					[to = &to, vs = &variables,names = &names]() -> void

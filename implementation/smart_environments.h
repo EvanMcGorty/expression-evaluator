@@ -49,7 +49,7 @@ namespace expr
 		{
 		public:
 
-			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}, name_set const& n = global_type_renames) :
+			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}, name_set const& n = global_type_renames()) :
 				environment(std::move(base)),
 				input(i),
 				output(o),
@@ -176,11 +176,11 @@ namespace expr
 					if (*to_use.begin() == '_')
 					{
 						to_use = std::string{ to_use.begin() + 1,to_use.end() };
-						perform(statement::val_type::make<function_call>(to_use, 1), result, variables, special_functions, garbage, errors);
+						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, special_functions, garbage, errors);
 					}
 					else
 					{
-						perform(statement::val_type::make<function_call>(to_use, 1), result, variables, functions, garbage, errors);
+						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, functions, garbage, errors);
 					}
 				}
 

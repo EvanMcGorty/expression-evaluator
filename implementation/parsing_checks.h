@@ -7,37 +7,36 @@ namespace expr
 	{
 		using expression_evaluator_internal_logic_error = std::logic_error;
 
+		using expression_evaluator_usage_logic_error = std::logic_error;
+
+#ifdef _DEBUG
 		void assert_with_generic_logic_error(bool a)
 		{
-#ifdef _DEBUG
 			if (!a)
 			{
 				throw expression_evaluator_internal_logic_error("the expression evaluator has an internal logic error");
 			}
-#endif
 		}
-
-		using expression_evaluator_usage_logic_error = std::logic_error;
-
 		void throw_invalid_method_usage(bool a)
 		{
-#ifdef _DEBUG
 			if (!a)
 			{
 				throw expression_evaluator_usage_logic_error("usage of invalid method");
 			}
-#endif
 		}
-
 		void throw_invalid_name_usage(bool a)
 		{
-#ifdef _DEBUG
 			if (!a)
 			{
 				throw expression_evaluator_usage_logic_error("usage of invalid name");
 			}
-#endif
 		}
+#else
+		void assert_with_generic_logic_error(bool){}
+		void throw_invalid_method_usage(bool){}
+		void throw_invalid_name_usage(bool){}
+#endif
+
 
 
 		//for passing a string while ensuring that it is a valid name with assert()
@@ -104,7 +103,7 @@ namespace expr
 					return false;
 				}
 
-				for (int i = 1; i != a.length(); ++i)
+				for (size_t i = 1; i != a.length(); ++i)
 				{
 					if (i + 1 == a.length())
 					{

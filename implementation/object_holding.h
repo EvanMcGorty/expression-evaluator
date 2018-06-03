@@ -75,7 +75,7 @@ namespace expr
 				return std::string{ val };
 			}
 
-			std::string string_view(name_set const& names) override
+			std::string string_view(name_set const&) override
 			{
 				literal temp{ literal_value{std::string{val}} };
 				return std::string("unparsed{") + temp.make_string() + "}";
@@ -93,12 +93,12 @@ namespace expr
 				return false;
 			}
 
-			bool lazy_can(std::type_info const& tar) const override
+			bool lazy_can(std::type_info const&) const override
 			{
 				return true;
 			}
 
-			bool can(std::type_info const& tar) const override
+			bool can(std::type_info const&) const override
 			{
 				return true;
 			}
@@ -168,7 +168,7 @@ namespace expr
 				return "";
 			}
 			
-			std::string string_view(name_set const& names) override
+			std::string string_view(name_set const&) override
 			{
 				return "void_object{}";
 			}
@@ -193,23 +193,23 @@ namespace expr
 				return true;
 			}
 
-			bool get(any_type_ask* tar) override
+			bool get(any_type_ask*) override
 			{
 				return false;
 			}
 
-			bool can(std::type_info const& tar) const override
+			bool can(std::type_info const&) const override
 			{
 				return false;
 			}
 
 
-			bool lazy_get(any_type_ask* tar) override
+			bool lazy_get(any_type_ask*) override
 			{
 				return false;
 			}
 
-			bool lazy_can(std::type_info const& tar) const override
+			bool lazy_can(std::type_info const&) const override
 			{
 				return false;
 			}

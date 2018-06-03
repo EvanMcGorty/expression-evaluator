@@ -90,7 +90,7 @@ namespace expr
 
 			ret.first = 0;
 
-			int curv;
+			int curv = -5; //to silence the warning
 
 			while (start != stop)
 			{
@@ -102,12 +102,12 @@ namespace expr
 				}
 				else
 				{
-					if ((std::numeric_limits<big_uint>::max() - curv) / 10 <= ret.first)
+					if ((std::numeric_limits<big_uint>::max() - static_cast<big_uint>(curv)) / 10 <= ret.first)
 					{
 						return std::nullopt;
 					}
 					ret.first *= 10;
-					ret.first += curv;
+					ret.first += static_cast<big_uint>(curv);
 				}
 				++start;
 			}
@@ -138,12 +138,12 @@ namespace expr
 					}
 					else
 					{
-						if ((std::numeric_limits<big_uint>::max() - curv) / 10 <= ret.second)
+						if ((std::numeric_limits<big_uint>::max() - static_cast<big_uint>(curv)) / 10 <= ret.second)
 						{
 							return std::nullopt;
 						}
 						ret.second *= 10;
-						ret.second += curv;
+						ret.second += static_cast<big_uint>(curv);
 					}
 					++start;
 				}
@@ -169,12 +169,12 @@ namespace expr
 					}
 					else
 					{
-						if ((std::numeric_limits<big_uint>::max() - curv) / 10 <= ret.first || std::numeric_limits<big_uint>::max() / 10 <= ret.second)
+						if ((std::numeric_limits<big_uint>::max() - static_cast<big_uint>(curv)) / 10 <= ret.first || std::numeric_limits<big_uint>::max() / 10 <= ret.second)
 						{
 							return std::nullopt;
 						}
 						ret.first *= 10;
-						ret.first += curv;
+						ret.first += static_cast<big_uint>(curv);
 						ret.second *= 10;
 					}
 					++start;
@@ -258,9 +258,12 @@ namespace expr
 						ret = static_cast<t>(static_cast<t>(numerator) / denomenator);
 					}
 
-					if (is_negative)
+					if constexpr(std::is_signed_v<t>)
 					{
-						ret *= -1;
+						if (is_negative)
+						{
+							ret *= -1;
+						}
 					}
 
 					return std::optional<t>{std::move(ret)};

@@ -27,7 +27,7 @@ namespace expr
 			}
 			else if (a->is_object())
 			{
-				return std::move(std::move(a).downcast<any_object>());
+				return std::move(a).downcast<any_object>();
 			}
 			else
 			{
@@ -165,6 +165,10 @@ namespace expr
 		class any_callable
 		{
 		public:
+			any_callable() = default;
+			any_callable(any_callable const&) = default;
+			any_callable(any_callable&&) = default;
+
 			virtual object_holder try_perform(stack& a, size_t args_to_take) = 0;
 			virtual bool can_perform(stack const& a, size_t args_to_take) const = 0;
 			virtual void put_type(std::ostream& target, name_set const& from) const = 0;
@@ -181,8 +185,8 @@ namespace expr
 		public:
 
 			layered(base_callable&& f, held_callable&& tail) :
-				next(std::move(tail)),
-				base_callable(std::move(f))
+				base_callable(std::move(f)),
+				next(std::move(tail))
 			{
 				static_assert(std::is_base_of_v<any_callable, base_callable>);
 			}
@@ -246,6 +250,10 @@ namespace expr
 			using arg_tuple_type = std::tuple<std::optional<store_t<args>>...>;
 		public:
 
+			smart_callable() = default;
+			smart_callable(smart_callable&&) = default;
+			smart_callable(smart_callable const&) = default;
+
 
 			smart_callable(std::function<returned_t<ret_t>(store_t<args>&&...)>&& f)
 			{
@@ -257,14 +265,14 @@ namespace expr
 				return held_callable::make<layered<smart_callable<ret_t, args...>>>(smart_callable<ret_t, args...>{std::move(target)}, std::move(tail));
 			}
 
-			void put_type(std::ostream& target, name_set const& from) const override
+			void put_type(std::ostream& into, name_set const& from) const override
 			{
-				target << '(';
+				into << '(';
 				if constexpr(sizeof...(args) > 0)
 				{
-					put_types<store_t<args>...>(target,from);
+					put_types<store_t<args>...>(into,from);
 				}
-				target << ") -> " << name_of<returned_t<ret_t>>(from);
+				into << ") -> " << name_of<returned_t<ret_t>>(from);
 			}
 
 			//when the stack is not popped from, it is the callers responsibility to manage garbage variables
@@ -340,7 +348,7 @@ namespace expr
 
 			}
 
-			~smart_callable()
+			~smart_callable() override
 			{
 			}
 
@@ -392,12 +400,12 @@ namespace expr
 				target = a;
 			}
 
-			void put_type(std::ostream& target, name_set const& from) const override
+			void put_type(std::ostream& into, name_set const&) const override
 			{
-				target << "(...)->?";
+				into << "(...)->?";
 			}
 
-			held_callable add_layer(held_callable&& layer) && override
+			held_callable add_layer(held_callable&&) && override
 			{
 				//because try_perform never fails, the next layer would never need to be called
 				return held_callable::make<manual_callable>(std::move(target));
@@ -408,19 +416,19 @@ namespace expr
 				assert_with_generic_logic_error(a.stuff.size() >= args_to_take);
 				std::vector<stack_elem> to_call;
 				to_call.reserve(args_to_take);
-				for (int i = a.stuff.size() - args_to_take; i != a.stuff.size(); ++i)
+				for (size_t i = a.stuff.size() - args_to_take; i != a.stuff.size(); ++i)
 				{
 					to_call.emplace_back(std::move(a.stuff[i]));
 				}
 				auto ret = target(to_call);
-				for (int i = 0; i != to_call.size(); ++i)
+				for (size_t i = 0; i != to_call.size(); ++i)
 				{
 					a.stuff[a.stuff.size() - args_to_take + i] = std::move(to_call[i]);
 				}
 				return ret;
 			}
 
-			bool can_perform(stack const& a, size_t args_to_take) const override
+			bool can_perform(stack const&, size_t) const override
 			{
 				return true;
 			}
