@@ -324,13 +324,20 @@ namespace expr
 				
 				if constexpr(!(sizeof...(args) == 0))
 				{
-					if (a.smart_check_from_front<0, args...>())
+					if (a.smart_check_from_front<0, store_t<args>...>())
 					{
 						return true;
 					}
+					else
+					{
+						return false;
+					}
+				}
+				else
+				{
+					return true;
 				}
 
-				return false;
 			}
 
 			~smart_callable()

@@ -142,7 +142,7 @@ namespace expr
 
 			static object_holder make_clone(std::vector<stack_elem>& a)
 			{
-				if (a.size() == 1 && !a[0].is_nullval() && a[0]->is_object())
+				if (a.size() == 1 && !a[0].is_nullval() && a[0]->has_value())
 				{
 					return a[0].downcast_get<value_elem_val>()->make_clone();
 				}
