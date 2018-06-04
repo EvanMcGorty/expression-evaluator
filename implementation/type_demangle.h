@@ -3,6 +3,7 @@
 #include <memory>
 #include <unordered_map>
 #include <typeindex>
+#include <cstdlib>
 
 #include "type_qualities.h"
 
@@ -53,11 +54,31 @@ namespace expr
 		struct name_set
 		{
 			std::unordered_map<std::type_index, std::string> data;
+
+			~name_set() {}
 		};
+
+
+
+		static name_set* global_type_renames_object_pointer;
+		
+		inline void delete_global_type_renames_object()
+		{
+			delete global_type_renames_object_pointer;
+		}
+
+
+		name_set*& make_global_type_renames_object()
+		{
+			std::atexit(&delete_global_type_renames_object);
+			global_type_renames_object_pointer = new name_set();
+			return global_type_renames_object_pointer;
+		}
+
 
 		name_set& global_type_renames()
 		{
-			static name_set* val = new name_set();
+			static name_set*& val = make_global_type_renames_object();
 			return *val;
 		}
 
