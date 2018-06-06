@@ -52,8 +52,8 @@ _exit
 
 */
 
-#include<vector>
-#include<iostream>
+#include <vector>
+#include <iostream>
 
 #include "../evaluator.h"
 
@@ -66,23 +66,22 @@ double multiply(double a, double b)
 
 std::vector<double> global_vector;
 
-
 void push(double a)
 {
 	global_vector.push_back(a);
 }
 
-void rotate(double& a)
+void rotate(double &a)
 {
-	for (double& i : global_vector)
+	for (double &i : global_vector)
 	{
 		std::swap(a, i);
 	}
 }
 
-void print(std::vector<double> const& w)
+void print(std::vector<double> const &w)
 {
-	for (auto const& i : w)
+	for (auto const &i : w)
 	{
 		std::cout << i << std::endl;
 	}
@@ -92,22 +91,36 @@ int main()
 {
 	std::cout << "this code will run before the evaluator is used" << std::endl;
 
+	//by default uses a global rename dataset
 	rename<std::vector<double>>("vec");
 
-	interpreter env;
+	//the environment that will hold variables and functions
+	environment env;
 
+	//use imports a function set. an empty string means to not use a namespace
+	env.functions.use<core>("").use<cpp_core>("")
 
-	env.functions.use<core>("").use<cpp_core>("").use<util<std::vector<double>>>().use<util<double>>()
+		//util<t> wraps t and provides basic functions. by not providing a string, the evaluator chooses a default name.
+		.use<util<std::vector<double>>>()
+		.use<util<double>>()
+
+		//a pretty syntax for binding functions. sfn takes a function pointer and turns it into something that env can use.
 		<< "prod" << sfn(multiply)
 		<< "push" << sfn(push)
 		<< "rotate" << sfn(rotate)
 		<< "print" << sfn(print)
+
+		//val creates a function that returns a copy of the value it is passed. passing a pointer to global_vector gives write access to the caller.
 		<< "glv" << val(&global_vector);
 
+	//there are alternate ways to expresss binding functions.
+	//function sets can also be imported with the << syntax using fs_functs
+	//and functions can be bound with method syntax with .add
 
-	env.go();
+	//interpreter is a more complicated environment that interacts with iostreams and has settings (with default settings and cout/cin).
+	interpreter{ std::move(env) }.go();
 
-	std::cout << "this code will run after the user calls _exit from the evaluator" << std::endl;
+	std::cout << "this code will run after the user calls _exit from the interpreter" << std::endl;
 	char a;
 	std::cin >> a;
 }
