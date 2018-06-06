@@ -1,5 +1,6 @@
 #include<vector>
 #include<random>
+#include<cmath>
 
 
 std::vector<int> player;
@@ -7,6 +8,12 @@ std::vector<int> player;
 int resources;
 
 int turn_count;
+
+int event_strength()
+{
+	return turn_count;
+}
+
 
 void wave(unsigned int strength)
 {
@@ -85,16 +92,20 @@ void shrink(unsigned int strength)
 	{
 		strength = resources;
 	}
+	if(strength > player.size())
+	{
+		strength = player.size();
+	}
+	strength = 2*(strength/2); //must be even
 	resources -= strength;
 
-	for (int i = 0; i != 2*strength; ++++i)
+	for(int i = 0; i != strength; ++++i)
 	{
-		if (i + 1 >= player.size())
-		{
-			shrink((strength - i) / 2);
-			return;
-		}
-		player[i/2] = player[i] + player[i + 1];
+		player[i/2] = player[i] + 2*player[i + 1];
+	}
+	for(int i = 0; i != strength/2;++i)
+	{
+		player.pop_back();
 	}
 }
 
@@ -116,11 +127,13 @@ bool clean()
 
 	++turn_count;
 
+	int newresources = 0;
+
 	for (auto it : player)
 	{
-		resources += it;
+		newresources += it;
 	}
-	resources /= player.size();
+	resources += newresources / player.size();
 
 	return false;
 }
@@ -177,6 +190,7 @@ int main()
 			if (player.size() == 0)
 			{
 				std::cout << "cannot play with empty board\n" << std::flush;
+				return;
 			}
 			std::string todo;
 			std::getline(std::cin,todo);
@@ -186,9 +200,9 @@ int main()
 				return;
 			}
 			std::string event = random_event();
-			std::cout << event << std::endl;
+			std::cout << event << ' ' << std::to_string(event_strength()) << std::endl;
 			
-			options->evaluate(elem::make("event." + event + "(" + std::to_string(turn_count) + ")"), std::cout);
+			options->evaluate(elem::make("event." + event + "(" + std::to_string(event_strength()) + ")"), std::cout);
 			if (clean())
 			{
 				std::cout << "game over\n" << std::flush;
