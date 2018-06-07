@@ -20,7 +20,12 @@ namespace expr
 
 			stack run(executable&& a, std::ostream& errors);
 
-			stack_elem evaluate(elem&& a, std::ostream& errors);
+			stack_elem evaluate(expression&& a, std::ostream& errors);
+
+			stack_elem evaluate(std::string const& a, std::ostream& errors)
+			{
+				return evaluate(expression::make(a), errors);
+			}
 
 			held_callable info_printer(std::ostream& to = std::cout, name_set const& from = global_type_renames())
 			{

@@ -127,7 +127,7 @@ namespace expr
 			{
 				if (unparsed.begin() != unparsed.end() && *unparsed.begin() == '_')
 				{
-					elem n = elem::make(std::string{ unparsed.begin() + 1, unparsed.end() });
+					expression n = expression::make(std::string{ unparsed.begin() + 1, unparsed.end() });
 					if (n.get_function() == nullptr)
 					{
 						if (settings.whether_to_reprint_input_as_parsed)
@@ -150,7 +150,7 @@ namespace expr
 				}
 				else
 				{
-					elem n = elem::make(std::string{ unparsed.begin(), unparsed.end() });
+					expression n = expression::make(std::string{ unparsed.begin(), unparsed.end() });
 
 					if (settings.whether_to_reprint_input_as_parsed)
 					{

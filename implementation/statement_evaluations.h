@@ -115,7 +115,7 @@ namespace expr
 			return loc;
 		}
 
-		inline stack_elem environment::evaluate(elem&& tar, std::ostream& errors)
+		inline stack_elem environment::evaluate(expression&& tar, std::ostream& errors)
 		{
 			executable to_run;
 			std::move(tar).into_executable(to_run);

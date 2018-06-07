@@ -167,7 +167,8 @@ std::string random_event()
 #include<string>
 #include<functional>
 
-#include"../details.h"
+
+#include"../evaluator.h"
 using namespace expr;
 
 
@@ -209,8 +210,8 @@ int main()
 		}
 		std::string todo;
 		std::getline(std::cin, todo);
-		//create and evaluate an expression, parsed from the concatenation of "player." and the new input.
-		if (options->evaluate(elem::make("player." + todo), std::cout).is_nullval())
+		//evaluate the concatenation of "player." and the new input.
+		if (options->evaluate("player." + todo, std::cout).is_nullval())
 		{
 			//if the evaluation returned empty
 			std::cout << "bad input\n" << std::flush;
@@ -219,7 +220,7 @@ int main()
 		std::string event = random_event();
 		std::cout << event << ' ' << std::to_string(event_strength()) << std::endl;
 
-		options->evaluate(elem::make("event." + event + "(" + std::to_string(event_strength()) + ")"), std::cout);
+		options->evaluate("event." + event + "(" + std::to_string(event_strength()) + ")", std::cout);
 		if (clean())
 		{
 			std::cout << "game over\n" << std::flush;

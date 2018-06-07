@@ -12,7 +12,7 @@ namespace expr
 	namespace impl
 	{
 
-		class elem;
+		class expression;
 
 
 
@@ -39,7 +39,7 @@ namespace expr
 				return false;
 			}
 
-			virtual elem duplicate() const = 0;
+			virtual expression duplicate() const = 0;
 
 			virtual bool is_equal(node const* a) const = 0;
 
@@ -83,7 +83,7 @@ namespace expr
 			}
 
 
-			elem duplicate() const override;
+			expression duplicate() const override;
 
 
 			bool is_equal(node const* a) const override
@@ -346,7 +346,7 @@ namespace expr
 				return true;
 			}
 
-			elem duplicate() const override;
+			expression duplicate() const override;
 
 
 			bool is_equal(node const* a) const override
@@ -448,7 +448,7 @@ namespace expr
 
 		struct function_value
 		{
-			function_value(name_checker&& n, std::vector<elem>&& a = {})
+			function_value(name_checker&& n, std::vector<expression>&& a = {})
 			{
 				fn_name = std::move(n);
 				arguments = std::move(a);
@@ -456,7 +456,7 @@ namespace expr
 
 			std::string fn_name;
 
-			std::vector<elem> arguments;
+			std::vector<expression> arguments;
 		};
 
 		class function : public node
@@ -474,7 +474,7 @@ namespace expr
 				return true;
 			}
 
-			elem duplicate() const override;
+			expression duplicate() const override;
 
 
 			bool is_equal(node const* a) const override;
@@ -497,39 +497,39 @@ namespace expr
 
 		class executable;
 
-		class elem
+		class expression
 		{
-			friend elem literal::duplicate() const;
-			friend elem variable::duplicate() const;
-			friend elem function::duplicate() const;
+			friend expression literal::duplicate() const;
+			friend expression variable::duplicate() const;
+			friend expression function::duplicate() const;
 			friend std::string function::make_string() const;
 
 		public:
 
-			elem() noexcept(true) :
+			expression() noexcept(true) :
 				val(dtp::make_nullval())
 			{}
 
-			elem(elem&& a) noexcept(true) :
+			expression(expression&& a) noexcept(true) :
 				val(std::move(a.val))
 			{
 			}
 
-			void operator=(elem&& a) noexcept(true)
+			void operator=(expression&& a) noexcept(true)
 			{
 				val = std::move(a.val);
 			}
 
-			elem(elem const& a) :
+			expression(expression const& a) :
 				val(!a.val.is_nullval() ? std::move(a.val->duplicate().val) : dtp::make_nullval())
 			{}
 
-			void operator=(elem const& a)
+			void operator=(expression const& a)
 			{
 				val = (!a.val.is_nullval() ? std::move(a.val->duplicate().val) : dtp::make_nullval());
 			}
 
-			bool operator==(elem const& a) const
+			bool operator==(expression const& a) const
 			{
 				if (val.is_nullval())
 				{
@@ -555,7 +555,7 @@ namespace expr
 				}
 			}
 
-			bool operator!=(elem const& a) const
+			bool operator!=(expression const& a) const
 			{
 				return !operator==(a);
 			}
@@ -578,30 +578,30 @@ namespace expr
 
 			void into_executable(executable& a) &&;
 
-			static elem make(literal_value&& a)
+			static expression make(literal_value&& a)
 			{
-				return elem{ dtp::make<literal>(std::move(a)) };
+				return expression{ dtp::make<literal>(std::move(a)) };
 			}
 
-			static elem make(variable_value&& a)
+			static expression make(variable_value&& a)
 			{
-				return elem{ dtp::make<variable>(std::move(a)) };
+				return expression{ dtp::make<variable>(std::move(a)) };
 			}
 
-			static elem make(function_value&& a)
+			static expression make(function_value&& a)
 			{
-				return elem{ dtp::make<function>(std::move(a)) };
+				return expression{ dtp::make<function>(std::move(a)) };
 			}
 
-			static elem make_empty()
+			static expression make_empty()
 			{
-				return elem{ dtp::make_nullval() };
+				return expression{ dtp::make_nullval() };
 			}
 
-			static elem make(std::string const& to_be_parsed)
+			static expression make(std::string const& to_be_parsed)
 			{
 				std::string::const_iterator it = to_be_parsed.cbegin();
-				std::optional<elem> o{ parse(it,to_be_parsed.cend()) };
+				std::optional<expression> o{ parse(it,to_be_parsed.cend()) };
 				if (!o)
 				{
 					return make_empty();
@@ -617,13 +617,13 @@ namespace expr
 				return std::move(*o);
 			}
 
-			static elem make(char const* to_be_parsed)
+			static expression make(char const* to_be_parsed)
 			{
 				return make(std::string{ to_be_parsed });
 			}
 
 
-			static std::optional<elem> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			static std::optional<expression> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
 				if (start == stop)
 				{
@@ -634,7 +634,7 @@ namespace expr
 					std::optional<variable> n = variable::parse(start, stop);
 					if (n)
 					{
-						return std::optional<elem>{elem{ dtp::make<variable>(std::move(*n)) }};
+						return std::optional<expression>{expression{ dtp::make<variable>(std::move(*n)) }};
 					}
 					else
 					{
@@ -646,7 +646,7 @@ namespace expr
 					std::optional<function> n{ function::parse(start,stop) };
 					if (n)
 					{
-						return std::optional<elem>{elem{ dtp::make<function>(std::move(*n)) }};
+						return std::optional<expression>{expression{ dtp::make<function>(std::move(*n)) }};
 					}
 					else
 					{
@@ -656,14 +656,14 @@ namespace expr
 				else if (*start == '_')
 				{
 					++start;
-					return std::optional<elem>{elem::make_empty()};
+					return std::optional<expression>{expression::make_empty()};
 				}
 				else
 				{
 					std::optional<literal> n = literal::parse(start, stop);
 					if (n)
 					{
-						return std::optional<elem>{elem{ dtp::make<literal>(std::move(*n)) }};
+						return std::optional<expression>{expression{ dtp::make<literal>(std::move(*n)) }};
 					}
 					else
 					{
@@ -672,42 +672,42 @@ namespace expr
 				}
 			}
 
-			static elem literal_parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			static expression literal_parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
 				auto g = literal::parse(start, stop);
 				if (g)
 				{
-					return elem::make(std::move(g->data));
+					return expression::make(std::move(g->data));
 				}
 				else
 				{
-					return elem::make_empty();
+					return expression::make_empty();
 				}
 			}
 
-			static elem variable_parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			static expression variable_parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
 				auto g = variable::parse(start, stop);
 				if (g)
 				{
-					return elem::make(std::move(g->data));
+					return expression::make(std::move(g->data));
 				}
 				else
 				{
-					return elem::make_empty();
+					return expression::make_empty();
 				}
 			}
 
-			static elem function_parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			static expression function_parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
 				auto g = function::parse(start, stop);
 				if (g)
 				{
-					return elem::make(std::move(g->data));
+					return expression::make(std::move(g->data));
 				}
 				else
 				{
-					return elem::make_empty();
+					return expression::make_empty();
 				}
 			}
 
@@ -792,22 +792,22 @@ namespace expr
 			dtp val;
 
 
-			elem(dtp&& a) :
+			expression(dtp&& a) :
 				val(std::move(a))
 			{}
 		};
 
-		std::ostream& operator<<(std::ostream& stream, elem const& expression)
+		std::ostream& operator<<(std::ostream& stream, expression const& expression)
 		{
 			stream << expression.str();
 			return stream;
 		}
 
-		std::istream& operator>>(std::istream& stream, elem& expression)
+		std::istream& operator>>(std::istream& stream, expression& expression)
 		{
 			std::string to_parse;
 			std::getline(stream, to_parse);
-			expression = elem::make(to_parse);
+			expression = expression::make(to_parse);
 			return stream;
 		}
 
@@ -817,7 +817,7 @@ namespace expr
 			ret.reserve(data.fn_name.size() + data.arguments.size() * 10);
 			ret = data.fn_name;
 			ret.push_back('(');
-			//for(std::vector<elem>::const_iterator it = arguments.cbegin(); it!=arguments.cend(); ++it)
+			//for(std::vector<expression>::const_iterator it = arguments.cbegin(); it!=arguments.cend(); ++it)
 			//for(int i = 0; i!=arguments.size(); ++i)
 			for (auto const& it : data.arguments)
 			{
@@ -896,7 +896,7 @@ namespace expr
 					return std::optional<function>{std::move(ret)};
 				}
 
-				auto next = elem::parse(start, stop);
+				auto next = expression::parse(start, stop);
 
 				if (next)
 				{
@@ -935,7 +935,7 @@ namespace expr
 		{
 			if (a->is_function() && static_cast<function const *>(a)->data.fn_name == data.fn_name)
 			{
-				std::vector<elem> const &r = static_cast<function const *>(a)->data.arguments;
+				std::vector<expression> const &r = static_cast<function const *>(a)->data.arguments;
 				if (r.size() != data.arguments.size())
 				{
 					return false;
@@ -955,19 +955,19 @@ namespace expr
 			}
 		}
 
-		inline elem literal::duplicate() const
+		inline expression literal::duplicate() const
 		{
-			return elem{ dtp::make<literal>(std::move(*this)) };
+			return expression{ dtp::make<literal>(std::move(*this)) };
 		}
 
-		inline elem variable::duplicate() const
+		inline expression variable::duplicate() const
 		{
-			return elem{ dtp::make<variable>(std::move(*this)) };
+			return expression{ dtp::make<variable>(std::move(*this)) };
 		}
 
-		inline elem function::duplicate() const
+		inline expression function::duplicate() const
 		{
-			return elem{ dtp::make<function>(std::move(*this)) };
+			return expression{ dtp::make<function>(std::move(*this)) };
 		}
 
 	}

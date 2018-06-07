@@ -132,7 +132,7 @@ namespace expr
 			std::vector<statement> statements;
 		};
 
-		inline void elem::make_executable(executable& result_location) const
+		inline void expression::make_executable(executable& result_location) const
 		{
 			std::vector<statement>& a = result_location.statements;
 			if (val.is_nullval())
@@ -158,7 +158,7 @@ namespace expr
 			}
 		}
 
-		inline void elem::into_executable(executable& result_location) &&
+		inline void expression::into_executable(executable& result_location) &&
 		{
 			std::vector<statement>& a = result_location.statements;
 			if (val.is_nullval())
