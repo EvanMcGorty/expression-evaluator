@@ -7,107 +7,148 @@ namespace expr
 {
 	namespace impl
 	{
-
+		
 		template<typename t>
-		class type_wrap
+		class type
 		{
 		public:
-			type_wrap()
-			{}
-
 
 			typedef t held;
+
+			constexpr bool is_ref()
+			{
+				return false;
+			}
+
+			constexpr bool is_val()
+			{
+				return false;
+			}
+
+			type()
+			{}
+		};
+
+		template<typename t>
+		struct ref_wrap
+		{
+			explicit ref_wrap(t& a) :
+				to(&a)
+			{
+				static_assert(!std::is_reference_v<t>);
+				static_assert(std::is_trivial_v<ref_wrap<t>>);
+				static_assert(!type<t>::is_ref() && !type<t>::is_val());
+			}
+
+			explicit operator t&()
+			{
+				return *to;
+			}
+
+			ref_wrap() = delete;
+			ref_wrap(ref_wrap const&) = default;
+			ref_wrap(ref_wrap&&) = default;
+			~ref_wrap() = default;
+
+			t* to;
+		};
+
+		template<typename t>
+		struct val_wrap
+		{
+			explicit val_wrap(t&& a) :
+				wrapped(a)
+			{
+				static_assert(!std::is_reference_v<t> && !std::is_const_v<t>);
+				static_assert(std::is_trivial_v<val_wrap<t>> == std::is_trivial_v<t>);
+			}
+
+			explicit operator t() &&
+			{
+				return std::move(wrapped);
+			}
+
+
+			val_wrap() = delete;
+			val_wrap(val_wrap const&) = default;
+			val_wrap(val_wrap&&) = default;
+			~val_wrap() = default;
+
+			t wrapped;
+
 		};
 
 
-
+		//if t is what you see in a function argument, store_t<t> is what is held before it is passed.
 		template<typename t>
 		constexpr auto as_storable()
 		{
-
 			if constexpr (std::template is_rvalue_reference_v<t>)
 			{
 				if constexpr (std::is_const_v<typename std::remove_reference_t<t>>)
 				{
-					return type_wrap<typename std::remove_reference_t<t> const *>();
+					return type<ref_wrap<typename std::remove_reference_t<t> const>>();
 				}
 				else
 				{
-					return type_wrap<typename std::remove_reference_t<t>>();
+					return type<val_wrap<typename std::remove_reference_t<t>>>();
 				}
 			}
 			else if constexpr (std::template is_lvalue_reference_v<t>)
 			{
 				if constexpr (std::is_const_v<typename std::remove_reference_t<t>>)
 				{
-					return type_wrap<typename std::remove_reference_t<t> const *>();
+					return type<ref_wrap<typename std::remove_reference_t<t> const>>();
 				}
 				else
 				{
-					return type_wrap<typename std::remove_reference_t<t>*>();
+					return type<ref_wrap<typename std::remove_reference_t<t>>>();
 				}
 			}
 			else
 			{
-				return type_wrap<t>();
+				return type<val_wrap<t>>();
 			}
 		}
 
+		//if t is the argument of the function, pass_t is the type that must be forwarded into the function at the call site
 		template<typename t>
 		constexpr auto as_passable()
 		{
-
 			if constexpr (std::template is_rvalue_reference_v<t> || std::template is_lvalue_reference_v<t>)
 			{
-				return type_wrap<t>();
+				return type<t>();
 			}
 			else
 			{
-				return type_wrap<std::remove_const_t<t>&&>();
+				return type<std::remove_const_t<t>&&>();
 			}
 		}
 
+		//if t is the return type of a function, return_t<t> is what the evaluator stores from the result.
 		template<typename t>
 		constexpr auto as_returnable()
 		{
-			if constexpr (std::template is_rvalue_reference_v<t>)
+			if constexpr (std::template is_lvalue_reference_v<t>)
 			{
-				if constexpr (std::is_const_v<typename std::remove_reference_t<t>>)
-				{
-					return type_wrap<typename std::remove_reference_t<t> const *>();
-				}
-				else
-				{
-					return type_wrap<typename std::remove_reference_t<t>>();
-				}
-			}
-			else if constexpr (std::template is_lvalue_reference_v<t>)
-			{
-				if constexpr (std::is_const_v<typename std::remove_reference_t<t>>)
-				{
-					return type_wrap<typename std::remove_reference_t<t> const *>();
-				}
-				else
-				{
-					return type_wrap<typename std::remove_reference_t<t> *>();
-				}
+				return type<ref_wrap<typename std::remove_reference_t<t>>>();
 			}
 			else
 			{
-				if constexpr (std::is_const_v<t>)
+				if constexpr (
+					std::is_same_v<void,t>
+					||
+					(
+					std::template is_const_v<std::remove_reference_t<t>>
+					&&
+				 	!std::template is_copy_constructible_v<std::remove_const_t<std::remove_reference_t<t>>>)
+					)
 				{
-					if constexpr(std::is_copy_constructible_v<std::remove_const_t<t>>)
-					{
-						return type_wrap<std::remove_const_t<t>>();
-					}
-					else
-					{
-						return type_wrap<void>();
-					}
+					return type<void>();
 				}
 				else
 				{
-					return type_wrap<t>();
+					return type<val_wrap<typename std::remove_const<std::remove_reference_t<t>>>>();
 				}
 			}
 		}
@@ -143,73 +184,32 @@ namespace expr
 		using returned_t = typename returned<t>::type::held;
 
 
+		//where t is the argument type in the function
 		template<typename t>
 		constexpr pass_t<t> storable_into_passable(store_t<t>&& x)
 		{
-			if constexpr(std::is_rvalue_reference_v<t>)
-			{
-				if constexpr(std::is_const_v<typename std::remove_reference_t<t>>)
-				{
-					return std::move(*x);
-				}
-				else
-				{
-					return std::move(x);
-				}
-			}
-			else if constexpr(!std::is_reference_v<t>)
-			{
-				return std::move(x);
-			}
-			else if constexpr(std::is_lvalue_reference_v<t>)
-			{
-				return *x;
-			}
-		}
-
-		template<typename t>
-		constexpr returned_t<t> into_returnable(t&& x)
-		{
-			if constexpr(!std::is_reference_v<t>)
-			{
-				if constexpr(std::is_const_v<t>)
-				{
-					if constexpr(std::is_copy_constructible_v<std::remove_const_t<t>>)
-					{
-						return std::remove_const_t<t>{ x };
-					}
-					else
-					{
-						return;
-					}
-				}
-				else
-				{
-					return std::move(x);
-				}
-			}
-			else if constexpr(std::is_rvalue_reference_v<t>)
-			{
-				if constexpr(!std::is_const_v<typename std::remove_reference_t<t>>)
-				{
-					return std::move(x);
-				}
-				else
-				{
-					return &x;
-				}
-			}
-			else if constexpr(std::is_lvalue_reference_v<t>)
-			{
-				return &x;
-			}
+			return pass_t<t>(std::move(x));
 		}
 
 		template<typename t>
 		constexpr bool can_return()
 		{
-			return !(std::is_void_v<t> || (!std::is_reference_v<t> && std::is_const_v<t> && !std::is_copy_constructible_v<std::remove_const_t<t>>));
+			return !std::is_same_v<void,returned_t<t>>;
 		}
+
+		template<typename t>
+		constexpr returned_t<t> into_returnable(t&& x)
+		{
+			if constexpr (!can_return<t>())
+			{
+				return;
+			}
+			else
+			{
+				return returned_t<t>(std::move(x));
+			}
+		}
+
 
 
 		template<typename ret_t, typename...argts>
