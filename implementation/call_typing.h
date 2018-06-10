@@ -44,7 +44,6 @@ namespace expr
 				to(&a)
 			{
 				static_assert(!std::is_reference_v<t>);
-				static_assert(std::is_trivial_v<ref_wrap<t>>);
 				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
@@ -77,7 +76,6 @@ namespace expr
 				wrapped(std::move(a))
 			{
 				static_assert(!std::is_reference_v<t> && !std::is_const_v<t>);
-				static_assert(std::is_trivial_v<val_wrap<t>> == std::is_trivial_v<t>);
 				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
@@ -105,7 +103,6 @@ namespace expr
 				wrapped(a)
 			{
 				static_assert(!std::is_reference_v<t> && !std::is_const_v<t>);
-				static_assert(std::is_trivial_v<val_wrap<t>> == std::is_trivial_v<t>);
 				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
@@ -136,7 +133,6 @@ namespace expr
 				wrapped(std::move(a))
 			{
 				static_assert(!std::is_reference_v<t> && !std::is_const_v<t>);
-				static_assert(std::is_trivial_v<val_wrap<t>> == std::is_trivial_v<t>);
 				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
@@ -172,7 +168,6 @@ namespace expr
 				wrapped(a)
 			{
 				static_assert(!std::is_reference_v<t> && !std::is_const_v<t>);
-				static_assert(std::is_trivial_v<val_wrap<t>> == std::is_trivial_v<t>);
 				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
@@ -211,6 +206,8 @@ namespace expr
 
 			typedef val_wrap<t> held;
 
+			typedef t raw;
+
 			type()
 			{}
 			
@@ -237,6 +234,8 @@ namespace expr
 		public:
 
 			typedef ref_wrap<t> held;
+
+			typedef t raw;
 
 			type()
 			{}
@@ -366,7 +365,7 @@ namespace expr
 		template<typename t>
 		constexpr pass_t<t> storable_into_passable(store_t<t>&& x)
 		{
-			return pass_t<t>(std::move(x));
+			return std::forward<pass_t<t>>(pass_t<t>(std::move(x)));
 		}
 
 		template<typename t>

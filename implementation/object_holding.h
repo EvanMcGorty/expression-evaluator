@@ -22,7 +22,7 @@ namespace expr
 				return false;
 			}
 
-			virtual bool is_reference() const
+			virtual bool is_object_reference() const
 			{
 				return false;
 			}
@@ -119,7 +119,7 @@ namespace expr
 
 			virtual mu::virt<any_object> make_clone() const = 0;
 
-			virtual mu::virt<any_object> take_referenced() = 0;
+			virtual mu::virt<any_object> dereference() = 0;
 		};
 
 
@@ -180,7 +180,7 @@ namespace expr
 				return mu::virt<any_object>::make_nullval();
 			}
 
-			mu::virt<any_object> take_referenced() override
+			mu::virt<any_object> dereference() override
 			{
 				return mu::virt<any_object>::make_nullval();
 			}
@@ -221,6 +221,19 @@ namespace expr
 		class object_of final : public any_object
 		{
 		private:
+			typedef typename type<t>::raw raw;
+
+			raw& get_raw()
+			{
+				if constexpr(type<t>::is_ref())
+				{
+					return static_cast<raw&>(val);
+				}
+				else if constexpr(type<t>::is_val())
+				{
+					return val.wrapped;
+				}
+			}
 
 		public:
 
@@ -233,19 +246,19 @@ namespace expr
 
 			std::string convert_into_string() override
 			{
-				return converter<t>::print(val);
+				return converter<raw>::print(get_raw());
 			}
 
 			std::string string_view(name_set const& names) override
 			{
-				return std::string("object_of{") + name_of<t>(names) + "(" + converter<t>::print(val) + ")" + "}";
+				return std::string("object_of{") + name_of<raw>(names) + "(" + converter<raw>::print(get_raw()) + ")" + "}";
 			}
 
 			mu::virt<any_object> as_non_trivially_destructible() && override
 			{
-				if constexpr(std::is_trivially_destructible_v<t>)
+				if constexpr(std::is_trivially_destructible_v<raw>)
 				{
-					return mu::virt<any_object>::make<object_of<strong<t>>>(strong<t>(std::move(val)));
+					return mu::virt<any_object>::make<object_of<returned_t<strong<raw>>>>(into_returnable(strong<raw>{std::move(get_raw())}));
 				}
 				else
 				{
@@ -262,7 +275,7 @@ namespace expr
 			{
 				if constexpr(std::is_copy_constructible<t>::value)
 				{
-					return mu::virt<any_object>::make<object_of<t>>(t{ val });
+					return mu::virt<any_object>::make<object_of<t>>(t(val));
 				}
 				else
 				{
@@ -270,15 +283,15 @@ namespace expr
 				}
 			}
 
-			mu::virt<any_object> take_referenced() override
+			mu::virt<any_object> dereference() override
 			{
-				if constexpr(type_wrap_info<t>::is())
+				if constexpr(type_wrap_info<raw>::is())
 				{
-					if constexpr(!std::is_const_v<typename type_wrap_info<t>::deref>)
+					if constexpr(!std::is_const_v<typename type_wrap_info<raw>::deref>)
 					{
-						if(type_wrap_info<t>::get(val) != nullptr)
+						if(type_wrap_info<raw>::has(get_raw()))
 						{
-							return mu::virt<any_object>::make<object_of<typename type_wrap_info<t>::deref>>(std::move(*type_wrap_info<t>::get(val)));
+							return mu::virt<any_object>::make<object_of<returned_t<typename type_wrap_info<raw>::deref>>>(into_returnable(type_wrap_info<raw>::get(get_raw())));
 						}
 					}
 				}
@@ -287,7 +300,7 @@ namespace expr
 
 			std::type_info const& get_type() const override
 			{
-				return typeid(t);
+				return typeid(raw);
 			}
 
 			bool is_movable()
@@ -405,6 +418,12 @@ namespace expr
 
 		using object_holder = mu::virt<any_object>;
 
+		template<typename t>
+		object_holder make_object(t&& a)
+		{
+			object_holder::make<object_of<returned_t<t>>>(into_returnable<t>(std::forward<t>(a)));
+		}
+
 
 		//on a stack, this is what a variable pushes (unless if the variable is also being popped).
 		class value_reference : public value_elem_val
@@ -417,7 +436,7 @@ namespace expr
 				ref = a;
 			}
 
-			bool is_reference() const override
+			bool is_object_reference() const override
 			{
 				return true;
 			}
@@ -435,11 +454,11 @@ namespace expr
 				}
 			}
 
-			mu::virt<any_object> take_referenced() override
+			mu::virt<any_object> dereference() override
 			{
 				if (!ref->is_nullval())
 				{
-					return (**ref).take_referenced();
+					return (**ref).dereference();
 				}
 				else
 				{

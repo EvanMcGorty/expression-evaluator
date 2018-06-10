@@ -21,7 +21,7 @@ namespace expr
 			{
 				return object_holder::make_nullval();
 			}
-			else if (a->is_reference())
+			else if (a->is_object_reference())
 			{
 				return std::move(*a.downcast_get<value_reference>()->ref);
 			}
@@ -43,7 +43,7 @@ namespace expr
 			{
 				a = std::move(b);
 			}
-			else if (a->is_reference())
+			else if (a->is_object_reference())
 			{
 				(*a.downcast_get<value_reference>()->ref) = std::move(b);
 			}
@@ -82,8 +82,10 @@ namespace expr
 				{
 					if (ask.pointed_to_value)
 					{
-						cur = stack_elem::make<object_of<std::remove_const_t<typename std::remove_pointer_t<t>>>>(std::move(ask.pointed_to_value->val));
-						return &cur.downcast_get<object_of<std::remove_const_t<typename std::remove_pointer_t<t>>>>()->val;
+						auto&& new_cur = make_object<std::remove_const_t<typename std::remove_pointer_t<t>>>(std::move(ask.pointed_to_value->val));
+						std::optional<t> ret = &new_cur->val;
+						cur = std::move(new_cur);
+						return ret;
 					}
 					else
 					{

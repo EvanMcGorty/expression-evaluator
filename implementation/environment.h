@@ -71,7 +71,7 @@ namespace expr
 				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{
 					[g = &garbage](std::vector<stack_elem>& a) -> object_holder
 					{
-						if (a.size() != 1 || a[0].is_nullval() || !a[0]->is_reference())
+						if (a.size() != 1 || a[0].is_nullval() || !a[0]->is_object_reference())
 						{
 							return object_holder::make_nullval();
 						}

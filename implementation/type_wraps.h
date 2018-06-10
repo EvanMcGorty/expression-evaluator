@@ -25,14 +25,19 @@ namespace expr
 
 			static std::string suffix()
 			{
-				return "-ref";
+				return "-ptr";
 			}
 
-			typedef t deref;
+			typedef t& deref;
 
-			static deref* get(t*& a)
+			static bool has(t* const& a)
 			{
-				return a;
+				return a != nullptr;
+			}
+
+			static deref get(t*& a)
+			{
+				return *a;
 			}
 
 		};
@@ -50,11 +55,16 @@ namespace expr
 				return "-unique";
 			}
 
-			typedef t deref;
+			typedef t& deref;
 
-			static deref* get(std::unique_ptr<t>& a)
+			static bool has(std::unique_ptr<t> const& a)
 			{
-				return a.get();
+				return a.get() != nullptr;
+			}
+
+			static deref get(std::unique_ptr<t>& a)
+			{
+				return *a;
 			}
 		};
 
@@ -71,11 +81,16 @@ namespace expr
 				return "-shared";
 			}
 
-			typedef t deref;
+			typedef t& deref;
 
-			static deref* get(std::shared_ptr<t>& a)
+			static bool has(std::shared_ptr<t> const& a)
 			{
-				return a.get();
+				return a.get() != nullptr;
+			}
+
+			static deref get(std::shared_ptr<t>& a)
+			{
+				return *a;
 			}
 		};
 
@@ -92,18 +107,16 @@ namespace expr
 				return "-optional";
 			}
 
-			typedef t deref;
+			typedef t& deref;
 
-			static deref* get(std::optional<t>& a)
+			static bool has(std::optional<t> const& a)
 			{
-				if (a)
-				{
-					return *a;
-				}
-				else
-				{
-					return nullptr;
-				}
+				return a != std::nullopt;
+			}
+
+			static deref& get(std::optional<t>& a)
+			{
+				return *a
 			}
 		};
 
@@ -136,7 +149,7 @@ namespace expr
 				//destructor needed to make this non trivially destructible
 			}
 
-			t& operator*() const
+			std::remove_const_t<t>& operator*() const
 			{
 				return val;
 			}
@@ -155,11 +168,16 @@ namespace expr
 				return "-strong";
 			}
 
-			typedef t deref;
+			typedef std::remove_const_t<t>& deref;
 
-			static deref* get(strong<t>& a)
+			static bool has(strong<t> const& a)
 			{
-				return &*a;
+				return true;
+			}
+
+			static deref& get(strong<t>& a)
+			{
+				return *a;
 			}
 		};
 

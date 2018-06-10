@@ -30,6 +30,9 @@ namespace expr
 	//can be of any type, derives from any_object
 	using impl::object_of;
 
+	//creates an object_of
+	using impl::make_object;
+
 	//used instead of object_of<void>
 	using impl::void_object;
 

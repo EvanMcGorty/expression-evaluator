@@ -5,7 +5,7 @@
 #include <typeindex>
 #include <cstdlib>
 
-#include "type_qualities.h"
+#include "type_wraps.h"
 
 #ifdef __GNUG__
 

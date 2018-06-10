@@ -6,7 +6,7 @@
 #include<utility>
 #include<limits>
 #include"parsing_checks.h"
-#include"type_qualities.h"
+#include"type_wraps.h"
 
 namespace expr
 {
@@ -303,13 +303,13 @@ namespace expr
 			{
 				if constexpr(type_wrap_info<t>::is())
 				{
-					if (type_wrap_info<t>::get(tar) == nullptr)
+					if (!type_wrap_info<t>::has(tar))
 					{
 						return "NULL";
 					}
 					else
 					{
-						return converter<typename type_wrap_info<t>::deref>::print(*tar);
+						return converter<typename type_wrap_info<t>::deref>::print(type_wrap_info<t>::get(tar));
 					}
 				}
 				else if constexpr(std::is_arithmetic_v<t>)
