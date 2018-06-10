@@ -120,9 +120,6 @@ namespace expr
 			virtual mu::virt<any_object> make_clone() const = 0;
 
 			virtual mu::virt<any_object> take_referenced() = 0;
-			
-			//returns true upon success
-			virtual bool give_reference(any_elem_val&) = 0;
 		};
 
 
@@ -214,11 +211,6 @@ namespace expr
 				return false;
 			}
 
-			bool give_reference(any_elem_val&) override
-			{
-				return false;
-			}
-
 		};
 
 
@@ -294,30 +286,6 @@ namespace expr
 					}
 				}
 				return mu::virt<any_object>::make_nullval();
-			}
-
-
-
-			bool give_reference(any_elem_val& tar) override
-			{
-				if constexpr(type_wrap_info<t>::is())
-				{
-					if constexpr(!std::is_const_v<typename type_wrap_info<t>::deref>)
-					{
-						if (type_wrap_info<t>::get(val) != nullptr)
-						{
-							type_ask_of<typename type_wrap_info<t>::deref> ask;
-							tar.lazy_get(&ask);
-							if (ask.gotten)
-							{
-								*type_wrap_info<t>::get(val) = std::move(*ask.gotten);
-								return true;
-							}
-						}
-					}
-				}
-
-				return false;
 			}
 
 			std::type_info const& get_type() const override
@@ -483,17 +451,6 @@ namespace expr
 			}
 
 
-			bool give_reference(any_elem_val& tar) override
-			{
-				if (!ref->is_nullval())
-				{
-					return (**ref).give_reference(tar);
-				}
-				else
-				{
-					return false;
-				}
-			}
 
 			bool get(any_type_ask* tar) override
 			{

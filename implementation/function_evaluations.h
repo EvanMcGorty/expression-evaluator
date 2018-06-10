@@ -116,7 +116,11 @@ namespace expr
 			template<typename tup_t, size_t ind, typename t, typename...ts>
 			void smart_set_rest(tup_t& a)
 			{
-				std::get<ind>(a) = smart_take_elem<t>(stuff[stuff.size() + ind - std::tuple_size_v<tup_t>]);
+				std::optional<t>&& temp = smart_take_elem<t>(stuff[stuff.size() + ind - std::tuple_size_v<tup_t>]);
+				if(temp)
+				{
+					std::get<ind>(a).emplace(std::move(*temp));
+				}
 				
 				if constexpr(sizeof...(ts) > 0)
 				{

@@ -8,6 +8,7 @@ namespace expr
 	namespace impl
 	{
 		
+		
 		template<typename t>
 		class type
 		{
@@ -15,19 +16,26 @@ namespace expr
 
 			typedef t held;
 
-			constexpr bool is_ref()
-			{
-				return false;
-			}
-
-			constexpr bool is_val()
-			{
-				return false;
-			}
-
 			type()
 			{}
+
+			static constexpr bool is_raw()
+			{
+				return true;
+			}
+
+			static constexpr bool is_ref()
+			{
+				return false;
+			}
+
+			static constexpr bool is_val()
+			{
+				return false;
+			}
+
 		};
+
 
 		template<typename t>
 		struct ref_wrap
@@ -37,7 +45,7 @@ namespace expr
 			{
 				static_assert(!std::is_reference_v<t>);
 				static_assert(std::is_trivial_v<ref_wrap<t>>);
-				static_assert(!type<t>::is_ref() && !type<t>::is_val());
+				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
 			explicit operator t&()
@@ -57,10 +65,11 @@ namespace expr
 		struct val_wrap
 		{
 			explicit val_wrap(t&& a) :
-				wrapped(a)
+				wrapped(std::move(a))
 			{
 				static_assert(!std::is_reference_v<t> && !std::is_const_v<t>);
 				static_assert(std::is_trivial_v<val_wrap<t>> == std::is_trivial_v<t>);
+				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
 			explicit operator t() &&
@@ -78,6 +87,58 @@ namespace expr
 
 		};
 
+		template<typename t>
+		class type<val_wrap<t>>
+		{
+		public:
+
+			typedef val_wrap<t> held;
+
+			type()
+			{}
+			
+			static constexpr bool is_raw()
+			{
+				return false;
+			}
+			
+			static constexpr bool is_ref()
+			{
+				return false;
+			}
+
+			static constexpr bool is_val()
+			{
+				return true;
+			}
+		};
+
+		
+		template<typename t>
+		class type<ref_wrap<t>>
+		{
+		public:
+
+			typedef ref_wrap<t> held;
+
+			type()
+			{}
+			
+			static constexpr bool is_raw()
+			{
+				return false;
+			}
+			
+			static constexpr bool is_ref()
+			{
+				return true;
+			}
+
+			static constexpr bool is_val()
+			{
+				return false;
+			}
+		};
 
 		//if t is what you see in a function argument, store_t<t> is what is held before it is passed.
 		template<typename t>
@@ -148,7 +209,7 @@ namespace expr
 				}
 				else
 				{
-					return type<val_wrap<typename std::remove_const<std::remove_reference_t<t>>>>();
+					return type<val_wrap<typename std::remove_const_t<std::remove_reference_t<t>>>>();
 				}
 			}
 		}
@@ -203,6 +264,10 @@ namespace expr
 			if constexpr (!can_return<t>())
 			{
 				return;
+			}
+			else if constexpr(std::is_lvalue_reference_v<t>)
+			{
+				return returned_t<t>(x);
 			}
 			else
 			{
