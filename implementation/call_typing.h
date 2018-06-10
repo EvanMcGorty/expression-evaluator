@@ -56,13 +56,22 @@ namespace expr
 			ref_wrap() = delete;
 			ref_wrap(ref_wrap const&) = default;
 			ref_wrap(ref_wrap&&) = default;
+			ref_wrap& operator=(ref_wrap const&) = default;
+			ref_wrap& operator=(ref_wrap&&) = default;
 			~ref_wrap() = default;
 
 			t* to;
 		};
 
-		template<typename t>
+		//will wrap a single instance of a class.
+		//for classes that cannot be moved but can be copied, this will supply a move constructor that copies.
+		//same goes for assignment operators
+		template<typename t, typename enable = void>
 		struct val_wrap
+        {}; //this should never be instanciated
+
+        template<typename t>
+        struct val_wrap<t, std::enable_if_t<std::is_move_constructible_v<t> && std::is_move_assignable_v<t>>>
 		{
 			explicit val_wrap(t&& a) :
 				wrapped(std::move(a))
@@ -81,10 +90,118 @@ namespace expr
 			val_wrap() = delete;
 			val_wrap(val_wrap const&) = default;
 			val_wrap(val_wrap&&) = default;
+			val_wrap& operator=(val_wrap const&) = default;
+			val_wrap& operator=(val_wrap&& rhs) = default;
 			~val_wrap() = default;
 
 			t wrapped;
 
+		};
+
+		template <typename t>
+		struct val_wrap<t, std::enable_if_t<!std::is_move_constructible_v<t> && std::is_move_assignable_v<t>>>
+		{
+			explicit val_wrap(t const& a) :
+				wrapped(a)
+			{
+				static_assert(!std::is_reference_v<t> && !std::is_const_v<t>);
+				static_assert(std::is_trivial_v<val_wrap<t>> == std::is_trivial_v<t>);
+				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
+			}
+
+			explicit operator t() &&
+			{
+				return std::move(wrapped);
+			}
+
+
+			val_wrap() = delete;
+			val_wrap(val_wrap const&) :
+				wrapped(rhs.wrapped)
+			{ }
+			val_wrap(val_wrap&& rhs) :
+				wrapped(rhs.wrapped)
+			{ }
+			val_wrap& operator=(val_wrap const&) = default;
+			val_wrap& operator=(val_wrap&& rhs) = default;
+			~val_wrap() = default;
+
+			t wrapped;
+		};
+
+        template<typename t>
+        struct val_wrap<t,std::enable_if_t<std::is_move_constructible_v<t> && !std::is_move_assignable_v<t>>>
+		{
+			explicit val_wrap(t&& a) :
+				wrapped(std::move(a))
+			{
+				static_assert(!std::is_reference_v<t> && !std::is_const_v<t>);
+				static_assert(std::is_trivial_v<val_wrap<t>> == std::is_trivial_v<t>);
+				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
+			}
+
+			explicit operator t() &&
+			{
+				return std::move(wrapped);
+			}
+
+
+			val_wrap() = delete;
+			val_wrap(val_wrap const&) = default;
+			val_wrap(val_wrap&&) = default;
+			val_wrap& operator=(val_wrap const&)
+            {
+                wrapped = rhs.wrapped;
+                return *this;
+            }
+			val_wrap& operator=(val_wrap&& rhs)
+            {
+                wrapped = rhs.wrapped;
+                return *this;
+            }
+			~val_wrap() = default;
+
+			t wrapped;
+
+		};
+
+		template <typename t>
+		struct val_wrap<t, std::enable_if_t<!std::is_move_constructible_v<t> && !std::is_move_assignable_v<t>>>
+		{
+			explicit val_wrap(t const& a) :
+				wrapped(a)
+			{
+				static_assert(!std::is_reference_v<t> && !std::is_const_v<t>);
+				static_assert(std::is_trivial_v<val_wrap<t>> == std::is_trivial_v<t>);
+				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
+			}
+
+			explicit operator t() &&
+			{
+				return std::move(wrapped);
+			}
+
+
+			val_wrap() = delete;
+			val_wrap(val_wrap const&) :
+				wrapped(rhs.wrapped)
+			{ }
+			val_wrap(val_wrap&& rhs) :
+				wrapped(rhs.wrapped)
+			{ }
+			val_wrap& operator=(val_wrap const&)
+            {
+                wrapped = rhs.wrapped;
+                return *this;
+            }
+			val_wrap& operator=(val_wrap&& rhs)
+            {
+                wrapped = rhs.wrapped;
+                return *this;
+            }
+			~val_wrap() = default;
+
+			t wrapped;
 		};
 
 		template<typename t>

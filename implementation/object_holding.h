@@ -221,10 +221,6 @@ namespace expr
 		class object_of final : public any_object
 		{
 		private:
-			constexpr std::type_info const& type() const
-			{
-				return typeid(t);
-			}
 
 		public:
 
@@ -232,6 +228,7 @@ namespace expr
 				val(std::move(a))
 			{
 				static_assert(!std::is_const_v<t>,"object_of<t> should not have a const t");
+				static_assert(!type<typename t>::is_raw());
 			}
 
 			std::string convert_into_string() override
@@ -290,7 +287,7 @@ namespace expr
 
 			std::type_info const& get_type() const override
 			{
-				return type();
+				return typeid(t);
 			}
 
 			bool is_movable()
