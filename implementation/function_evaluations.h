@@ -21,9 +21,9 @@ namespace expr
 			{
 				return object_holder::make_nullval();
 			}
-			else if (a->is_object_reference())
+			else if (a->is_variable())
 			{
-				return std::move(*a.downcast_get<value_reference>()->ref);
+				return std::move(*a.downcast_get<variable_reference>()->ref);
 			}
 			else if (a->is_object())
 			{
@@ -43,9 +43,9 @@ namespace expr
 			{
 				a = std::move(b);
 			}
-			else if (a->is_object_reference())
+			else if (a->is_variable())
 			{
-				(*a.downcast_get<value_reference>()->ref) = std::move(b);
+				(*a.downcast_get<variable_reference>()->ref) = std::move(b);
 			}
 			else
 			{

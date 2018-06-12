@@ -154,11 +154,11 @@ namespace expr
 				}
 			}
 
-			static object_holder dereference(std::vector<stack_elem>& a)
+			static object_holder unwrap(std::vector<stack_elem>& a)
 			{
 				if (a.size() == 1 && !a[0].is_nullval() && a[0]->has_value())
 				{
-					return a[0].downcast_get<value_elem_val>()->dereference();
+					return a[0].downcast_get<value_elem_val>()->unwrap();
 				}
 				else
 				{
@@ -176,7 +176,7 @@ namespace expr
 				ret.add(mfn(cpp_core::drop), "drop")
 					.add(mfn(cpp_core::to_string), "to_string")
 					.add(mfn(cpp_core::make_clone), "clone")
-					.add(mfn(cpp_core::dereference), "take")
+					.add(mfn(cpp_core::unwrap), "take")
 					.add(mfn(cpp_core::strengthen), "strong");
 				return ret;
 			}

@@ -22,7 +22,7 @@ namespace expr
 				return false;
 			}
 
-			virtual bool is_object_reference() const
+			virtual bool is_variable() const
 			{
 				return false;
 			}
@@ -117,9 +117,13 @@ namespace expr
 				return true;
 			}
 
-			virtual mu::virt<any_object> make_clone() const = 0;
+			virtual mu::virt<any_object> make_clone() = 0;
 
-			virtual mu::virt<any_object> dereference() = 0;
+			virtual mu::virt<any_object> make_reference() = 0;
+
+			virtual mu::virt<any_object> take_value() = 0;
+
+			virtual mu::virt<any_object> unwrap() = 0;
 		};
 
 
@@ -145,7 +149,6 @@ namespace expr
 			{
 				return true;
 			}
-
 
 
 		};
@@ -175,12 +178,23 @@ namespace expr
 				return mu::virt<any_object>::make<void_object>();
 			}
 
-			mu::virt<any_object> make_clone() const override
+
+			mu::virt<any_object> make_clone() override
 			{
 				return mu::virt<any_object>::make_nullval();
 			}
 
-			mu::virt<any_object> dereference() override
+			mu::virt<any_object> make_reference() override
+			{
+				return mu::virt<any_object>::make_nullval();
+			}
+
+			mu::virt<any_object> take_value() override
+			{
+				return mu::virt<any_object>::make_nullval();
+			}
+			
+			mu::virt<any_object> unwrap() override
 			{
 				return mu::virt<any_object>::make_nullval();
 			}
@@ -271,11 +285,11 @@ namespace expr
 				return std::is_trivially_destructible_v<t>;
 			}
 
-			mu::virt<any_object> make_clone() const override
+			mu::virt<any_object> make_clone() override
 			{
-				if constexpr(std::is_copy_constructible<t>::value)
+				if constexpr(std::is_constructible_v<std::remove_const_t<raw>, raw&>)
 				{
-					return mu::virt<any_object>::make<object_of<t>>(t(val));
+					return mu::virt<any_object>::make<object_of<val_wrap<std::remove_const_t<raw>>>>(into_returnable<std::remove_const_t<raw>>(raw(get_raw())));
 				}
 				else
 				{
@@ -283,7 +297,24 @@ namespace expr
 				}
 			}
 
-			mu::virt<any_object> dereference() override
+			mu::virt<any_object> make_reference() override
+			{
+				return mu::virt<any_object>::make<object_of<returned_t<raw&>>>(into_returnable<raw&>(get_raw()));
+			}
+
+			virtual mu::virt<any_object> take_value() override
+			{
+				if constexpr(type<t>::is_ref() && std::is_const_v<raw>)
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
+				else
+				{
+					return mu::virt<any_object>::make<object_of<returned_t<raw>>>(into_returnable<raw>(std::move(get_raw())));
+				}
+			}
+
+			mu::virt<any_object> unwrap() override
 			{
 				if constexpr(type_wrap_info<raw>::is())
 				{
@@ -300,7 +331,7 @@ namespace expr
 
 			std::type_info const& get_type() const override
 			{
-				return typeid(raw);
+				return typeid(t);
 			}
 
 			bool is_movable()
@@ -329,40 +360,26 @@ namespace expr
 
 			bool get(any_type_ask* tar) override
 			{
-				if (tar->get_type() == typeid(t))
+				if constexpr(type<t>::is_val())
 				{
-					static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
-					return is_movable();
+					if (tar->get_type() == typeid(t))
+					{
+						static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
+						return is_movable();
+					}
 				}
-				if (tar->get_type() == typeid(t*))
+				if (tar->get_type() == typeid(ref_wrap<raw>))
 				{
-					static_cast<type_ask_of<t*>*>(tar)->gotten.emplace(&val);
+					static_cast<type_ask_of<ref_wrap<raw>>*>(tar)->gotten.emplace(into_returnable<raw&>(get_raw()));
 					return false;
 				}
-				if constexpr(!std::is_const_v<t>)
+				if constexpr(!std::is_const_v<raw>)
 				{
-					if (tar->get_type() == typeid(t const*))
+					if (tar->get_type() == typeid(ref_wrap<raw const>))
 					{
-						static_cast<type_ask_of<t const*>*>(tar)->gotten.emplace(&val);
+						static_cast<type_ask_of<ref_wrap<raw const>>*>(tar)->gotten.emplace(into_returnable<raw const&>(get_raw()));
 						return false;
 					}
-				}
-				if constexpr (type_wrap_info<t>::is()) //to return a t*/t& as a t&& or t const&
-				{
-					if (tar->get_type() == typeid(typename type_wrap_info<t>::deref*))
-					{
-						static_cast<type_ask_of<typename type_wrap_info<t>::deref*>*>(tar)->gotten.emplace(std::move(type_wrap_info<t>::get(val)));
-						return false;
-					}
-					if constexpr(!std::is_const_v<typename type_wrap_info<t>::deref>)
-					{
-						if (tar->get_type() == typeid(typename type_wrap_info<t>::deref const*))
-						{
-							static_cast<type_ask_of<typename type_wrap_info<t>::deref const*>*>(tar)->gotten.emplace(std::move(type_wrap_info<t>::get(val)));
-							return false;
-						}
-					}
-					return false;
 				}
 				return false;
 			}
@@ -382,31 +399,16 @@ namespace expr
 				{
 					return true;
 				}
-				if (tar == typeid(t*))
+				if (tar == typeid(ref_wrap<raw>))
 				{
 					return true;
 				}
-				if constexpr(!std::is_const_v<t>)
+				if constexpr(!std::is_const_v<raw>)
 				{
-					if (tar == typeid(t const*))
+					if (tar == typeid(ref_wrap<raw const>))
 					{
 						return true;
 					}
-				}
-				if constexpr(type_wrap_info<t>::is())
-				{
-					if (tar == typeid(typename type_wrap_info<t>::deref*))
-					{
-						return true;
-					}
-					if constexpr(!std::is_const_v<typename type_wrap_info<t>::deref>)
-					{
-						if (tar == typeid(typename type_wrap_info<t>::deref const*))
-						{
-							return true;
-						}
-					}
-					return false;
 				}
 				return false;
 			}
@@ -426,23 +428,23 @@ namespace expr
 
 
 		//on a stack, this is what a variable pushes (unless if the variable is also being popped).
-		class value_reference : public value_elem_val
+		class variable_reference : public value_elem_val
 		{
 		public:
 
 
-			value_reference(object_holder* a)
+			variable_reference(object_holder* a)
 			{
 				ref = a;
 			}
 
-			bool is_object_reference() const override
+			bool is_variable() const override
 			{
 				return true;
 			}
 
 
-			mu::virt<any_object> make_clone() const override
+			mu::virt<any_object> make_clone() override
 			{
 				if (!ref->is_nullval())
 				{
@@ -454,11 +456,35 @@ namespace expr
 				}
 			}
 
-			mu::virt<any_object> dereference() override
+			mu::virt<any_object> make_reference() override
 			{
 				if (!ref->is_nullval())
 				{
-					return (**ref).dereference();
+					return (**ref).make_reference();
+				}
+				else
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
+			}
+
+			mu::virt<any_object> take_value() override
+			{
+				if (!ref->is_nullval())
+				{
+					return (**ref).take_value();
+				}
+				else
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
+			}
+
+			mu::virt<any_object> unwrap() override
+			{
+				if (!ref->is_nullval())
+				{
+					return (**ref).unwrap();
 				}
 				else
 				{

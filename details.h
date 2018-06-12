@@ -40,7 +40,7 @@ namespace expr
 	using impl::object_holder;
 
 	//a reference to an object/variable
-	using impl::value_reference;
+	using impl::variable_reference;
 
 	//like an any_object but can also be a reference to an object/variable
 	using impl::value_elem_val;

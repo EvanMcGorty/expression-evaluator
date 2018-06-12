@@ -42,7 +42,7 @@ namespace expr
 					auto to_push = variables.get_var(temp.var.data.var_name);
 					if (to_push)
 					{
-						loc.stuff.emplace_back(stack_elem::make<value_reference>(*to_push));
+						loc.stuff.emplace_back(stack_elem::make<variable_reference>(*to_push));
 					}
 					else
 					{
@@ -54,7 +54,7 @@ namespace expr
 				case(sc::push):
 				{
 					auto to_push = variables.push_var(std::move(temp.var.data.var_name));
-					loc.stuff.emplace_back(stack_elem::make<value_reference>(to_push));
+					loc.stuff.emplace_back(stack_elem::make<variable_reference>(to_push));
 				}
 				break;
 				}
