@@ -530,7 +530,7 @@ namespace expr
 
 			static std::string get_name(name_set const& from)
 			{
-				return name_of<std::string>(from);
+				return name_of<val_wrap<std::string>>(from);
 			}
 		};
 
@@ -612,7 +612,7 @@ namespace expr
 
 			static std::string get_name(name_set const& from)
 			{
-				return name_of<std::vector<t>>(from);
+				return name_of<val_wrap<std::vector<t>>>(from);
 			}
 		};
 

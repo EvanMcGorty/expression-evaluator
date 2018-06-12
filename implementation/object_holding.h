@@ -265,7 +265,7 @@ namespace expr
 
 			std::string string_view(name_set const& names) override
 			{
-				return std::string("object_of{") + name_of<raw>(names) + "(" + converter<raw>::print(get_raw()) + ")" + "}";
+				return std::string("object_of{") + name_of<t>(names) + "(" + converter<raw>::print(get_raw()) + ")" + "}";
 			}
 
 			mu::virt<any_object> as_non_trivially_destructible() && override

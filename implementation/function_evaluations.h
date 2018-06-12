@@ -278,7 +278,15 @@ namespace expr
 				{
 					put_types<store_t<args>...>(into,from);
 				}
-				into << ") -> " << name_of<returned_t<ret_t>>(from);
+
+				if constexpr(can_return<ret_t>())
+				{
+					into << ") -> " << name_of<returned_t<ret_t>>(from);
+				}
+				else
+				{
+					into << ")";
+				}
 			}
 
 			//when the stack is not popped from, it is the callers responsibility to manage garbage variables

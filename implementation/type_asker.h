@@ -29,11 +29,11 @@ namespace expr
 		template<typename t>
 		struct possible<true, t>
 		{
-			possible(std::remove_const_t<typename std::remove_pointer_t<t>> &&a) :
+			possible(std::remove_const_t<typename type<t>::raw> &&a) :
 				val(std::move(a))
 			{}
 
-			std::remove_const_t<typename std::remove_pointer_t<t>> val;
+			std::remove_const_t<typename type<t>::raw> val;
 		};
 
 		template<typename t>
@@ -50,9 +50,9 @@ namespace expr
 
 			void parse(std::string const& a) override
 			{
-				if constexpr(std::is_pointer_v<t>)
+				if constexpr(type<t>::is_ref())
 				{
-					typedef std::remove_const_t<typename std::remove_pointer_t<t>> holdable;
+					typedef std::remove_const_t<typename type<t>::raw> holdable;
 					auto it = a.cbegin();
 					std::optional<holdable> temp = converter<holdable>::parse(it,a.cend());
 					if (temp)
@@ -63,7 +63,7 @@ namespace expr
 				else
 				{
 					auto it = a.cbegin();
-					auto temp = converter<std::remove_const_t<t>>::parse(it,a.cend());
+					auto temp = converter<typename type<t>::raw>::parse(it,a.cend());
 					if (temp)
 					{
 						gotten.emplace(std::move(*temp));
@@ -73,7 +73,7 @@ namespace expr
 
 			void lazy_parse(std::string const& a) override
 			{
-				if constexpr(std::is_pointer_v<t>)
+				if constexpr(type<t>::is_ref())
 				{
 					
 				}
@@ -94,7 +94,7 @@ namespace expr
 			}
 
 			std::optional<std::remove_const_t<t>> gotten;
-			std::optional<possible<std::is_pointer_v<t>, t>> pointed_to_value;
+			std::optional<possible<type<t>::is_ref(), t>> pointed_to_value;
 		};
 
 	}

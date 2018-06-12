@@ -28,6 +28,8 @@ namespace expr
 				return "-ptr";
 			}
 
+			typedef t wrapped;
+
 			typedef t& deref;
 
 			static bool has(t* const& a)
@@ -55,6 +57,8 @@ namespace expr
 				return "-unique";
 			}
 
+			typedef t wrapped;
+
 			typedef t& deref;
 
 			static bool has(std::unique_ptr<t> const& a)
@@ -81,6 +85,8 @@ namespace expr
 				return "-shared";
 			}
 
+			typedef t wrapped;
+
 			typedef t& deref;
 
 			static bool has(std::shared_ptr<t> const& a)
@@ -106,6 +112,8 @@ namespace expr
 			{
 				return "-optional";
 			}
+
+			typedef t wrapped;
 
 			typedef t& deref;
 
@@ -167,6 +175,8 @@ namespace expr
 			{
 				return "-strong";
 			}
+
+			typedef t wrapped;
 
 			typedef std::remove_const_t<t>& deref;
 

@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 #include "type_wraps.h"
+#include "call_typing.h"
 
 #ifdef __GNUG__
 
@@ -82,42 +83,49 @@ namespace expr
 			return *val;
 		}
 
-		template<typename type>
+		template<typename t>
 		void rename(std::string&& new_name, name_set& names = global_type_renames())
 		{
-			static_assert(!(std::is_const_v<type>||type_wrap_info<type>::is()||std::is_reference_v<type>), "can only rename a raw class/struct/union");
 
-			names.data[std::type_index{ typeid(type) }] = std::move(new_name);
+			static_assert(!(std::is_const_v<t>||std::is_reference_v<t>), "can only rename a raw type, references and const are not allowed");
+
+			names.data[std::type_index{ typeid(t) }] = std::move(new_name);
 			
 		}
 		
-		template<typename type>
+		template<typename t>
 		std::string name_of(name_set const& names = global_type_renames())
 		{
-			if constexpr(std::is_reference_v<type>)
-			{
-				return name_of<std::remove_reference_t<type>*>(names);
-			}
-			else if constexpr(std::is_const_v<type>)
-			{
-				return name_of<std::remove_const_t<type>>(names) + "-const";
-			}
+			static_assert(!type<t>::is_raw());
 
-			auto g = names.data.find(std::type_index{ typeid(type) });
-			if (g == names.data.end())
+			using raw = typename type<t>::raw;
+
+			if constexpr(type<t>::is_ref())
 			{
-				if constexpr(type_wrap_info<type>::is())
-				{
-					return name_of<typename type_wrap_info<type>::deref>(names) + type_wrap_info<type>::suffix();
-				}
-				else
-				{
-					return demangle(typeid(type).name());
-				}
+				return name_of<val_wrap<raw>>(names) + "-ref";
+			}
+			else if constexpr(std::is_const_v<raw>)
+			{
+				return name_of<val_wrap<std::remove_const_t<raw>>>(names) + "-const";
 			}
 			else
 			{
-				return std::string{ g->second };
+				auto g = names.data.find(std::type_index{ typeid(raw) });
+				if (g == names.data.end())
+				{
+					if constexpr(type_wrap_info<raw>::is())
+					{
+						return name_of<returned_t<typename type_wrap_info<raw>::wrapped>>(names) + type_wrap_info<raw>::suffix();
+					}
+					else
+					{
+						return demangle(typeid(raw).name());
+					}
+				}
+				else
+				{
+					return std::string{ g->second };
+				}
 			}
 		}
 
