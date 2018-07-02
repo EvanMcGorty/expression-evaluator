@@ -4,8 +4,11 @@
 
 namespace expr
 {
-	//creates a callable object that will return a copy of the value passed into val
-	using impl::val;
+	//creates a callable object that will return a copy of the value passed into copier
+	using impl::copier;
+
+	//creates a callable object that will return a reference to the object into refto
+	using impl::refto;
 
 	//creates a callable object that provides member access based on the member pointer passed in
 	using impl::mbr;

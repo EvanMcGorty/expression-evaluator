@@ -58,6 +58,7 @@ namespace expr
 					if (temp)
 					{
 						pointed_to_value.emplace(possible<true, t>{ std::move(*temp) });
+						gotten.emplace(pointed_to_value->val);
 					}
 				}
 				else

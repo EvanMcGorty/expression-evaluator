@@ -72,9 +72,15 @@ namespace expr
 		}
 
 		template<typename t>
-		held_callable val(t&& a)
+		held_callable copier(t&& a)
 		{
-			return sfn(std::function<t()>{[val = std::move(a)]() -> t {return t{ val }; }});
+			return sfn(std::function<t()>{[val = std::move(a)]()->t {return t{ val }; }});
+		}
+		
+		template<typename t>
+		held_callable refto(t& a)
+		{
+			return sfn(std::function<t&()>{[val = &a]()->t& {return *val; }});
 		}
 
 		held_callable mfn(std::function<object_holder(std::vector<stack_elem>&)>&& target)

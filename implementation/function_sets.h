@@ -543,10 +543,10 @@ namespace expr
 				std::vector<t> ret;
 				for (auto& v : a)
 				{
-					std::optional<t> g = smart_take_elem<t>(v);
+					std::optional<val_wrap<t>> g = smart_take_elem<val_wrap<t>>(v);
 					if (g)
 					{
-						ret.emplace_back(std::move(*g));
+						ret.emplace_back(t(std::move(*g)));
 					}
 				}
 				return make_object<std::vector<t>>(std::move(ret));

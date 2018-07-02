@@ -78,12 +78,12 @@ namespace expr
 						return std::nullopt;
 					}
 				}
-				else if constexpr (std::is_pointer_v<t>)
+				else if constexpr (type<t>::is_ref())
 				{
 					if (ask.pointed_to_value)
 					{
-						auto&& new_cur = make_object<std::remove_const_t<typename std::remove_pointer_t<t>>>(std::move(ask.pointed_to_value->val));
-						std::optional<t> ret = &new_cur->val;
+						auto&& new_cur = make_object<std::remove_const_t<typename type<t>::raw>>(std::move(ask.pointed_to_value->val));
+						std::optional<t> ret{ t(new_cur->val.wrapped) };
 						cur = std::move(new_cur);
 						return ret;
 					}
@@ -91,7 +91,7 @@ namespace expr
 					{
 						if (ask.gotten)
 						{
-							return std::optional<t>{std::move(*ask.gotten)};
+							return std::optional<t>(std::move(*ask.gotten));
 						}
 						else
 						{
@@ -103,7 +103,7 @@ namespace expr
 				{
 					if (ask.gotten)
 					{
-						return std::optional<t>{std::move(*ask.gotten)};
+						return std::optional<t>(std::move(*ask.gotten));
 					}
 					else
 					{

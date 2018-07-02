@@ -264,7 +264,7 @@ namespace expr
 			{
 				if constexpr (std::is_const_v<typename std::remove_reference_t<t>>)
 				{
-					return type<ref_wrap<typename std::remove_reference_t<t> const>>();
+					return type<val_wrap<typename std::remove_reference_t<t>>>();
 				}
 				else
 				{
@@ -292,7 +292,11 @@ namespace expr
 		template<typename t>
 		constexpr auto as_passable()
 		{
-			if constexpr (std::template is_rvalue_reference_v<t> || std::template is_lvalue_reference_v<t>)
+			if constexpr (std::template is_rvalue_reference_v<t>)
+			{
+				return type<std::remove_reference_t<t>>();
+			}
+			else if constexpr(std::template is_lvalue_reference_v<t>)
 			{
 				return type<t>();
 			}

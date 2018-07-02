@@ -255,7 +255,7 @@ namespace expr
 				val(std::move(a))
 			{
 				static_assert(!std::is_const_v<t>,"object_of<t> should not have a const t");
-				static_assert(!type<typename t>::is_raw());
+				static_assert(!type<t>::is_raw());
 			}
 
 			std::string convert_into_string() override
@@ -421,9 +421,9 @@ namespace expr
 		using object_holder = mu::virt<any_object>;
 
 		template<typename t>
-		object_holder make_object(t&& a)
+		mu::virt<object_of<returned_t<t>>> make_object(t&& a)
 		{
-			object_holder::make<object_of<returned_t<t>>>(into_returnable<t>(std::forward<t>(a)));
+			return mu::virt<object_of<returned_t<t>>>::template make<object_of<returned_t<t>>>(into_returnable<t>(std::forward<t>(a)));
 		}
 
 
