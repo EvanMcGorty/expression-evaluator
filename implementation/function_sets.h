@@ -165,6 +165,18 @@ namespace expr
 					return object_holder::make_nullval();
 				}
 			}
+
+			static object_holder move_from_reference(std::vector<stack_elem>& a)
+			{
+				if (a.size() == 1 && !a[0].is_nullval() && a[0]->has_value())
+				{
+					return a[0].downcast_get<value_elem_val>()->take_value();
+				}
+				else
+				{
+					return object_holder::make_nullval();
+				}
+			}
 		};
 
 		template<>
@@ -176,7 +188,8 @@ namespace expr
 				ret.add(mfn(cpp_core::drop), "drop")
 					.add(mfn(cpp_core::to_string), "to_string")
 					.add(mfn(cpp_core::make_clone), "clone")
-					.add(mfn(cpp_core::unwrap), "take")
+					.add(mfn(cpp_core::unwrap), "unwrap")
+					.add(mfn(cpp_core::move_from_reference), "take")
 					.add(mfn(cpp_core::strengthen), "strong");
 				return ret;
 			}
