@@ -55,7 +55,7 @@ _exit
 #include <vector>
 #include <iostream>
 
-#include "../evaluator.h"
+#include "../details.h"
 
 using namespace expr;
 
@@ -111,7 +111,7 @@ int main()
 		<< "print" << sfn(print)
 
 		//val creates a function that returns a copy of the value it is passed. passing a pointer to global_vector gives write access to the caller.
-		<< "glv" << val(&global_vector);
+		<< "glv" << refto(global_vector);
 
 	//there are alternate ways to expresss binding functions.
 	//function sets can also be imported with the << syntax using fs_functs

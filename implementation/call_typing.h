@@ -79,7 +79,7 @@ namespace expr
 				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
-			explicit operator t() &&
+			explicit operator t&&() &&
 			{
 				return std::move(wrapped);
 			}
@@ -89,7 +89,7 @@ namespace expr
 			val_wrap(val_wrap const&) = default;
 			val_wrap(val_wrap&&) = default;
 			val_wrap& operator=(val_wrap const&) = default;
-			val_wrap& operator=(val_wrap&& rhs) = default;
+			val_wrap& operator=(val_wrap&&) = default;
 			~val_wrap() = default;
 
 			t wrapped;
@@ -106,21 +106,21 @@ namespace expr
 				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
-			explicit operator t() &&
+			explicit operator t&&() &&
 			{
 				return std::move(wrapped);
 			}
 
 
 			val_wrap() = delete;
-			val_wrap(val_wrap const&) :
+			val_wrap(val_wrap const& rhs) :
 				wrapped(rhs.wrapped)
 			{ }
 			val_wrap(val_wrap&& rhs) :
 				wrapped(rhs.wrapped)
 			{ }
 			val_wrap& operator=(val_wrap const&) = default;
-			val_wrap& operator=(val_wrap&& rhs) = default;
+			val_wrap& operator=(val_wrap&&) = default;
 			~val_wrap() = default;
 
 			t wrapped;
@@ -136,7 +136,7 @@ namespace expr
 				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
-			explicit operator t() &&
+			explicit operator t&&() &&
 			{
 				return std::move(wrapped);
 			}
@@ -145,7 +145,7 @@ namespace expr
 			val_wrap() = delete;
 			val_wrap(val_wrap const&) = default;
 			val_wrap(val_wrap&&) = default;
-			val_wrap& operator=(val_wrap const&)
+			val_wrap& operator=(val_wrap const& rhs)
             {
                 wrapped = rhs.wrapped;
                 return *this;
@@ -171,20 +171,20 @@ namespace expr
 				static_assert(!type<t>::is_ref() && !type<t>::is_val() && type<t>::is_raw());
 			}
 
-			explicit operator t() &&
+			explicit operator t&&() &&
 			{
 				return std::move(wrapped);
 			}
 
 
 			val_wrap() = delete;
-			val_wrap(val_wrap const&) :
+			val_wrap(val_wrap const& rhs) :
 				wrapped(rhs.wrapped)
 			{ }
 			val_wrap(val_wrap&& rhs) :
 				wrapped(rhs.wrapped)
 			{ }
-			val_wrap& operator=(val_wrap const&)
+			val_wrap& operator=(val_wrap const& rhs)
             {
                 wrapped = rhs.wrapped;
                 return *this;

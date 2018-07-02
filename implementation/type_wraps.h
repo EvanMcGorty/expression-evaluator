@@ -124,7 +124,7 @@ namespace expr
 
 			static deref& get(std::optional<t>& a)
 			{
-				return *a
+				return *a;
 			}
 		};
 

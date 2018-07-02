@@ -136,7 +136,7 @@ namespace expr
 
 
 			template<typename t = void, typename string_convertible = std::string>
-			function_set& use(string_convertible&& n = fs_name<t>(global_type_renames()), function_set&& set = fs_functs<t>())
+			function_set& use(string_convertible&& n = fs_name<val_wrap<t>>(global_type_renames()), function_set&& set = fs_functs<t>())
 			{
 				std::string name{ n };
 				if (name == "")
