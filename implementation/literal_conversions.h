@@ -431,5 +431,58 @@ namespace expr
 			}
 		};
 
+		template<typename t>
+		struct converter<std::optional<t>>
+		{
+			static std::optional<std::optional<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			{
+				if(start == stop)
+				{
+					//invalid input
+					return std::optional<std::optional<t>>(std::nullopt);
+				}
+
+				static char const none[] = "none";
+
+				auto m = std::mismatch(start,stop,std::begin(none),std::end(none)-1);
+
+				if(m.second == std::end(none)-1)
+				{
+					//valid input indicating an empty optional of t.
+					start = m.first;
+					return std::optional<std::optional<t>>(std::optional<t>(std::nullopt));
+				}
+				else if(*start == '?')
+				{
+					++start;
+					std::optional<t>&& g = converter<t>::parse(start,stop);
+					if(g)
+					{
+						return std::optional<std::optional<t>>(std::move(g));
+					}
+					else
+					{
+						return std::nullopt;
+					}
+				}
+				else
+				{
+					return std::nullopt;
+				}
+			}
+
+			static std::string print(std::optional<std::optional<t>>& tar)
+			{
+				if(tar)
+				{
+					return "?" + converter<t>::print(*tar);
+				}
+				else
+				{
+					return "none";
+				}
+			}
+		};
+
 	}
 }
