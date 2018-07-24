@@ -433,12 +433,12 @@ namespace expr
 		template<typename t>
 		struct wrapper_util
 		{
-			static t& mutable_reference(t& a)
+			static t* mutable_pointer(t& a)
 			{
 				return a;
 			}
 
-			static t const& const_reference(t& a)
+			static t const* const_pointer(t& a)
 			{
 				return a;
 			}
@@ -462,6 +462,16 @@ namespace expr
 			{
 				return std::make_shared<t const>(std::move(a));
 			}
+
+			static std::optional<t> mutable_optional(t&& a)
+			{
+				return std::optional<t>(std::move(a));
+			}
+
+			static std::optional<t const> const_optional(t&& a)
+			{
+				return std::optional<t const>(std::move(a));
+			}
 		};
 
 		template<typename t>
@@ -476,9 +486,11 @@ namespace expr
 					ret.add(sfn(&wrapper_util<t>::const_unique), "const-unique");
 					ret.add(sfn(&wrapper_util<t>::mutable_shared), "shared");
 					ret.add(sfn(&wrapper_util<t>::const_shared), "const-shared");
+					ret.add(sfn(&wrapper_util<t>::mutable_shared), "optional");
+					ret.add(sfn(&wrapper_util<t>::const_shared), "const-optional");
 				}
-				ret.add(sfn(&wrapper_util<t>::mutable_reference), "ref");
-				ret.add(sfn(&wrapper_util<t>::const_reference), "const-ref");
+				ret.add(sfn(&wrapper_util<t>::mutable_reference), "ptr");
+				ret.add(sfn(&wrapper_util<t>::const_reference), "const-ptr");
 				return std::move(ret);
 			}
 
