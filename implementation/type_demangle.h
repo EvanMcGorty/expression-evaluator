@@ -115,7 +115,7 @@ namespace expr
 				{
 					if constexpr(type_wrap_info<raw>::is())
 					{
-						return name_of<returned_t<typename type_wrap_info<raw>::wrapped>>(names) + type_wrap_info<raw>::suffix();
+						return name_of<post_return_t<typename type_wrap_info<raw>::wrapped>>(names) + type_wrap_info<raw>::suffix();
 					}
 					else
 					{

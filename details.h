@@ -64,11 +64,11 @@ namespace expr
 	//a global type dataset
 	using impl::global_type_renames;
 
-	//store_t<t> is the object stored before being passed into a function argument of t
-	using impl::store_t;
+	//pre_call_t<t> is the object stored before being passed into a function argument of t
+	using impl::pre_call_t;
 
-	//returned_t<t> is the object stored after a function returns a t
-	using impl::returned_t;
+	//post_return_t<t> is the object stored after a function returns a t
+	using impl::post_return_t;
 
 
 

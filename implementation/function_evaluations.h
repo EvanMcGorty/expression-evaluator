@@ -252,8 +252,8 @@ namespace expr
 		template<typename ret_t, typename...args>
 		class smart_callable : public any_callable
 		{
-			using use_tuple_type = std::tuple<store_t<args>...>;
-			using arg_tuple_type = std::tuple<std::optional<store_t<args>>...>;
+			using use_tuple_type = std::tuple<pre_call_t<args>...>;
+			using arg_tuple_type = std::tuple<std::optional<pre_call_t<args>>...>;
 		public:
 
 			smart_callable() = default;
@@ -261,7 +261,7 @@ namespace expr
 			smart_callable(smart_callable const&) = default;
 
 
-			smart_callable(std::function<returned_t<ret_t>(store_t<args>&&...)>&& f)
+			smart_callable(std::function<post_return_t<ret_t>(pre_call_t<args>&&...)>&& f)
 			{
 				target = std::move(f);
 			}
@@ -276,12 +276,12 @@ namespace expr
 				into << '(';
 				if constexpr(sizeof...(args) > 0)
 				{
-					put_types<store_t<args>...>(into,from);
+					put_types<pre_call_t<args>...>(into,from);
 				}
 
 				if constexpr(can_return<ret_t>())
 				{
-					into << ") -> " << name_of<returned_t<ret_t>>(from);
+					into << ") -> " << name_of<post_return_t<ret_t>>(from);
 				}
 				else
 				{
@@ -301,7 +301,7 @@ namespace expr
 				if constexpr(sizeof...(args) > 0)
 				{
 					arg_tuple_type to_use;
-					a.smart_set_from_front<arg_tuple_type, store_t<args>...>(to_use);
+					a.smart_set_from_front<arg_tuple_type, pre_call_t<args>...>(to_use);
 					std::optional<use_tuple_type> might_use = prepare_arguments<0, args...>(std::move(to_use));
 
 					if (might_use)
@@ -313,7 +313,7 @@ namespace expr
 						}
 						else
 						{
-							return object_holder::make<object_of<returned_t<ret_t>>>(do_call(std::move(*might_use)));
+							return object_holder::make<object_of<post_return_t<ret_t>>>(do_call(std::move(*might_use)));
 						}
 					}
 					else
@@ -330,7 +330,7 @@ namespace expr
 					}
 					else
 					{
-						return object_holder::make<object_of<returned_t<ret_t>>>(do_call(use_tuple_type{}));
+						return object_holder::make<object_of<post_return_t<ret_t>>>(do_call(use_tuple_type{}));
 					}
 				}
 			}
@@ -346,7 +346,7 @@ namespace expr
 				
 				if constexpr(!(sizeof...(args) == 0))
 				{
-					if (a.smart_check_from_front<0, store_t<args>...>())
+					if (a.smart_check_from_front<0, pre_call_t<args>...>())
 					{
 						return true;
 					}
@@ -367,18 +367,18 @@ namespace expr
 			}
 
 
-			std::function<returned_t<ret_t>(store_t<args>&&...)> target;
+			std::function<post_return_t<ret_t>(pre_call_t<args>&&...)> target;
 
 		private:
 
 			template<size_t ind = 0, typename t, typename...ts>
-			static std::optional<std::tuple<store_t<t>, store_t<ts>...>> prepare_arguments(arg_tuple_type&& tar)
+			static std::optional<std::tuple<pre_call_t<t>, pre_call_t<ts>...>> prepare_arguments(arg_tuple_type&& tar)
 			{
 				if constexpr(sizeof...(ts) == 0)
 				{
 					if (std::get<ind>(tar))
 					{
-						return std::optional<std::tuple<store_t<t>, store_t<ts>...>>(std::move(std::tuple<store_t<t>>{std::move(*std::get<ind>(tar))}));
+						return std::optional<std::tuple<pre_call_t<t>, pre_call_t<ts>...>>(std::move(std::tuple<pre_call_t<t>>{std::move(*std::get<ind>(tar))}));
 					}
 					else
 					{
@@ -392,16 +392,16 @@ namespace expr
 						auto rest = prepare_arguments<ind + 1, ts...>(std::move(tar));
 						if (rest)
 						{
-							return std::tuple_cat(std::tuple<store_t<t>>(std::move(*std::get<ind>(tar))), std::move(*rest));
+							return std::tuple_cat(std::tuple<pre_call_t<t>>(std::move(*std::get<ind>(tar))), std::move(*rest));
 						}
 					}
 					return std::nullopt;
 				}
 			}
 
-			returned_t<ret_t> do_call(use_tuple_type&& a)
+			post_return_t<ret_t> do_call(use_tuple_type&& a)
 			{
-				return call(std::function<returned_t<ret_t>(store_t<args>&&...)>(target), std::move(a));
+				return call(std::function<post_return_t<ret_t>(pre_call_t<args>&&...)>(target), std::move(a));
 			}
 		};
 

@@ -272,7 +272,7 @@ namespace expr
 			{
 				if constexpr(std::is_trivially_destructible_v<raw>)
 				{
-					return mu::virt<any_object>::make<object_of<returned_t<strong<raw>>>>(into_returnable(strong<raw>{std::move(get_raw())}));
+					return mu::virt<any_object>::make<object_of<post_return_t<strong<raw>>>>(into_returnable(strong<raw>{std::move(get_raw())}));
 				}
 				else
 				{
@@ -299,7 +299,7 @@ namespace expr
 
 			mu::virt<any_object> make_reference() override
 			{
-				return mu::virt<any_object>::make<object_of<returned_t<raw&>>>(into_returnable<raw&>(get_raw()));
+				return mu::virt<any_object>::make<object_of<post_return_t<raw&>>>(into_returnable<raw&>(get_raw()));
 			}
 
 			virtual mu::virt<any_object> take_value() override
@@ -310,7 +310,7 @@ namespace expr
 				}
 				else
 				{
-					return mu::virt<any_object>::make<object_of<returned_t<raw>>>(into_returnable<raw>(std::move(get_raw())));
+					return mu::virt<any_object>::make<object_of<post_return_t<raw>>>(into_returnable<raw>(std::move(get_raw())));
 				}
 			}
 
@@ -322,7 +322,7 @@ namespace expr
 					{
 						if(type_wrap_info<raw>::has(get_raw()))
 						{
-							return mu::virt<any_object>::make<object_of<returned_t<typename type_wrap_info<raw>::deref>>>(into_returnable(type_wrap_info<raw>::get(get_raw())));
+							return mu::virt<any_object>::make<object_of<post_return_t<typename type_wrap_info<raw>::deref>>>(into_returnable(type_wrap_info<raw>::get(get_raw())));
 						}
 					}
 				}
@@ -421,9 +421,9 @@ namespace expr
 		using object_holder = mu::virt<any_object>;
 
 		template<typename t>
-		mu::virt<object_of<returned_t<t>>> make_object(t&& a)
+		mu::virt<object_of<post_return_t<t>>> make_object(t&& a)
 		{
-			return mu::virt<object_of<returned_t<t>>>::template make<object_of<returned_t<t>>>(into_returnable<t>(std::forward<t>(a)));
+			return mu::virt<object_of<post_return_t<t>>>::template make<object_of<post_return_t<t>>>(into_returnable<t>(std::forward<t>(a)));
 		}
 
 

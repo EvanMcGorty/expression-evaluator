@@ -256,7 +256,7 @@ namespace expr
 			}
 		};
 
-		//if t is what you see in a function argument, store_t<t> is what is held before it is passed.
+		//if t is what you see in a function argument, pre_call_t<t> is what is held before it is passed.
 		template<typename t>
 		constexpr auto as_storable()
 		{
@@ -288,7 +288,7 @@ namespace expr
 			}
 		}
 
-		//if t is the argument of the function, pass_t is the type that must be forwarded into the function at the call site
+		//if t is the argument of the function, at_call_site_t is the type that must be forwarded into the function at the call site
 		template<typename t>
 		constexpr auto as_passable()
 		{
@@ -337,49 +337,49 @@ namespace expr
 		//msvc 17 needs this goofy workaround in order to compile.
 
 		template<typename t>
-		struct store
+		struct pre_call
 		{
 			typedef decltype(as_storable<t>()) type;
 		};
 
 		template<typename t>
-		using store_t = typename store<t>::type::held;
+		using pre_call_t = typename pre_call<t>::type::held;
 
 
 		template<typename t>
-		struct pass
+		struct at_call_site
 		{
 			typedef decltype(as_passable<t>()) type;
 		};
 
 		template<typename t>
-		using pass_t = typename pass<t>::type::held;
+		using at_call_site_t = typename at_call_site<t>::type::held;
 
 		template<typename t>
-		struct returned
+		struct post_return
 		{
 			typedef decltype(as_returnable<t>()) type;
 		};
 
 		template<typename t>
-		using returned_t = typename returned<t>::type::held;
+		using post_return_t = typename post_return<t>::type::held;
 
 
 		//where t is the argument type in the function
 		template<typename t>
-		constexpr pass_t<t> storable_into_passable(store_t<t>&& x)
+		constexpr at_call_site_t<t> storable_into_passable(pre_call_t<t>&& x)
 		{
-			return std::forward<pass_t<t>>(pass_t<t>(std::move(x)));
+			return std::forward<at_call_site_t<t>>(at_call_site_t<t>(std::move(x)));
 		}
 
 		template<typename t>
 		constexpr bool can_return()
 		{
-			return !std::is_same_v<void,returned_t<t>>;
+			return !std::is_same_v<void,post_return_t<t>>;
 		}
 
 		template<typename t>
-		constexpr returned_t<t> into_returnable(t&& x)
+		constexpr post_return_t<t> into_returnable(t&& x)
 		{
 			if constexpr (!can_return<t>())
 			{
@@ -387,23 +387,23 @@ namespace expr
 			}
 			else if constexpr(std::is_lvalue_reference_v<t>)
 			{
-				return returned_t<t>(x);
+				return post_return_t<t>(x);
 			}
 			else
 			{
-				return returned_t<t>(std::move(x));
+				return post_return_t<t>(std::move(x));
 			}
 		}
 
 
 
 		template<typename ret_t, typename...argts>
-		std::function<returned_t<ret_t>(store_t<argts>...)> make_storable_call(std::function<ret_t(argts...)>&& f)
+		std::function<post_return_t<ret_t>(pre_call_t<argts>...)> make_storable_call(std::function<ret_t(argts...)>&& f)
 		{
 			if constexpr(can_return<ret_t>())
 			{
-				return std::function<returned_t<ret_t>(store_t<argts>&&...)> {
-					[f = std::move(f)](store_t<argts>...argvs)->returned_t<ret_t>
+				return std::function<post_return_t<ret_t>(pre_call_t<argts>&&...)> {
+					[f = std::move(f)](pre_call_t<argts>...argvs)->post_return_t<ret_t>
 					{
 						return into_returnable<ret_t>(f(storable_into_passable<argts>(std::move(argvs))...));
 					}
@@ -411,8 +411,8 @@ namespace expr
 			}
 			else
 			{
-				return std::function<void(store_t<argts>&&...)> {
-					[f = std::move(f)](store_t<argts>&&...argvs) -> void
+				return std::function<void(pre_call_t<argts>&&...)> {
+					[f = std::move(f)](pre_call_t<argts>&&...argvs) -> void
 					{
 						f(storable_into_passable<argts>(std::move(argvs))...);
 					}
