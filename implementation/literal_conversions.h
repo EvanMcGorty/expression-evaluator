@@ -228,7 +228,7 @@ namespace expr
 					bool is_negative = p->first;
 					big_uint numerator = std::move(p->second.first);
 					big_uint denomenator = std::move(p->second.second);
-					t ret;
+					std::remove_const_t<t> ret;
 
 
 					if constexpr(!std::is_signed_v<t>)
@@ -320,7 +320,7 @@ namespace expr
 				}
 				else if constexpr(std::is_convertible_v<t const&, std::string>)
 				{
-					return { tar };
+					return literal{ literal_value{std::string(tar)} }.make_string();
 				}
 				else
 				{
@@ -471,7 +471,7 @@ namespace expr
 				}
 			}
 
-			static std::string print(std::optional<std::optional<t>>& tar)
+			static std::string print(std::optional<t>& tar)
 			{
 				if(tar)
 				{
@@ -480,6 +480,111 @@ namespace expr
 				else
 				{
 					return "none";
+				}
+			}
+		};
+
+		template<typename t>
+		struct converter<std::unique_ptr<t>>
+		{
+			static std::optional<std::unique_ptr<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			{
+				if (start == stop)
+				{
+					//invalid input
+					return std::optional<std::unique_ptr<t>>(nullptr);
+				}
+
+				static char const none[] = "nullptr";
+
+				auto m = std::mismatch(start, stop, std::begin(none), std::end(none) - 1);
+
+				if (m.second == std::end(none) - 1)
+				{
+					start = m.first;
+					return std::optional<std::unique_ptr<t>>(std::unique_ptr<t>(nullptr));
+				}
+				else if (*start == '&')
+				{
+					++start;
+					std::optional<t>&& g = converter<t>::parse(start, stop);
+					if (g)
+					{
+						return std::optional<std::unique_ptr<t>>(std::make_unique<t>(std::move(*g)));
+					}
+					else
+					{
+						return std::nullopt;
+					}
+				}
+				else
+				{
+					return std::nullopt;
+				}
+			}
+
+			static std::string print(std::unique_ptr<t>& tar)
+			{
+				if (tar)
+				{
+					return "&" + converter<t>::print(*tar);
+				}
+				else
+				{
+					return "nullptr";
+				}
+			}
+		};
+
+
+		template<typename t>
+		struct converter<std::shared_ptr<t>>
+		{
+			static std::optional<std::shared_ptr<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			{
+				if (start == stop)
+				{
+					//invalid input
+					return std::optional<std::shared_ptr<t>>(nullptr);
+				}
+
+				static char const none[] = "nullptr";
+
+				auto m = std::mismatch(start, stop, std::begin(none), std::end(none) - 1);
+
+				if (m.second == std::end(none) - 1)
+				{
+					start = m.first;
+					return std::optional<std::shared_ptr<t>>(std::shared_ptr<t>(nullptr));
+				}
+				else if (*start == '&')
+				{
+					++start;
+					std::optional<t>&& g = converter<t>::parse(start, stop);
+					if (g)
+					{
+						return std::optional<std::shared_ptr<t>>(std::make_unique<t>(std::move(*g)));
+					}
+					else
+					{
+						return std::nullopt;
+					}
+				}
+				else
+				{
+					return std::nullopt;
+				}
+			}
+
+			static std::string print(std::shared_ptr<t>& tar)
+			{
+				if (tar)
+				{
+					return "&" + converter<t>::print(*tar);
+				}
+				else
+				{
+					return "nullptr";
 				}
 			}
 		};
