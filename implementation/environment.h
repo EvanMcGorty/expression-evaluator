@@ -6,13 +6,6 @@ namespace expr
 {
 	namespace impl
 	{
-
-		class environment;
-
-		void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors);
-		void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors);
-		
-
 		class environment
 		{
 		public:
@@ -128,5 +121,31 @@ namespace expr
 			variable_set variables;
 			variable_value_stack garbage;
 		};
+
+
+		inline void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors)
+		{
+			for (auto&& it : std::move(tar.statements))
+			{
+				perform(std::move(it), loc, env.variables, env.functions, env.garbage, errors);
+			}
+		}
+
+		inline stack environment::run(executable&& tar, std::ostream& errors)
+		{
+			stack loc;
+			perform_all(std::move(tar), loc, *this, errors);
+			return loc;
+		}
+
+
+		inline stack_elem environment::evaluate(expression&& tar, std::ostream& errors)
+		{
+			executable to_run;
+			std::move(tar).into_executable(to_run);
+			stack v = run(std::move(to_run), errors);
+			assert_with_generic_logic_error(v.stuff.size() == 1);
+			return std::move(*v.stuff.begin());
+		}
 	}
 }

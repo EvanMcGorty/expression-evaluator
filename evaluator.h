@@ -1,6 +1,7 @@
 #pragma once
 
 #include"implementation/statement_evaluations.h"
+#include"implementation/smart_environments.h"
 
 namespace expr
 {
