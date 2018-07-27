@@ -338,6 +338,20 @@ namespace expr
 		};
 
 		template<typename t>
+		struct converter<t&>
+		{
+			static std::optional<t&> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			{
+				return std::nullopt;
+			}
+
+			static std::string print(t& tar)
+			{
+				return converter<t>::print(tar);
+			}
+		};
+
+		template<typename t>
 		struct converter<std::vector<t>>
 		{
 			static std::optional<std::vector<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
