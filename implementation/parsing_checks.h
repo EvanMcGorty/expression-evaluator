@@ -190,11 +190,24 @@ namespace expr
 				}
 			}
 
-			static bool canbeafterelem(char a)
+			static bool canbeendofelem(char a)
 			{
 				switch (a)
 				{
 				case(' '):case(','):case(')'):
+					return true;
+					break;
+				default:
+					return false;
+					break;
+				}
+			}
+
+			static bool mustbeendofelem(char a)
+			{
+				switch (a)
+				{
+				case(','):case(')'):
 					return true;
 					break;
 				default:

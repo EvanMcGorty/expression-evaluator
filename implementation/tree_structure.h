@@ -229,14 +229,18 @@ namespace expr
 
 				assert_with_generic_logic_error(start != stop);
 
-				if (*start != '"')
+				if(*start != '"')
 				{
-					while (start != stop && !name_checker::canbeafterelem(*start))
+					if (*start == '\'')
+					{
+						++start;
+					}
+					while (start != stop && !name_checker::mustbeendofelem(*start))
 					{
 						ret.push_back(*start);
 						++start;
 					}
-					return std::optional<literal>{literal{std::move(ret)}};
+					return std::optional<literal>{literal{ std::move(ret) }};
 				}
 
 
@@ -248,7 +252,7 @@ namespace expr
 					if (*start == '"')
 					{
 						++start;
-						if (start == stop || name_checker::canbeafterelem(*start))
+						if (start == stop || name_checker::canbeendofelem(*start))
 						{
 							return std::optional<literal>{literal{std::move(ret)}};
 						}
