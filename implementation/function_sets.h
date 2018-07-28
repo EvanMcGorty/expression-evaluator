@@ -382,7 +382,7 @@ namespace expr
 
 			static std::string get_name(name_set const& from)
 			{
-				return name_of<t>(from);
+				return name_of<val_wrap<t>>(from);
 			}
 		};
 
@@ -401,7 +401,7 @@ namespace expr
 
 			static std::string get_name(name_set const& from)
 			{
-				return name_of<t>(from);
+				return name_of<val_wrap<t>>(from);
 			}
 		};
 
@@ -425,7 +425,7 @@ namespace expr
 
 			static std::string get_name(name_set const& from)
 			{
-				return name_of<t>(from);
+				return name_of<val_wrap<t>>(from);
 			}
 		};
 
@@ -496,7 +496,7 @@ namespace expr
 
 			static std::string get_name(name_set const& from)
 			{
-				return name_of<t>(from) + "-wrap";
+				return name_of<val_wrap<t>>(from) + "-wrap";
 			}
 		};
 
