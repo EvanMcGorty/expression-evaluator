@@ -202,7 +202,7 @@ public:
     auto downcast() &&
     {
         static_assert(variadic_utilities::is_one_of<d,derived...>(),"can only downcast to one of the derived types listed as a template parameter");
-        assert(data.template can_downcast<d>());
+		expr::impl::assert_with_generic_logic_error(data.template can_downcast<d>());
         return changer<d>::change(std::move(*this),variadic_utilities::filter<d,derived...>::get());
     }
 

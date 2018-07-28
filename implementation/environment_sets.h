@@ -129,7 +129,7 @@ namespace expr
 			template<typename string_convertible>
 			function_set& add(held_callable&& f, string_convertible&& n)
 			{
-				throw_invalid_name_usage(name_checker::is_valid(std::string{ n }));
+				assert_with_invalid_name_usage(name_checker::is_valid(std::string{ n }));
 				add_to_map(std::make_pair(std::string{ n }, std::move(f)));
 				return *this;
 			}
@@ -147,7 +147,7 @@ namespace expr
 					}
 					return *this;
 				}
-				throw_invalid_name_usage(name_checker::is_valid(std::string{ name }));
+				assert_with_invalid_name_usage(name_checker::is_valid(std::string{ name }));
 				for (auto it = set.map.begin(); it != set.map.end(); ++it)
 				{
 					auto cur = std::move(*it);

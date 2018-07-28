@@ -1,45 +1,15 @@
 #pragma once
 #include<string>
 
+#include"asserts_and_errors.h"
+
 namespace expr
 {
 	namespace impl
 	{
-		using expression_evaluator_internal_logic_error = std::logic_error;
-
-		using expression_evaluator_usage_logic_error = std::logic_error;
-
-#ifdef _DEBUG
-		void assert_with_generic_logic_error(bool a)
-		{
-			if (!a)
-			{
-				throw expression_evaluator_internal_logic_error("the expression evaluator has an internal logic error");
-			}
-		}
-		void throw_invalid_method_usage(bool a)
-		{
-			if (!a)
-			{
-				throw expression_evaluator_usage_logic_error("usage of invalid method");
-			}
-		}
-		void throw_invalid_name_usage(bool a)
-		{
-			if (!a)
-			{
-				throw expression_evaluator_usage_logic_error("usage of invalid name");
-			}
-		}
-#else
-		void assert_with_generic_logic_error(bool){}
-		void throw_invalid_method_usage(bool){}
-		void throw_invalid_name_usage(bool){}
-#endif
 
 
-
-		//for passing a string while ensuring that it is a valid name with assert()
+		//for passing a string while ensuring that it is a valid name with expr::impl::assert_with_generic_logic_error()
 		//or for checking manually
 		class name_checker
 		{
@@ -52,7 +22,7 @@ namespace expr
 
 			name_checker(std::string&& a)
 			{
-				assert_with_generic_logic_error(is_valid(a));
+				assert_with_invalid_name_usage(is_valid(a));
 				held = std::move(a);
 			}
 
@@ -63,7 +33,7 @@ namespace expr
 
 			void operator=(std::string&& a)
 			{
-				assert_with_generic_logic_error(is_valid(a));
+				assert_with_invalid_name_usage(is_valid(a));
 				held = std::move(a);
 			}
 
