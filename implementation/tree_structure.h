@@ -240,6 +240,10 @@ namespace expr
 						ret.push_back(*start);
 						++start;
 					}
+					while (ret.size() > 0 && *ret.rbegin() == ' ')
+					{
+						ret.pop_back();
+					}
 					return std::optional<literal>{literal{ std::move(ret) }};
 				}
 

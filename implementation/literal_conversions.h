@@ -356,6 +356,7 @@ namespace expr
 		{
 			static std::optional<std::vector<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
+
 				if (start == stop)
 				{
 					return { std::vector<t>{} };
@@ -368,8 +369,21 @@ namespace expr
 				{
 					return { std::vector<t>{} };
 				}
-				if (*start == '[')
+				if (*start == '[' || *start == '(' || *start == '{')
 				{
+					char close_char = '!'; //not initialized
+					if (*start == '[')
+					{
+						close_char = ']';
+					}
+					else if (*start == '(')
+					{
+						close_char = ')';
+					}
+					else if (*start == '{')
+					{
+						close_char = '}';
+					}
 					std::vector<t> ret;
 					++start;
 					while (start != stop)
@@ -407,11 +421,7 @@ namespace expr
 						{
 							return std::nullopt;
 						}
-						if (*start == ',')
-						{
-							++start;
-						}
-						else if (*start == ']')
+						if (*start == close_char)
 						{
 							++start;
 							return { std::move(ret) };
@@ -434,7 +444,7 @@ namespace expr
 				for (auto& it : tar)
 				{
 					ret.append(converter<t>::print(it));
-					ret.push_back(',');
+					ret.push_back(' ');
 				}
 				if (ret.size() == 1)
 				{
