@@ -162,12 +162,12 @@ namespace expr
 
 			}
 
-			void evaluate_input(stack& result, std::ostream& errors, executable& to_run, std::optional<statement>& special_call)
+			void evaluate_input(stack& result, std::ostream& info, executable& to_run, std::optional<statement>& special_call)
 			{
-				result = run(std::move(to_run), errors);
+				result = run(std::move(to_run), info);
 				if (special_call)
 				{
-					perform(std::move(*special_call), result, variables, special_functions, garbage, errors);
+					perform(std::move(*special_call), result, variables, special_functions, garbage, info);
 				}
 				else if (settings.default_final_operation)
 				{
@@ -176,17 +176,17 @@ namespace expr
 					if (*to_use.begin() == '_')
 					{
 						to_use = std::string{ to_use.begin() + 1,to_use.end() };
-						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, special_functions, garbage, errors);
+						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, special_functions, garbage, info);
 					}
 					else
 					{
-						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, functions, garbage, errors);
+						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, functions, garbage, info);
 					}
 				}
 
 				assert_with_generic_logic_error(result.stuff.size() == 1);
 
-				garbage.clean_all_to_front(result, 1);
+				garbage.clean_all_to_front(result, 1, info);
 			}
 			
 		};

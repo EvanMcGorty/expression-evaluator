@@ -7,6 +7,7 @@
 #include<limits>
 #include"parsing_checks.h"
 #include"type_wraps.h"
+#include"tree_structure.h"
 
 namespace expr
 {

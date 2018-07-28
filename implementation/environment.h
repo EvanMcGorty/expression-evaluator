@@ -123,27 +123,27 @@ namespace expr
 		};
 
 
-		inline void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors)
+		inline void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& info)
 		{
 			for (auto&& it : std::move(tar.statements))
 			{
-				perform(std::move(it), loc, env.variables, env.functions, env.garbage, errors);
+				perform(std::move(it), loc, env.variables, env.functions, env.garbage, info);
 			}
 		}
 
-		inline stack environment::run(executable&& tar, std::ostream& errors)
+		inline stack environment::run(executable&& tar, std::ostream& info)
 		{
 			stack loc;
-			perform_all(std::move(tar), loc, *this, errors);
+			perform_all(std::move(tar), loc, *this, info);
 			return loc;
 		}
 
 
-		inline stack_elem environment::evaluate(expression&& tar, std::ostream& errors)
+		inline stack_elem environment::evaluate(expression&& tar, std::ostream& info)
 		{
 			executable to_run;
 			std::move(tar).into_executable(to_run);
-			stack v = run(std::move(to_run), errors);
+			stack v = run(std::move(to_run), info);
 			assert_with_generic_logic_error(v.stuff.size() == 1);
 			return std::move(*v.stuff.begin());
 		}

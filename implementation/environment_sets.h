@@ -303,25 +303,26 @@ namespace expr
 				return ret;
 			}
 
-			void clean_to_front(stack_elem& from)
+			void clean_to_front(stack_elem& from, std::ostream& info)
 			{
 				if (!from.is_nullval() && from->is_object())
 				{
 					auto to_push = std::move(from).downcast<any_object>();
 					if (!to_push->can_trivially_destruct())
 					{
+						info << to_push->string_view(global_type_renames()) << " cleaned to stack front\n";
 						push_front(std::move(to_push));
 					}
 				}
 			}
 
-			void clean_all_to_front(stack& from, size_t count)
+			void clean_all_to_front(stack& from, size_t count, std::ostream& info)
 			{
 				assert_with_generic_logic_error(count <= from.stuff.size());
 
 				for (size_t i = 0; i != count; ++i)
 				{
-					clean_to_front(*from.stuff.rbegin());
+					clean_to_front(*from.stuff.rbegin(), info);
 					from.stuff.pop_back();
 				}
 			}

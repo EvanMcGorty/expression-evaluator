@@ -6,11 +6,11 @@ namespace expr
 	namespace impl
 	{
 
-		inline void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors)
+		inline void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& info)
 		{
 			if (todo.val.is_nullval())
 			{
-				errors << "null value found\n";
+				info << "null value found\n";
 				loc.stuff.emplace_back(stack_elem::make_nullval());
 			}
 			else if (todo.val->is_literal_push())
@@ -32,7 +32,7 @@ namespace expr
 					}
 					else
 					{
-						errors << "variable name \"" << temp.var.data.var_name << "\" not found\n";
+						info << "variable name \"" << temp.var.data.var_name << "\" not found\n";
 						loc.stuff.emplace_back(stack_elem::make_nullval());
 					}
 				}
@@ -46,7 +46,7 @@ namespace expr
 					}
 					else
 					{
-						errors << "variable name \"" << temp.var.data.var_name << "\" not found\n";
+						info << "variable name \"" << temp.var.data.var_name << "\" not found\n";
 						loc.stuff.emplace_back(stack_elem::make_nullval());
 					}
 				}
@@ -65,8 +65,8 @@ namespace expr
 				auto optional_todo = functions.get(temp.name);
 				if (!optional_todo)
 				{
-					errors << "function name \"" << temp.name << "\" not found\n";
-					garbage.clean_all_to_front(loc, temp.arg_count);
+					info << "function name \"" << temp.name << "\" not found\n";
+					garbage.clean_all_to_front(loc, temp.arg_count, info);
 					loc.stuff.emplace_back(stack_elem::make_nullval());
 				}
 				else
@@ -81,16 +81,16 @@ namespace expr
 					}
 					catch (std::exception const& caught)
 					{
-						errors << "call to function \"" << temp.name << "\" threw an exception: " << caught.what() << "\n";
+						info << "call to function \"" << temp.name << "\" threw an exception: " << caught.what() << "\n";
 						tp = object_holder::make_nullval();
 						no_exceptions = false;
 					}
 
 					if (no_exceptions && tp.is_nullval())
 					{
-						errors << "call to function \"" << temp.name << "\" returned null\n";
+						info << "call to function \"" << temp.name << "\" returned null\n";
 					}
-					garbage.clean_all_to_front(loc, temp.arg_count);
+					garbage.clean_all_to_front(loc, temp.arg_count, info);
 					loc.stuff.emplace_back(std::move(tp));
 				}
 			}
