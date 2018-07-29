@@ -2,7 +2,7 @@
 
 #include"type_asker.h"
 #include"statement.h"
-#include"type_demangle.h"
+#include"type_name_mapping.h"
 
 namespace expr
 {
@@ -425,6 +425,37 @@ namespace expr
 		{
 			return mu::virt<object_of<post_return_t<t>>>::template make<object_of<post_return_t<t>>>(into_returnable<t>(std::forward<t>(a)));
 		}
+
+
+
+		struct predeclared_object_result
+		{
+			predeclared_object_result(object_holder&& a) :
+				wrapped(std::move(a))
+			{}
+			object_holder wrapped;
+		};
+
+
+		template<typename t>
+		predeclared_object_result type_operations_for<t>::make_from_string(std::string::const_iterator& start, std::string::const_iterator stop)
+		{
+			std::optional<t> g{ converter<t>::parse(start,stop) };
+			if (g)
+			{
+				return predeclared_object_result{ make_object(g) };
+			}
+			else
+			{
+				return predeclared_object_result{ object_holder::make_nullval() };
+			}
+		}
+
+		/*template<typename t>
+		constexpr type_operations_for<t> make_type_operations()
+		{
+			return type_operations_for<t>{};
+		}*/
 
 
 		//on a stack, this is what a variable pushes (unless if the variable is also being popped).

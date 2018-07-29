@@ -51,10 +51,29 @@ namespace expr
 {
 	namespace impl
 	{
+		struct predeclared_object_result;
+
+		class type_operations
+		{
+			virtual predeclared_object_result make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) = 0;
+		};
+
+		template<typename t>
+		class type_operations_for : public type_operations
+		{
+			predeclared_object_result make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) override;
+		};
+
+		/*template<typename t>
+		constexpr type_operations_for<t> make_type_operations();*/
+
+		template<typename t>
+		constexpr type_operations_for<t> global_type_operation_adresses{};// = make_type_operations<t>();
 
 		struct name_set
 		{
-			std::unordered_map<std::type_index, std::string> data;
+			std::unordered_map<std::type_index, std::string> names;
+			std::unordered_map<std::string, type_operations const*> operations;
 
 			~name_set() {}
 		};
@@ -89,7 +108,8 @@ namespace expr
 
 			static_assert(!(std::is_const_v<t>||std::is_reference_v<t>), "can only rename a raw type, references and const are not allowed");
 
-			names.data[std::type_index{ typeid(t) }] = std::move(new_name);
+			names.operations[new_name] = &global_type_operation_adresses<t>;
+			names.names[std::type_index{ typeid(t) }] = std::move(new_name);
 			
 		}
 		
@@ -110,8 +130,8 @@ namespace expr
 			}
 			else
 			{
-				auto g = names.data.find(std::type_index{ typeid(raw) });
-				if (g == names.data.end())
+				auto g = names.names.find(std::type_index{ typeid(raw) });
+				if (g == names.names.end())
 				{
 					if constexpr(type_wrap_info<raw>::is())
 					{
