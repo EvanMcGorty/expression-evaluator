@@ -17,7 +17,7 @@ namespace expr
 				return function_set{};
 			}
 
-			static std::string get_name(name_set const& names)
+			static std::string get_name(type_info_set const& names)
 			{
 				static_assert("no overloaded instance of fs_info exists for this class");
 				return "";
@@ -30,7 +30,7 @@ namespace expr
 			return fs_info<t>::get_functions();
 		}
 		template<typename t>
-		inline std::string fs_name(name_set const& names)
+		inline std::string fs_name(type_info_set const& names)
 		{
 			return fs_info<t>::get_name(names);
 		}
@@ -91,7 +91,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(name_set const&)
+			static std::string get_name(type_info_set const&)
 			{
 				return "core";
 			}
@@ -207,7 +207,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(name_set const&)
+			static std::string get_name(type_info_set const&)
 			{
 				return "cpp";
 			}
@@ -269,7 +269,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(name_set const&)
+			static std::string get_name(type_info_set const&)
 			{
 				return "sys";
 			}
@@ -380,7 +380,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(name_set const& from)
+			static std::string get_name(type_info_set const& from)
 			{
 				return name_of<val_wrap<t>>(from);
 			}
@@ -399,7 +399,7 @@ namespace expr
 				return function_set{};
 			}
 
-			static std::string get_name(name_set const& from)
+			static std::string get_name(type_info_set const& from)
 			{
 				return name_of<val_wrap<t>>(from);
 			}
@@ -423,7 +423,7 @@ namespace expr
 				return std::move(basic.use("", std::move(extended)));
 			}
 
-			static std::string get_name(name_set const& from)
+			static std::string get_name(type_info_set const& from)
 			{
 				return name_of<val_wrap<t>>(from);
 			}
@@ -494,7 +494,7 @@ namespace expr
 				return std::move(ret);
 			}
 
-			static std::string get_name(name_set const& from)
+			static std::string get_name(type_info_set const& from)
 			{
 				return name_of<val_wrap<t>>(from) + "-wrap";
 			}
@@ -566,7 +566,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(name_set const& from)
+			static std::string get_name(type_info_set const& from)
 			{
 				return name_of<val_wrap<std::string>>(from);
 			}
@@ -648,7 +648,7 @@ namespace expr
 				return std::move(ret);
 			}
 
-			static std::string get_name(name_set const& from)
+			static std::string get_name(type_info_set const& from)
 			{
 				return name_of<val_wrap<std::vector<t>>>(from);
 			}

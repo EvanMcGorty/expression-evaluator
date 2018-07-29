@@ -20,7 +20,7 @@ namespace expr
 				return evaluate(expression::make(a), errors);
 			}
 
-			held_callable info_printer(std::ostream& to = std::cout, name_set const& from = global_type_renames())
+			held_callable info_printer(std::ostream& to = std::cout, type_info_set const& from = global_type_info())
 			{
 				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> object_holder
 					{
@@ -90,7 +90,7 @@ namespace expr
 				});
 			}
 
-			held_callable functions_printer(std::ostream& to = std::cout, name_set const& names = global_type_renames())
+			held_callable functions_printer(std::ostream& to = std::cout, type_info_set const& names = global_type_info())
 			{
 				return sfn(std::function<void()>{
 					[to = &to,fs = &functions, names = &names]() -> void
@@ -105,7 +105,7 @@ namespace expr
 				});
 			}
 
-			held_callable variables_printer(std::ostream& to = std::cout, name_set const& names = global_type_renames())
+			held_callable variables_printer(std::ostream& to = std::cout, type_info_set const& names = global_type_info())
 			{
 				return sfn(std::function<void()>{
 					[to = &to, vs = &variables,names = &names]() -> void

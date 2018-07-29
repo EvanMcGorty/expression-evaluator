@@ -56,13 +56,13 @@ namespace expr
 	using impl::converter;
 
 	//a map of names to types
-	using impl::name_set;
+	using impl::type_info_set;
 
-	//checks the name of a type in a name_set, by default using the global type dataset
+	//checks the name of a type in a type_info_set, by default using the global type dataset
 	using impl::name_of;
 
 	//a global type dataset
-	using impl::global_type_renames;
+	using impl::global_type_info;
 
 	//pre_call_t<t> is the object stored before being passed into a function argument of t
 	using impl::pre_call_t;

@@ -34,7 +34,7 @@ namespace expr
 
 			virtual std::string convert_into_string() = 0;
 
-			virtual std::string string_view(name_set const& names) = 0;
+			virtual std::string string_view(type_info_set const& names) = 0;
 
 			//returns true if this is an object and the held value was moved.
 			virtual bool get(any_type_ask* tar) = 0;
@@ -75,7 +75,7 @@ namespace expr
 				return std::string{ val };
 			}
 
-			std::string string_view(name_set const&) override
+			std::string string_view(type_info_set const&) override
 			{
 				literal temp{ literal_value{std::string{val}} };
 				return std::string("unparsed{") + temp.make_string() + "}";
@@ -168,7 +168,7 @@ namespace expr
 				return "";
 			}
 			
-			std::string string_view(name_set const&) override
+			std::string string_view(type_info_set const&) override
 			{
 				return "void_object{}";
 			}
@@ -263,7 +263,7 @@ namespace expr
 				return converter<raw>::print(get_raw());
 			}
 
-			std::string string_view(name_set const& names) override
+			std::string string_view(type_info_set const& names) override
 			{
 				return std::string("object_of{") + name_of<t>(names) + "(" + convert_into_string() + ")" + "}";
 			}
@@ -438,7 +438,7 @@ namespace expr
 
 
 		template<typename t>
-		predeclared_object_result type_operations_for<t>::make_from_string(std::string::const_iterator& start, std::string::const_iterator stop)
+		predeclared_object_result type_operations_for<t>::make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) const
 		{
 			std::optional<t> g{ converter<t>::parse(start,stop) };
 			if (g)
@@ -450,12 +450,6 @@ namespace expr
 				return predeclared_object_result{ object_holder::make_nullval() };
 			}
 		}
-
-		/*template<typename t>
-		constexpr type_operations_for<t> make_type_operations()
-		{
-			return type_operations_for<t>{};
-		}*/
 
 
 		//on a stack, this is what a variable pushes (unless if the variable is also being popped).
@@ -589,7 +583,7 @@ namespace expr
 				}
 			}
 
-			std::string string_view(name_set const& names) override
+			std::string string_view(type_info_set const& names) override
 			{
 				if (ref->is_nullval())
 				{

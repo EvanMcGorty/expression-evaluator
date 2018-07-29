@@ -177,7 +177,7 @@ namespace expr
 
 			virtual object_holder try_perform(stack& a, size_t args_to_take) = 0;
 			virtual bool can_perform(stack const& a, size_t args_to_take) const = 0;
-			virtual void put_type(std::ostream& target, name_set const& from) const = 0;
+			virtual void put_type(std::ostream& target, type_info_set const& from) const = 0;
 			virtual mu::virt<any_callable> add_layer(mu::virt<any_callable>&& tail) && = 0;
 			virtual ~any_callable()
 			{}
@@ -221,7 +221,7 @@ namespace expr
 			}
 
 
-			void put_type(std::ostream& into, name_set const& from) const override
+			void put_type(std::ostream& into, type_info_set const& from) const override
 			{
 				into << "\\ ";
 				base_callable::put_type(into, from);
@@ -235,7 +235,7 @@ namespace expr
 
 
 		template<typename t,typename...ts>
-		void put_types(std::ostream& target, name_set const& from)
+		void put_types(std::ostream& target, type_info_set const& from)
 		{
 			if constexpr(sizeof...(ts) > 0)
 			{
@@ -271,7 +271,7 @@ namespace expr
 				return held_callable::make<layered<smart_callable<ret_t, args...>>>(smart_callable<ret_t, args...>{std::move(target)}, std::move(tail));
 			}
 
-			void put_type(std::ostream& into, name_set const& from) const override
+			void put_type(std::ostream& into, type_info_set const& from) const override
 			{
 				into << '(';
 				if constexpr(sizeof...(args) > 0)
@@ -414,7 +414,7 @@ namespace expr
 				target = a;
 			}
 
-			void put_type(std::ostream& into, name_set const&) const override
+			void put_type(std::ostream& into, type_info_set const&) const override
 			{
 				into << "(...)->?";
 			}

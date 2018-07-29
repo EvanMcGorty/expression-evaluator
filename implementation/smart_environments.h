@@ -49,7 +49,7 @@ namespace expr
 		{
 		public:
 
-			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}, name_set const& n = global_type_renames()) :
+			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}, type_info_set const& n = global_type_info()) :
 				environment(std::move(base)),
 				input(i),
 				output(o),
@@ -119,7 +119,7 @@ namespace expr
 			std::istream& input;
 			std::ostream& output;
 			option_set settings;
-			name_set const& names;
+			type_info_set const& names;
 
 		private:
 

@@ -55,58 +55,62 @@ namespace expr
 
 		class type_operations
 		{
-			virtual predeclared_object_result make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) = 0;
+			virtual predeclared_object_result make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) const = 0;
 		};
 
 		template<typename t>
 		class type_operations_for : public type_operations
 		{
-			predeclared_object_result make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) override;
+			predeclared_object_result make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) const override;
 		};
 
-		/*template<typename t>
-		constexpr type_operations_for<t> make_type_operations();*/
 
 		template<typename t>
-		constexpr type_operations_for<t> global_type_operation_adresses{};// = make_type_operations<t>();
+		constexpr type_operations_for<t> global_type_operation_adresses{};
 
-		struct name_set
+		struct type_info_set
 		{
 			std::unordered_map<std::type_index, std::string> names;
 			std::unordered_map<std::string, type_operations const*> operations;
 
-			~name_set() {}
+			~type_info_set() {}
 		};
 
 
 
-		static name_set* global_type_renames_object_pointer;
+		static type_info_set* global_type_info_object_pointer;
 		
-		inline void delete_global_type_renames_object()
+		inline void delete_global_type_info_object()
 		{
-			delete global_type_renames_object_pointer;
+			delete global_type_info_object_pointer;
 		}
 
 
-		name_set*& make_global_type_renames_object()
+		type_info_set*& make_global_type_info_object()
 		{
-			std::atexit(&delete_global_type_renames_object);
-			global_type_renames_object_pointer = new name_set();
-			return global_type_renames_object_pointer;
+			std::atexit(&delete_global_type_info_object);
+			global_type_info_object_pointer = new type_info_set();
+			return global_type_info_object_pointer;
 		}
 
 
-		name_set& global_type_renames()
+		type_info_set& global_type_info()
 		{
-			static name_set*& val = make_global_type_renames_object();
+			static type_info_set*& val = make_global_type_info_object();
 			return *val;
 		}
 
 		template<typename t>
-		void rename(std::string&& new_name, name_set& names = global_type_renames())
+		void declare(std::string&& new_name, type_info_set& names = global_type_info())
 		{
+			auto ends_with = [](std::string const & value, std::string const & ending) -> bool
+			{
+				if (ending.size() > value.size()) return false;
+				return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+			};
 
-			static_assert(!(std::is_const_v<t>||std::is_reference_v<t>), "can only rename a raw type, references and const are not allowed");
+			assert_with_invalid_method_usage(!ends_with(new_name, "-ref") && !ends_with(new_name, "-const"));
+			static_assert(!(std::is_const_v<t>||std::is_reference_v<t>), "can only declare a raw type, references and const are not allowed");
 
 			names.operations[new_name] = &global_type_operation_adresses<t>;
 			names.names[std::type_index{ typeid(t) }] = std::move(new_name);
@@ -114,7 +118,7 @@ namespace expr
 		}
 		
 		template<typename t>
-		std::string name_of(name_set const& names = global_type_renames())
+		std::string name_of(type_info_set const& names = global_type_info())
 		{
 			static_assert(!type<t>::is_raw());
 

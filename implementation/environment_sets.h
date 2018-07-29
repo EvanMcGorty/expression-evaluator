@@ -109,7 +109,7 @@ namespace expr
 		class function_set;
 
 		template<typename t>
-		std::string fs_name(const name_set &names);
+		std::string fs_name(const type_info_set &names);
 
 		template<typename t>
 		function_set fs_functs();
@@ -136,7 +136,7 @@ namespace expr
 
 
 			template<typename t = void, typename string_convertible = std::string>
-			function_set& use(string_convertible&& n = fs_name<t>(global_type_renames()), function_set&& set = fs_functs<t>())
+			function_set& use(string_convertible&& n = fs_name<t>(global_type_info()), function_set&& set = fs_functs<t>())
 			{
 				std::string name{ n };
 				if (name == "")
@@ -280,7 +280,7 @@ namespace expr
 				}
 			}
 
-			std::string string_view(name_set const& from)
+			std::string string_view(type_info_set const& from)
 			{
 				if (values.size() == 0)
 				{
@@ -310,7 +310,7 @@ namespace expr
 					auto to_push = std::move(from).downcast<any_object>();
 					if (!to_push->can_trivially_destruct())
 					{
-						info << to_push->string_view(global_type_renames()) << " cleaned to stack front\n";
+						info << to_push->string_view(global_type_info()) << " cleaned to stack front\n";
 						push_front(std::move(to_push));
 					}
 				}
@@ -369,7 +369,7 @@ namespace expr
 				}
 			}
 
-			void put_values(std::ostream& to, name_set const& from)
+			void put_values(std::ostream& to, type_info_set const& from)
 			{
 				for (auto& it : map)
 				{
