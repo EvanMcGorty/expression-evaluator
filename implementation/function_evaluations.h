@@ -16,7 +16,7 @@ namespace expr
 
 		object_holder get_value(stack_elem& a)
 		{
-			assert_with_generic_logic_error(a.is_nullval() || a->has_value());
+			assert_with_generic_logic_error([&]() {return a.is_nullval() || a->has_value(); });
 			if (a.is_nullval())
 			{
 				return object_holder::make_nullval();
@@ -31,14 +31,14 @@ namespace expr
 			}
 			else
 			{
-				assert_with_generic_logic_error(false);
+				assert_with_generic_logic_error([&]() {return false; });
 				return object_holder::make_nullval();
 			}
 		}
 
 		void set_value(stack_elem& a, object_holder&& b)
 		{
-			assert_with_generic_logic_error(a.is_nullval() || a->has_value());
+			assert_with_generic_logic_error([&]() {return a.is_nullval() || a->has_value(); });
 			if (a.is_nullval() || a->is_object())
 			{
 				a = std::move(b);
@@ -49,7 +49,7 @@ namespace expr
 			}
 			else
 			{
-				assert_with_generic_logic_error(false);
+				assert_with_generic_logic_error([&]() {return false; });
 			}
 		}
 
@@ -296,7 +296,7 @@ namespace expr
 				{
 					return object_holder::make_nullval();
 				}
-				assert_with_generic_logic_error(a.stuff.size() >= sizeof...(args));
+				assert_with_generic_logic_error([&]() {return a.stuff.size() >= sizeof...(args); });
 
 				if constexpr(sizeof...(args) > 0)
 				{
@@ -342,7 +342,7 @@ namespace expr
 					return false;
 				}
 
-				assert_with_generic_logic_error(a.stuff.size() >= sizeof...(args));
+				assert_with_generic_logic_error([&]() {return a.stuff.size() >= sizeof...(args); });
 				
 				if constexpr(!(sizeof...(args) == 0))
 				{
@@ -427,7 +427,7 @@ namespace expr
 
 			object_holder try_perform(stack& a, size_t args_to_take) override
 			{
-				assert_with_generic_logic_error(a.stuff.size() >= args_to_take);
+				assert_with_generic_logic_error([&]() {return a.stuff.size() >= args_to_take; });
 				std::vector<stack_elem> to_call;
 				to_call.reserve(args_to_take);
 				for (size_t i = a.stuff.size() - args_to_take; i != a.stuff.size(); ++i)

@@ -287,7 +287,7 @@ namespace expr
 				}
 				else
 				{
-					assert_with_invalid_method_usage(false);
+					assert_with_invalid_method_usage([&]() {return false; });
 				}
 			}
 
@@ -299,7 +299,7 @@ namespace expr
 				}
 				else
 				{
-					assert_with_invalid_method_usage(false);
+					assert_with_invalid_method_usage([&]() {return false; });
 				}
 			}
 
@@ -311,7 +311,7 @@ namespace expr
 				}
 				else
 				{
-					assert_with_invalid_method_usage(false);
+					assert_with_invalid_method_usage([&]() {return false; });
 				}
 			}
 
@@ -323,7 +323,7 @@ namespace expr
 				}
 				else
 				{
-					assert_with_invalid_method_usage(false);
+					assert_with_invalid_method_usage([&]() {return false; });
 				}
 			}
 
@@ -335,7 +335,7 @@ namespace expr
 				}
 				else
 				{
-					assert_with_invalid_method_usage(false);
+					assert_with_invalid_method_usage([&]() {return false; });
 				}
 			}
 
@@ -617,7 +617,7 @@ namespace expr
 				}
 				else
 				{
-					assert_with_invalid_method_usage(false);
+					assert_with_invalid_method_usage([&]() {return false; });
 				}
 			}
 

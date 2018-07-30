@@ -109,7 +109,7 @@ namespace expr
 				return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 			};
 
-			assert_with_invalid_method_usage(!ends_with(new_name, "-ref") && !ends_with(new_name, "-const"));
+			assert_with_invalid_method_usage([&]() {return !ends_with(new_name, "-ref") && !ends_with(new_name, "-const"); });
 			static_assert(!(std::is_const_v<t>||std::is_reference_v<t>), "can only declare a raw type, references and const are not allowed");
 
 			names.operations[new_name] = &global_type_operation_adresses<t>;

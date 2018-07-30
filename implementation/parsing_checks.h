@@ -22,7 +22,7 @@ namespace expr
 
 			name_checker(std::string&& a)
 			{
-				assert_with_invalid_name_usage(is_valid(a));
+				assert_with_invalid_name_usage([&]() {return is_valid(a); });
 				held = std::move(a);
 			}
 
@@ -33,7 +33,7 @@ namespace expr
 
 			void operator=(std::string&& a)
 			{
-				assert_with_invalid_name_usage(is_valid(a));
+				assert_with_invalid_name_usage([&]() {return is_valid(a); });
 				held = std::move(a);
 			}
 

@@ -144,7 +144,7 @@ namespace expr
 			executable to_run;
 			std::move(tar).into_executable(to_run);
 			stack v = run(std::move(to_run), info);
-			assert_with_generic_logic_error(v.stuff.size() == 1);
+			assert_with_generic_logic_error([&]() {return v.stuff.size() == 1; });
 			return std::move(*v.stuff.begin());
 		}
 	}

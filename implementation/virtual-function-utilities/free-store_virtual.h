@@ -102,7 +102,7 @@ public:
     virt<d> downcast() &&
     {
         static_assert(std::is_base_of<t,d>::value || std::is_same<d,t>::value,"to downcast virt<x>&& to virt<y>, y must derive from x");
-		expr::impl::assert_with_generic_logic_error(can_downcast<d>());
+		expr::impl::assert_with_generic_logic_error([&]() {return can_downcast<d>(); });
         return virt<d>{std::unique_ptr<d>{static_cast<d*>(data.release())}};
     }
 
@@ -111,7 +111,7 @@ public:
     d* downcast_get()
     {
         static_assert(std::is_base_of<t,d>::value || std::is_same<d,t>::value,"to downcast_get virt<x> const& as y*, y must derive from x");
-		expr::impl::assert_with_generic_logic_error(can_downcast<d>());
+		expr::impl::assert_with_generic_logic_error([&]() {return can_downcast<d>(); });
         return static_cast<d*>(data.get());
     }
 
@@ -120,7 +120,7 @@ public:
     d const* downcast_get() const
     {
         static_assert(std::is_base_of<t,d>::value || std::is_same<d,t>::value,"to downcast_get virt<x> const& as y*, y must derive from x");
-		expr::impl::assert_with_generic_logic_error(can_downcast<d>());
+		expr::impl::assert_with_generic_logic_error([&]() {return can_downcast<d>(); });
         return static_cast<d const*>(data.get());
     }
 

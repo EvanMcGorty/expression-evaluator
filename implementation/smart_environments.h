@@ -172,7 +172,7 @@ namespace expr
 				else if (settings.default_final_operation)
 				{
 					std::string to_use = *settings.default_final_operation;
-					assert_with_generic_logic_error(to_use.size() >= 1);
+					assert_with_generic_logic_error([&]() {return to_use.size() >= 1; });
 					if (*to_use.begin() == '_')
 					{
 						to_use = std::string{ to_use.begin() + 1,to_use.end() };
@@ -184,7 +184,7 @@ namespace expr
 					}
 				}
 
-				assert_with_generic_logic_error(result.stuff.size() == 1);
+				assert_with_generic_logic_error([&]() {return result.stuff.size() == 1; });
 
 				garbage.clean_all_to_front(result, 1, info);
 			}

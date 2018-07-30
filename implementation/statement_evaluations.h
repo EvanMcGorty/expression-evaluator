@@ -96,7 +96,7 @@ namespace expr
 			}
 			else
 			{
-				assert_with_generic_logic_error(false);
+				assert_with_generic_logic_error([&]() {return false; });
 			}
 		}
 
