@@ -111,8 +111,14 @@ namespace expr
 
 			assert_with_invalid_method_usage([&]() {return !ends_with(new_name, "-ref") && !ends_with(new_name, "-const"); });
 			static_assert(!(std::is_const_v<t>||std::is_reference_v<t>), "can only declare a raw type, references and const are not allowed");
-
-			names.operations[new_name] = &global_type_operation_adresses<t>;
+			
+			auto g = names.names.find(std::type_index{ typeid(t) });
+			if (g != names.names.end())
+			{
+				names.operations.erase(names.operations.find(g->second));
+				names.names.erase(g);
+			}
+			names.operations[new_name] = &global_type_operation_adresses<typename t>;
 			names.names[std::type_index{ typeid(t) }] = std::move(new_name);
 			
 		}
@@ -137,14 +143,20 @@ namespace expr
 				auto g = names.names.find(std::type_index{ typeid(raw) });
 				if (g == names.names.end())
 				{
+					std::string ret;
 					if constexpr(type_wrap_info<raw>::is())
 					{
-						return name_of<post_return_t<typename type_wrap_info<raw>::wrapped>>(names) + type_wrap_info<raw>::suffix();
+						ret = name_of<post_return_t<typename type_wrap_info<raw>::wrapped>>(names) + type_wrap_info<raw>::suffix();
 					}
 					else
 					{
-						return demangle(typeid(raw).name());
+						ret = demangle(typeid(raw).name());
 					}
+					while (names.operations.find(ret) != names.operations.end())
+					{
+						ret = "automatically_named." + ret;
+					}
+					return ret;
 				}
 				else
 				{
