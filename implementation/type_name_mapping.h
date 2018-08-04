@@ -99,30 +99,6 @@ namespace expr
 		};
 		
 		template<typename t>
-		std::string get_name_of(type_info_set const& names = global_type_info())
-		{
-			static_assert(!type<t>::is_raw());
-
-			using raw = typename type<t>::raw;
-
-				auto g = names.names.find(std::type_index{ typeid(raw) });
-				if (g == names.names.end())
-				{
-					std::string ret = type_operation_info<raw>::template type_name<type_info_set_name_generator>(type_info_set_name_generator{ names });
-
-					while (names.operations.find(ret) != names.operations.end())
-					{
-						ret = "automatically_named." + ret;
-					}
-					return ret;
-				}
-				else
-				{
-					return std::string{ g->second };
-				}
-		}
-
-		template<typename t>
 		std::string name_of(type_info_set const& names = global_type_info())
 		{
 			static_assert(!type<t>::is_raw());
@@ -142,6 +118,7 @@ namespace expr
 				auto g = names.names.find(std::type_index{ typeid(raw) });
 				if (g == names.names.end())
 				{
+					static_assert(!std::is_const_v<raw>);
 					std::string ret = type_operation_info<raw>::template type_name<type_info_set_name_generator>(type_info_set_name_generator{ names });
 
 					while (names.operations.find(ret) != names.operations.end())
