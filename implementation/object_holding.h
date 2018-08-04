@@ -316,7 +316,7 @@ namespace expr
 
 			mu::virt<any_object> unwrap() override
 			{
-				if constexpr(is_wrapper_v<raw>)
+				if constexpr(is_wrapper_v<type_operation_info<raw>>)
 				{
 					if constexpr(!std::is_const_v<typename type_operation_info<raw>::deref>)
 					{

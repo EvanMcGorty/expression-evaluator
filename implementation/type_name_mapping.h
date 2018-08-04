@@ -62,7 +62,7 @@ namespace expr
 		}
 
 		template<typename t>
-		void declare(std::string&& new_name = name_of<t>(global_type_info()), type_info_set& names = global_type_info())
+		void declare(std::string&& new_name, type_info_set& names = global_type_info())
 		{
 			auto ends_with = [](std::string const & value, std::string const & ending) -> bool
 			{
@@ -79,7 +79,7 @@ namespace expr
 				names.operations.erase(names.operations.find(g->second));
 				names.names.erase(g);
 			}
-			names.operations[new_name] = &global_type_operation_adresses<typename t>;
+			names.operations[new_name] = &global_type_operation_adresses<t>;
 			names.names[std::type_index{ typeid(t) }] = std::move(new_name);
 			
 		}
@@ -108,7 +108,7 @@ namespace expr
 				auto g = names.names.find(std::type_index{ typeid(raw) });
 				if (g == names.names.end())
 				{
-					std::string ret = type_operation_info<raw>::type_name<type_info_set_name_generator>(type_info_set_name_generator{ names });
+					std::string ret = type_operation_info<raw>::template type_name<type_info_set_name_generator>(type_info_set_name_generator{ names });
 
 					while (names.operations.find(ret) != names.operations.end())
 					{
@@ -142,7 +142,7 @@ namespace expr
 				auto g = names.names.find(std::type_index{ typeid(raw) });
 				if (g == names.names.end())
 				{
-					std::string ret = type_operation_info<raw>::type_name<type_info_set_name_generator>(type_info_set_name_generator{ names });
+					std::string ret = type_operation_info<raw>::template type_name<type_info_set_name_generator>(type_info_set_name_generator{ names });
 
 					while (names.operations.find(ret) != names.operations.end())
 					{

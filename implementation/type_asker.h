@@ -40,6 +40,9 @@ namespace expr
 		struct possible<false, t>
 		{
 		};
+		
+		template<typename t>
+		struct type_operation_info;
 
 		template<typename t>
 		class type_ask_of : public any_type_ask
