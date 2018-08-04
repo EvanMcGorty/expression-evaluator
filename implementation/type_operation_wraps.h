@@ -14,7 +14,7 @@ namespace expr
 		{
 			static std::string type_name()
 			{
-				return demangle(typeid(raw).name());
+				return demangle(typeid(t).name());
 			}
 
 			//when successful, start is exactly one place ahead of the last character of the parsed value.

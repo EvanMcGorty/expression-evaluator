@@ -104,15 +104,8 @@ namespace expr
 				auto g = names.names.find(std::type_index{ typeid(raw) });
 				if (g == names.names.end())
 				{
-					std::string ret;
-					if constexpr(is_wrapper_v<raw>)
-					{
-						ret = type_operation_info<raw>::type_name();
-					}
-					else
-					{
-						ret = demangle(typeid(raw).name());
-					}
+					std::string ret = type_operation_info<raw>::type_name();
+					
 					while (names.operations.find(ret) != names.operations.end())
 					{
 						ret = "automatically_named." + ret;
