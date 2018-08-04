@@ -53,7 +53,7 @@ namespace expr
 
 	//parsing/printing conversions generic to any type t
 	//specialize this class to supply custom parsing and printing for a type
-	using impl::converter;
+	using impl::type_operation_info;
 
 	//a map of names to types
 	using impl::type_info_set;

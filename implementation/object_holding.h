@@ -260,7 +260,7 @@ namespace expr
 
 			std::string convert_into_string() override
 			{
-				return converter<raw>::print(get_raw());
+				return type_operation_info<raw>::print(get_raw());
 			}
 
 			std::string string_view(type_info_set const& names) override
@@ -316,13 +316,13 @@ namespace expr
 
 			mu::virt<any_object> unwrap() override
 			{
-				if constexpr(type_wrap_info<raw>::is())
+				if constexpr(is_wrapper_v<raw>)
 				{
-					if constexpr(!std::is_const_v<typename type_wrap_info<raw>::deref>)
+					if constexpr(!std::is_const_v<typename type_operation_info<raw>::deref>)
 					{
-						if(type_wrap_info<raw>::has(get_raw()))
+						if(type_operation_info<raw>::can_unwrap(get_raw()))
 						{
-							return mu::virt<any_object>::make<object_of<post_return_t<typename type_wrap_info<raw>::deref>>>(into_returnable(type_wrap_info<raw>::get(get_raw())));
+							return mu::virt<any_object>::make<object_of<post_return_t<typename type_operation_info<raw>::deref>>>(into_returnable(type_operation_info<raw>::unwrap(get_raw())));
 						}
 					}
 				}
@@ -440,7 +440,7 @@ namespace expr
 		template<typename t>
 		predeclared_object_result type_operations_for<t>::make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) const
 		{
-			std::optional<t> g{ converter<t>::parse(start,stop) };
+			std::optional<t> g{ type_operation_info<t>::parse(start,stop) };
 			if (g)
 			{
 				return predeclared_object_result{ make_object(g) };

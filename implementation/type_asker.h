@@ -1,5 +1,5 @@
 #pragma once
-#include"literal_conversions.h"
+#include"literal_parsing.h"
 
 #include<typeinfo>
 
@@ -54,7 +54,7 @@ namespace expr
 				{
 					typedef std::remove_const_t<typename type<t>::raw> holdable;
 					auto it = a.cbegin();
-					std::optional<holdable> temp = converter<holdable>::parse(it,a.cend());
+					std::optional<holdable> temp = type_operation_info<holdable>::parse(it,a.cend());
 					if (temp)
 					{
 						pointed_to_value.emplace(possible<true, t>{ std::move(*temp) });
@@ -64,7 +64,7 @@ namespace expr
 				else
 				{
 					auto it = a.cbegin();
-					auto temp = converter<typename type<t>::raw>::parse(it,a.cend());
+					auto temp = type_operation_info<typename type<t>::raw>::parse(it,a.cend());
 					if (temp)
 					{
 						gotten.emplace(std::move(*temp));
@@ -81,7 +81,7 @@ namespace expr
 				else
 				{
 					auto it = a.cbegin();
-					auto temp = converter<std::remove_const_t<t>>::parse(it, a.cend());
+					auto temp = type_operation_info<std::remove_const_t<t>>::parse(it, a.cend());
 					if (temp)
 					{
 						gotten.emplace(std::move(*temp));

@@ -62,7 +62,7 @@ namespace expr
 		}
 
 		template<typename t>
-		void declare(std::string&& new_name, type_info_set& names = global_type_info())
+		void declare(std::string&& new_name = name_of<t>(global_type_info()), type_info_set& names = global_type_info())
 		{
 			auto ends_with = [](std::string const & value, std::string const & ending) -> bool
 			{
@@ -105,9 +105,9 @@ namespace expr
 				if (g == names.names.end())
 				{
 					std::string ret;
-					if constexpr(type_wrap_info<raw>::is())
+					if constexpr(is_wrapper_v<raw>)
 					{
-						ret = name_of<post_return_t<typename type_wrap_info<raw>::wrapped>>(names) + type_wrap_info<raw>::suffix();
+						ret = type_operation_info<raw>::type_name();
 					}
 					else
 					{

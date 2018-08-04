@@ -1,5 +1,6 @@
 #pragma once
 #include<memory>
+//#include<type_traits>
 #include"literal_parsing.h"
 #include"type_demangle.h"
 
@@ -11,10 +12,15 @@ namespace expr
 		template <typename t>
 		struct type_operation_info
 		{
+			static std::string type_name()
+			{
+				return demangle(typeid(raw).name());
+			}
+
 			//when successful, start is exactly one place ahead of the last character of the parsed value.
 			static std::optional<t> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
-				if constexpr(type_operation_info<t>::is_wrapper_type())
+				if constexpr(is_wrapper_v<t>)
 				{
 					return std::nullopt;
 				}
@@ -101,15 +107,15 @@ namespace expr
 
 			static std::string print(t& tar)
 			{
-				if constexpr(type_operation_info<t>::is_wrapper_type())
+				if constexpr(is_wrapper_v<t>)
 				{
-					if (!type_operation_info<t>::has(tar))
+					if (!type_operation_info<t>::can_unwrap(tar))
 					{
 						return "NULL";
 					}
 					else
 					{
-						return converter<typename type_operation_info<t>::deref>::print(type_operation_info<t>::get(tar));
+						return type_operation_info<typename type_operation_info<t>::deref>::print(type_operation_info<t>::get(tar));
 					}
 				}
 				else if constexpr(std::is_arithmetic_v<t>)
@@ -137,8 +143,16 @@ namespace expr
 			}
 		};
 
+		struct wrapper_type
+		{
+
+		};
+
+		template<typename t>
+		constexpr bool is_wrapper_v = std::is_base_of_v<t, wrapper_type>;
+
 		template <typename t>
-		struct type_operation_info<t*>
+		struct type_operation_info<t*> : public wrapper_type
 		{
 
 			static std::string type_name()
@@ -155,7 +169,7 @@ namespace expr
 			{
 				if (tar)
 				{
-					return "&" + converter<t>::print(*tar);
+					return "&" + type_operation_info<t>::print(*tar);
 				}
 				else
 				{
@@ -178,7 +192,7 @@ namespace expr
 		};
 
 		template <typename t>
-		struct type_operation_info<std::unique_ptr<t>>
+		struct type_operation_info<std::unique_ptr<t>> : public wrapper_type
 		{
 
 			static std::string type_name()
@@ -206,7 +220,7 @@ namespace expr
 				else if (*start == '&')
 				{
 					++start;
-					std::optional<t>&& g = converter<t>::parse(start, stop);
+					std::optional<t>&& g = type_operation_info<t>::parse(start, stop);
 					if (g)
 					{
 						return std::optional<std::unique_ptr<t>>(std::make_unique<t>(std::move(*g)));
@@ -226,7 +240,7 @@ namespace expr
 			{
 				if (tar)
 				{
-					return "&" + converter<t>::print(*tar);
+					return "&" + type_operation_info<t>::print(*tar);
 				}
 				else
 				{
@@ -249,7 +263,7 @@ namespace expr
 		};
 
 		template <typename t>
-		struct type_operation_info<std::shared_ptr<t>>
+		struct type_operation_info<std::shared_ptr<t>> : public wrapper_type
 		{
 
 			static std::string type_name()
@@ -277,7 +291,7 @@ namespace expr
 				else if (*start == '&')
 				{
 					++start;
-					std::optional<t>&& g = converter<t>::parse(start, stop);
+					std::optional<t>&& g = type_operation_info<t>::parse(start, stop);
 					if (g)
 					{
 						return std::optional<std::shared_ptr<t>>(std::make_unique<t>(std::move(*g)));
@@ -297,7 +311,7 @@ namespace expr
 			{
 				if (tar)
 				{
-					return "&" + converter<t>::print(*tar);
+					return "&" + type_operation_info<t>::print(*tar);
 				}
 				else
 				{
@@ -320,7 +334,7 @@ namespace expr
 		};
 
 		template <typename t>
-		struct type_operation_info<std::optional<t>>
+		struct type_operation_info<std::optional<t>> : public wrapper_type
 		{
 
 			static std::string type_name()
@@ -351,7 +365,7 @@ namespace expr
 				else if (*start == '?')
 				{
 					++start;
-					std::optional<t>&& g = converter<t>::parse(start, stop);
+					std::optional<t>&& g = type_operation_info<t>::parse(start, stop);
 					if (g)
 					{
 						return std::optional<std::optional<t>>(std::move(g));
@@ -371,7 +385,7 @@ namespace expr
 			{
 				if (tar)
 				{
-					return "?" + converter<t>::print(*tar);
+					return "?" + type_operation_info<t>::print(*tar);
 				}
 				else
 				{
@@ -429,7 +443,7 @@ namespace expr
 		};
 
 		template <typename t>
-		struct type_operation_info<strong<t>>
+		struct type_operation_info<strong<t>> : public wrapper_type
 		{
 
 			static std::string type_name()
@@ -442,7 +456,7 @@ namespace expr
 				auto&& g = type_operation_info<t>::parse(start, stop);
 				if (g)
 				{
-					return strong(std::move(*g));
+					return strong<t>(std::move(*g));
 				}
 				else
 				{
@@ -452,7 +466,7 @@ namespace expr
 
 			static std::string print(strong<t>& tar)
 			{
-				return type_operation_info<t>(*tar);
+				return type_operation_info<t>::print(*tar);
 			}
 
 
@@ -527,7 +541,7 @@ namespace expr
 							return { std::move(ret) };
 						}
 
-						std::optional<t> curelem = converter<t>::parse(start, stop);
+						std::optional<t> curelem = type_operation_info<t>::parse(start, stop);
 						if (curelem)
 						{
 							ret.emplace_back(std::move(*curelem));
@@ -567,7 +581,7 @@ namespace expr
 				ret.push_back('[');
 				for (auto& it : tar)
 				{
-					ret.append(converter<t>::print(it));
+					ret.append(type_operation_info<t>::print(it));
 					ret.push_back(' ');
 				}
 				if (ret.size() == 1)
@@ -576,6 +590,25 @@ namespace expr
 				}
 				(*ret.rbegin()) = ']';
 				return std::move(ret);
+			}
+		};
+
+		template<>
+		struct type_operation_info<std::string>
+		{
+			static std::string type_name()
+			{
+				return "string";
+			}
+
+			static std::optional<std::string> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			{
+				return std::optional<std::string>{ std::string(start,stop) };
+			}
+
+			static std::string print(std::string const& a)
+			{
+				return std::string(a);
 			}
 		};
 
