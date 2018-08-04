@@ -12,9 +12,10 @@ namespace expr
 		template <typename t>
 		struct type_operation_info
 		{
-			static std::string type_name()
+			template<typename name_generator = compiler_name_generator>
+			static std::string type_name(name_generator instance)
 			{
-				return demangle(typeid(t).name());
+				return compiler_name_generator{}.retrieve<t>();
 			}
 
 			//when successful, start is exactly one place ahead of the last character of the parsed value.
@@ -105,7 +106,7 @@ namespace expr
 				}
 			}
 
-			static std::string print(t& tar)
+			static std::string print(t const& tar)
 			{
 				if constexpr(is_wrapper_v<t>)
 				{
@@ -143,6 +144,27 @@ namespace expr
 			}
 		};
 
+		template <typename t>
+		struct type_operation_info<t const>
+		{
+			template<typename name_generator = compiler_name_generator>
+			static std::string type_name(name_generator instance)
+			{
+				static_assert(false, "caller should always ensure use of a non const t for this particular function");
+				return type_operation_info::type_name<name_generator>();
+			}
+			static std::optional<t> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			{
+				static_assert(false, "caller should always ensure use of a non const t for this particular function");
+				return type_operation_info::parse(start,stop);
+			}
+
+			static std::string print(t const& tar)
+			{
+				return type_operation_info<t>::print(tar);
+			}
+		};
+
 		struct wrapper_type
 		{
 
@@ -155,9 +177,10 @@ namespace expr
 		struct type_operation_info<t*> : public wrapper_type
 		{
 
-			static std::string type_name()
+			template<typename name_generator = compiler_name_generator>
+			static std::string type_name(name_generator instance)
 			{
-				return type_operation_info<t>::type_name() + "-ptr";
+				return instance.retrieve<t>() + "-ptr";
 			}
 
 			static std::optional<t*> parse(std::string::const_iterator& start, std::string::const_iterator stop)
@@ -165,7 +188,7 @@ namespace expr
 				return std::nullopt;
 			}
 
-			static std::string print(t*& tar)
+			static std::string print(t* const& tar)
 			{
 				if (tar)
 				{
@@ -195,9 +218,10 @@ namespace expr
 		struct type_operation_info<std::unique_ptr<t>> : public wrapper_type
 		{
 
-			static std::string type_name()
+			template<typename name_generator = compiler_name_generator>
+			static std::string type_name(name_generator instance)
 			{
-				return type_operation_info<t>::type_name() + "-unique_ptr";
+				return instance.retrieve<t>() + "-unique_ptr";
 			}
 
 			static std::optional<std::unique_ptr<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
@@ -236,7 +260,7 @@ namespace expr
 				}
 			}
 
-			static std::string print(std::unique_ptr<t>& tar)
+			static std::string print(std::unique_ptr<t> const& tar)
 			{
 				if (tar)
 				{
@@ -266,9 +290,10 @@ namespace expr
 		struct type_operation_info<std::shared_ptr<t>> : public wrapper_type
 		{
 
-			static std::string type_name()
+			template<typename name_generator = compiler_name_generator>
+			static std::string type_name(name_generator instance)
 			{
-				return type_operation_info<t>::type_name() + "-shared_ptr";
+				return instance.retrieve<t>() + "-shared_ptr";
 			}
 
 			static std::optional<std::shared_ptr<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
@@ -307,7 +332,7 @@ namespace expr
 				}
 			}
 
-			static std::string print(std::shared_ptr<t>& tar)
+			static std::string print(std::shared_ptr<t> const& tar)
 			{
 				if (tar)
 				{
@@ -337,9 +362,10 @@ namespace expr
 		struct type_operation_info<std::optional<t>> : public wrapper_type
 		{
 
-			static std::string type_name()
+			template<typename name_generator = compiler_name_generator>
+			static std::string type_name(name_generator instance)
 			{
-				return type_operation_info<t>::type_name() + "-optional";
+				return instance.retrieve<t>() + "-optional";
 			}
 
 
@@ -381,7 +407,7 @@ namespace expr
 				}
 			}
 
-			static std::string print(std::optional<t>& tar)
+			static std::string print(std::optional<t> const& tar)
 			{
 				if (tar)
 				{
@@ -402,6 +428,82 @@ namespace expr
 			}
 
 			static unwrapped do_unwrap(std::optional<t>& a)
+			{
+				return *a;
+			}
+		};
+
+		template <typename t>
+		struct type_operation_info<std::optional<t> const> : public wrapper_type
+		{
+
+			template<typename name_generator = compiler_name_generator>
+			static std::string type_name(name_generator instance)
+			{
+				static_assert(false,"caller should always ensure use of a non const t for this particular function");
+				return instance.retrieve<t>() + "-optional";
+			}
+
+
+			static std::optional<std::optional<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			{
+				static_assert(false, "caller should always ensure use of a non const t for this particular function");
+				if (start == stop)
+				{
+					//invalid input
+					return std::optional<std::optional<t>>(std::nullopt);
+				}
+
+				static char const none[] = "none";
+
+				auto m = std::mismatch(start, stop, std::begin(none), std::end(none) - 1);
+
+				if (m.second == std::end(none) - 1)
+				{
+					//valid input indicating an empty optional of t.
+					start = m.first;
+					return std::optional<std::optional<t>>(std::optional<t>(std::nullopt));
+				}
+				else if (*start == '?')
+				{
+					++start;
+					std::optional<t>&& g = type_operation_info<t>::parse(start, stop);
+					if (g)
+					{
+						return std::optional<std::optional<t>>(std::move(g));
+					}
+					else
+					{
+						return std::nullopt;
+					}
+				}
+				else
+				{
+					return std::nullopt;
+				}
+			}
+
+			static std::string print(std::optional<t> const& tar)
+			{
+				if (tar)
+				{
+					return "?" + type_operation_info<t const>::print(*tar);
+				}
+				else
+				{
+					return "none";
+				}
+			}
+
+
+			typedef t const& unwrapped;
+
+			static bool can_unwrap(std::optional<t> const& a)
+			{
+				return a != std::nullopt;
+			}
+
+			static unwrapped do_unwrap(std::optional<t> const& a)
 			{
 				return *a;
 			}
@@ -446,14 +548,15 @@ namespace expr
 		struct type_operation_info<strong<t>> : public wrapper_type
 		{
 
-			static std::string type_name()
+			template<typename name_generator = compiler_name_generator>
+			static std::string type_name(name_generator instance)
 			{
-				return type_operation_info<t>::type_name() + "-strong";
+				return instance.retrieve<t>() + "-strong";
 			}
 
 			static std::optional<strong<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
-				auto&& g = type_operation_info<t>::parse(start, stop);
+				auto&& g = type_operation_info<std::remove_const_t<t>>::parse(start, stop);
 				if (g)
 				{
 					return strong<t>(std::move(*g));
@@ -464,7 +567,7 @@ namespace expr
 				}
 			}
 
-			static std::string print(strong<t>& tar)
+			static std::string print(strong<t> const& tar)
 			{
 				return type_operation_info<t>::print(*tar);
 			}
@@ -487,9 +590,10 @@ namespace expr
 		template<typename t>
 		struct type_operation_info<std::vector<t>>
 		{
-			static std::string type_name()
+			template<typename name_generator = compiler_name_generator>
+			static std::string type_name(name_generator instance)
 			{
-				return type_operation_info<t>::type_name() + "-vector";
+				return instance.retrieve<t>() + "-vector";
 			}
 
 			static std::optional<std::vector<t>> parse(std::string::const_iterator& start, std::string::const_iterator stop)
@@ -575,7 +679,7 @@ namespace expr
 
 			}
 
-			static std::string print(std::vector<t>& tar)
+			static std::string print(std::vector<t> const& tar)
 			{
 				std::string ret;
 				ret.push_back('[');
@@ -596,7 +700,8 @@ namespace expr
 		template<>
 		struct type_operation_info<std::string>
 		{
-			static std::string type_name()
+			template<typename name_generator = compiler_name_generator>
+			static std::string type_name(name_generator instance)
 			{
 				return "string";
 			}

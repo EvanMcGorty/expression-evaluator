@@ -1,4 +1,6 @@
 #pragma once
+#include<string>
+#include<memory>
 
 #ifdef __GNUG__
 
@@ -38,3 +40,18 @@ namespace expr
 }
 
 #endif
+
+namespace expr
+{
+	namespace impl
+	{
+		struct compiler_name_generator
+		{
+			template<typename t>
+			std::string retrieve()
+			{
+				return demangle(typeid(t).name());
+			}
+		};
+	}
+}

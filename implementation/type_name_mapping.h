@@ -83,7 +83,45 @@ namespace expr
 			names.names[std::type_index{ typeid(t) }] = std::move(new_name);
 			
 		}
+
+		struct type_info_set_name_generator
+		{
+
+			type_info_set_name_generator(type_info_set const& a)
+			{
+				names = &a;
+			}
+
+			template<typename t>
+			std::string retrieve();
+
+			type_info_set const* names;
+		};
 		
+		template<typename t>
+		std::string get_name_of(type_info_set const& names = global_type_info())
+		{
+			static_assert(!type<t>::is_raw());
+
+			using raw = typename type<t>::raw;
+
+				auto g = names.names.find(std::type_index{ typeid(raw) });
+				if (g == names.names.end())
+				{
+					std::string ret = type_operation_info<raw>::type_name<type_info_set_name_generator>(type_info_set_name_generator{ names });
+
+					while (names.operations.find(ret) != names.operations.end())
+					{
+						ret = "automatically_named." + ret;
+					}
+					return ret;
+				}
+				else
+				{
+					return std::string{ g->second };
+				}
+		}
+
 		template<typename t>
 		std::string name_of(type_info_set const& names = global_type_info())
 		{
@@ -104,8 +142,8 @@ namespace expr
 				auto g = names.names.find(std::type_index{ typeid(raw) });
 				if (g == names.names.end())
 				{
-					std::string ret = type_operation_info<raw>::type_name();
-					
+					std::string ret = type_operation_info<raw>::type_name<type_info_set_name_generator>(type_info_set_name_generator{ names });
+
 					while (names.operations.find(ret) != names.operations.end())
 					{
 						ret = "automatically_named." + ret;
@@ -117,6 +155,14 @@ namespace expr
 					return std::string{ g->second };
 				}
 			}
+		}
+
+
+
+		template<typename t>
+		inline std::string type_info_set_name_generator::retrieve()
+		{
+			return name_of<pre_call_t<t>>(*names);
 		}
 
 	}
