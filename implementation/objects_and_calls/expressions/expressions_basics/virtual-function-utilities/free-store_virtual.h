@@ -6,6 +6,13 @@
 
 #include "../asserts_and_errors.h"
 
+
+namespace expr
+{
+namespace impl
+{
+
+
 namespace mu
 {
 
@@ -170,5 +177,9 @@ private:
     //wrapped data
     std::unique_ptr<t> data;
 };
+
+}
+
+}
 
 }

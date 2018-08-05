@@ -6,6 +6,13 @@
 #include "../asserts_and_errors.h"
 #include<functional>
 
+
+namespace expr
+{
+namespace impl
+{
+
+
 namespace mu
 {
 
@@ -384,5 +391,9 @@ private:
     std::array<unsigned char,cap> data;
     bool is_nonnull; //there needs to be some representation of a null state after an r-value is moved out of
 };
+
+}
+
+}
 
 }

@@ -4,6 +4,11 @@
 #include<typeinfo>
 #include"stack-based_virtual.h"
 
+namespace expr
+{
+namespace impl
+{
+
 namespace mu
 {
 
@@ -325,4 +330,7 @@ private:
 
 };
 
+}
+
+}
 }
