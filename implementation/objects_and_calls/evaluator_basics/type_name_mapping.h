@@ -86,15 +86,6 @@ namespace expr
 			
 		}
 
-		template<typename t, typename...ts>
-		void declare(type_info_set& names = global_type_info())
-		{
-			declare_with_name<t>(name_of<pre_call_t<t>>(names));
-			if constexpr(sizeof...(ts) > 0)
-			{
-				declare<ts...>(names);
-			}
-		}
 
 		struct type_info_set_name_generator
 		{
@@ -147,6 +138,15 @@ namespace expr
 		}
 
 
+		template<typename t, typename...ts>
+		void declare(type_info_set& names = global_type_info())
+		{
+			declare_with_name<t>(name_of<pre_call_t<t>>(names));
+			if constexpr(sizeof...(ts) > 0)
+			{
+				declare<ts...>(names);
+			}
+		}
 
 		template<typename t>
 		inline std::string type_info_set_name_generator::retrieve()
