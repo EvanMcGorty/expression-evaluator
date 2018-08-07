@@ -15,12 +15,53 @@ namespace expr
 		};
 
 		template<typename t>
-		constexpr bool is_wrapper_v = std::is_base_of_v<t, wrapper_type>;
-
+		constexpr bool is_wrapper_v = std::is_base_of_v<wrapper_type,t>;
 
 		template <typename t>
-		struct type_operation_info
+		struct type_operation_info : public type_operation_info<t const&>
+		{};
+
+		template <typename t>
+		struct type_operation_info<t&&> : public type_operation_info<t&>
 		{
+
+		};
+
+		template <typename t>
+		struct type_operation_info<t&> : public type_operation_info<t const&>
+		{
+
+		};
+
+		template <typename t>
+		struct type_operation_info<t const&>
+		{
+			static std::string print(t const& tar)
+			{
+				if constexpr(std::is_arithmetic_v<t>)
+				{
+					std::stringstream s;
+					s << tar;
+					return s.str();
+				}
+				else if constexpr(std::is_convertible_v<t const&, std::string>)
+				{
+					return literal{ literal_value{ std::string(tar) } }.make_string();
+				}
+				else
+				{
+					std::stringstream s;
+					s << std::hex << std::setw(2) << std::setfill('0') << "0x";
+					unsigned char const* p = reinterpret_cast<unsigned char const*>(&tar);
+					typedef unsigned int printable;
+					for (int i = 0; i != sizeof(t); ++i)
+					{
+						s << std::setw(2) << printable{ p[i] };
+					}
+					return s.str();
+				}
+			}
+
 			template<typename name_generator = compiler_name_generator>
 			static std::string type_name(name_generator instance)
 			{
@@ -115,45 +156,12 @@ namespace expr
 				}
 			}
 
-			static std::string print(t const& tar)
-			{
-				if constexpr(std::is_arithmetic_v<t>)
-				{
-					std::stringstream s;
-					s << tar;
-					return s.str();
-				}
-				else if constexpr(std::is_convertible_v<t const&, std::string>)
-				{
-					return literal{ literal_value{ std::string(tar) } }.make_string();
-				}
-				else
-				{
-					std::stringstream s;
-					s << std::hex << std::setw(2) << std::setfill('0') << "0x";
-					unsigned char const* p = reinterpret_cast<unsigned char const*>(&tar);
-					typedef unsigned int printable;
-					for (int i = 0; i != sizeof(t); ++i)
-					{
-						s << std::setw(2) << printable{ p[i] };
-					}
-					return s.str();
-				}
-			}
-		};
 
-		template <typename t>
-		struct type_operation_info<t const>
-		{
-			static std::string print(t const& tar)
-			{
-				return type_operation_info<t>::print(tar);
-			}
 		};
 
 
 		template <typename t>
-		struct type_operation_info<t*> : public wrapper_type
+		struct type_operation_info<t* const&> : public wrapper_type
 		{
 
 			template<typename name_generator = compiler_name_generator>
@@ -187,14 +195,14 @@ namespace expr
 				return a != nullptr;
 			}
 
-			static unwrapped do_unwrap(t*& a)
+			static unwrapped do_unwrap(t* const& a)
 			{
 				return *a;
 			}
 		};
 
 		template <typename t>
-		struct type_operation_info<std::unique_ptr<t>> : public wrapper_type
+		struct type_operation_info<std::unique_ptr<t> const&> : public wrapper_type
 		{
 
 			template<typename name_generator = compiler_name_generator>
@@ -259,14 +267,14 @@ namespace expr
 				return a.get() != nullptr;
 			}
 
-			static unwrapped do_unwrap(std::unique_ptr<t>& a)
+			static unwrapped do_unwrap(std::unique_ptr<t> const& a)
 			{
 				return *a;
 			}
 		};
 
 		template <typename t>
-		struct type_operation_info<std::shared_ptr<t>> : public wrapper_type
+		struct type_operation_info<std::shared_ptr<t> const&> : public wrapper_type
 		{
 
 			template<typename name_generator = compiler_name_generator>
@@ -331,15 +339,41 @@ namespace expr
 				return a.get() != nullptr;
 			}
 
-			static unwrapped do_unwrap(std::shared_ptr<t>& a)
+			static unwrapped do_unwrap(std::shared_ptr<t> const& a)
+			{
+				return *a;
+			}
+		};
+
+
+		template <typename t>
+		struct type_operation_info<std::optional<t>&> : public type_operation_info<std::optional<t> const&>
+		{
+			typedef t& unwrapped;
+
+			static unwrapped do_unwrap(std::optional<t>& a)
 			{
 				return *a;
 			}
 		};
 
 		template <typename t>
-		struct type_operation_info<std::optional<t>> : public wrapper_type
+		struct type_operation_info<std::optional<t> const&> : public wrapper_type
 		{
+
+			static std::string print(std::optional<t> const& tar)
+			{
+				if (tar)
+				{
+					return "?" + type_operation_info<t const&>::print(*tar);
+				}
+				else
+				{
+					return "nullopt";
+				}
+			}
+
+
 
 			template<typename name_generator = compiler_name_generator>
 			static std::string type_name(name_generator instance)
@@ -357,7 +391,7 @@ namespace expr
 					return std::optional<std::optional<t>>(std::nullopt);
 				}
 
-				static char const none[] = "none";
+				static char const none[] = "nullopt";
 
 				auto m = std::mismatch(start, stop, std::begin(none), std::end(none) - 1);
 
@@ -386,47 +420,6 @@ namespace expr
 				}
 			}
 
-			static std::string print(std::optional<t> const& tar)
-			{
-				if (tar)
-				{
-					return "?" + type_operation_info<t>::print(*tar);
-				}
-				else
-				{
-					return "none";
-				}
-			}
-
-
-			typedef t& unwrapped;
-
-			static bool can_unwrap(std::optional<t> const& a)
-			{
-				return a != std::nullopt;
-			}
-
-			static unwrapped do_unwrap(std::optional<t>& a)
-			{
-				return *a;
-			}
-		};
-
-		template <typename t>
-		struct type_operation_info<std::optional<t> const> : public wrapper_type
-		{
-
-			static std::string print(std::optional<t> const& tar)
-			{
-				if (tar)
-				{
-					return "?" + type_operation_info<t const>::print(*tar);
-				}
-				else
-				{
-					return "none";
-				}
-			}
 
 
 			typedef t const& unwrapped;
@@ -478,7 +471,7 @@ namespace expr
 		};
 
 		template <typename t>
-		struct type_operation_info<strong<t>> : public wrapper_type
+		struct type_operation_info<strong<t> const&> : public wrapper_type
 		{
 
 			template<typename name_generator = compiler_name_generator>
@@ -513,7 +506,7 @@ namespace expr
 				return true;
 			}
 
-			static unwrapped do_unwrap(strong<t>& a)
+			static unwrapped do_unwrap(strong<t> const& a)
 			{
 				return *a;
 			}
@@ -521,7 +514,7 @@ namespace expr
 
 
 		template<typename t>
-		struct type_operation_info<std::vector<t>>
+		struct type_operation_info<std::vector<t> const&>
 		{
 			template<typename name_generator = compiler_name_generator>
 			static std::string type_name(name_generator instance)
@@ -631,7 +624,7 @@ namespace expr
 		};
 
 		template<>
-		struct type_operation_info<std::string>
+		struct type_operation_info<std::string const&>
 		{
 			template<typename name_generator = compiler_name_generator>
 			static std::string type_name(name_generator instance)

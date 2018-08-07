@@ -121,6 +121,8 @@ namespace expr
 
 			virtual mu::virt<any_object> make_reference() = 0;
 
+			virtual mu::virt<any_object> make_constant_reference() = 0;
+
 			virtual mu::virt<any_object> take_value() = 0;
 
 			virtual mu::virt<any_object> unwrap() = 0;
@@ -189,6 +191,11 @@ namespace expr
 				return mu::virt<any_object>::make_nullval();
 			}
 
+			mu::virt<any_object> make_constant_reference() override
+			{
+				return mu::virt<any_object>::make_nullval();
+			}
+
 			mu::virt<any_object> take_value() override
 			{
 				return mu::virt<any_object>::make_nullval();
@@ -236,6 +243,7 @@ namespace expr
 		{
 		private:
 			typedef typename type<t>::raw raw;
+			typedef typename type<t>::will_pass will_pass;
 
 			raw& get_raw()
 			{
@@ -260,7 +268,7 @@ namespace expr
 
 			std::string convert_into_string() override
 			{
-				return type_operation_info<raw>::print(get_raw());
+				return type_operation_info<will_pass>::print(get_raw());
 			}
 
 			std::string string_view(type_info_set const& names) override
@@ -289,7 +297,7 @@ namespace expr
 			{
 				if constexpr(std::is_constructible_v<std::remove_const_t<raw>, raw&>)
 				{
-					return mu::virt<any_object>::make<object_of<val_wrap<std::remove_const_t<raw>>>>(into_returnable<std::remove_const_t<raw>>(raw(get_raw())));
+					return mu::virt<any_object>::make<object_of<val_wrap<std::remove_const_t<raw>>>>(into_returnable<std::remove_const_t<raw>>(std::remove_const_t<raw>(get_raw())));
 				}
 				else
 				{
@@ -300,6 +308,11 @@ namespace expr
 			mu::virt<any_object> make_reference() override
 			{
 				return mu::virt<any_object>::make<object_of<post_return_t<raw&>>>(into_returnable<raw&>(get_raw()));
+			}
+
+			mu::virt<any_object> make_constant_reference() override
+			{
+				return mu::virt<any_object>::make<object_of<post_return_t<raw const&>>>(into_returnable<raw const&>(get_raw()));
 			}
 
 			virtual mu::virt<any_object> take_value() override
@@ -316,13 +329,15 @@ namespace expr
 
 			mu::virt<any_object> unwrap() override
 			{
-				if constexpr(is_wrapper_v<type_operation_info<raw>>)
+				constexpr bool is_wrapper = is_wrapper_v<type_operation_info<will_pass>>;
+				if constexpr(is_wrapper)
 				{
-					if constexpr(!std::is_const_v<typename type_operation_info<raw>::deref>)
+					constexpr bool is_deref_returnable = can_return<typename type_operation_info<will_pass>::unwrapped>();
+					if constexpr(is_deref_returnable)
 					{
-						if(type_operation_info<raw>::can_unwrap(get_raw()))
+						if(type_operation_info<will_pass>::can_unwrap(get_raw()))
 						{
-							return mu::virt<any_object>::make<object_of<post_return_t<typename type_operation_info<raw>::deref>>>(into_returnable(type_operation_info<raw>::unwrap(get_raw())));
+							return mu::virt<any_object>::make<object_of<post_return_t<typename type_operation_info<will_pass>::unwrapped>>>(into_returnable(type_operation_info<will_pass>::do_unwrap(get_raw())));
 						}
 					}
 				}
@@ -474,6 +489,10 @@ namespace expr
 				return object_holder::make_nullval();
 			}
 			auto found = global_type_info().operations.find(std::move(type_name));
+			if (found == global_type_info().operations.end())
+			{
+				return object_holder::make_nullval();
+			}
 			predeclared_object_result&& ret = found->second->make_from_string(start,stop);
 			if(start == stop || *start != ')')
 			{
@@ -518,6 +537,18 @@ namespace expr
 				if (!ref->is_nullval())
 				{
 					return (**ref).make_reference();
+				}
+				else
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
+			}
+
+			mu::virt<any_object> make_constant_reference() override
+			{
+				if (!ref->is_nullval())
+				{
+					return (**ref).make_constant_reference();
 				}
 				else
 				{

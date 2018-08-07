@@ -208,6 +208,8 @@ namespace expr
 
 			typedef t raw;
 
+			typedef t&& will_pass;
+
 			type()
 			{}
 			
@@ -237,6 +239,8 @@ namespace expr
 
 			typedef t raw;
 
+			typedef t& will_pass;
+
 			type()
 			{}
 			
@@ -257,6 +261,7 @@ namespace expr
 		};
 
 		//if t is what you see in a function argument, pre_call_t<t> is what is held before it is passed.
+		//or, at least what is held should be implicitly convertible (by the expression evaluator) into pre_call_t<t>
 		template<typename t>
 		constexpr auto as_storable()
 		{
