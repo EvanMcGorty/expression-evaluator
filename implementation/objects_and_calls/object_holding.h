@@ -443,12 +443,44 @@ namespace expr
 			std::optional<t> g{ type_operation_info<t>::parse(start,stop) };
 			if (g)
 			{
-				return predeclared_object_result{ make_object(g) };
+				return predeclared_object_result{ make_object(std::move(*g)) };
 			}
 			else
 			{
 				return predeclared_object_result{ object_holder::make_nullval() };
 			}
+		}
+
+		object_holder parse_to_object(std::string::const_iterator& start, std::string::const_iterator stop)
+		{
+			if(start == stop)
+			{
+				return object_holder::make_nullval();
+			}
+			std::string type_name;
+			type_name.reserve(std::distance(start,stop));
+			while(*start!='(')
+			{
+				type_name.push_back(*start);
+				++start;
+				if(start == stop)
+				{
+					return object_holder::make_nullval();
+				}
+			}
+			++start;
+			if(start == stop)
+			{
+				return object_holder::make_nullval();
+			}
+			auto found = global_type_info().operations.find(std::move(type_name));
+			predeclared_object_result&& ret = found->second->make_from_string(start,stop);
+			if(start == stop || *start != ')')
+			{
+				return object_holder::make_nullval();
+			}
+			
+			return std::move(ret.wrapped);
 		}
 
 

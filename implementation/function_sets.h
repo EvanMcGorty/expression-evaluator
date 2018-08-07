@@ -77,6 +77,21 @@ namespace expr
 				}
 			}
 
+			static object_holder parse(std::vector<stack_elem>& a)
+			{
+				if(a.size() == 1)
+				{
+					std::optional<ref_wrap<std::string const>> g = smart_take_elem<ref_wrap<std::string const>>(a[0]);
+					if(g)
+					{
+						auto start = g->to->begin();
+						auto stop = g->to->end();
+						return parse_to_object(start,stop);
+					}
+				}
+				return object_holder::make_nullval();
+			}
+
 		};
 
 		template<>
@@ -87,7 +102,8 @@ namespace expr
 				function_set ret;
 				ret.add(mfn(core::swap), "swap")
 					.add(mfn(core::first), "first")
-					.add(mfn(core::last), "last");
+					.add(mfn(core::last), "last")
+					.add(mfn(core::parse), "parse");
 				return ret;
 			}
 

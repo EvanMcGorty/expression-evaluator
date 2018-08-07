@@ -54,6 +54,9 @@ namespace expr
 	using impl::wrapper_util;
 
 	//renames a type within a typename dataset (by default uses a global one)
+	using impl::declare_with_name;
+
+	//does declare_with_name on arbitrarily many types using their default names
 	using impl::declare;
 }
 

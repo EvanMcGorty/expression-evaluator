@@ -16,12 +16,14 @@ namespace expr
 
 		class type_operations
 		{
+		public:
 			virtual predeclared_object_result make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) const = 0;
 		};
 
 		template<typename t>
 		class type_operations_for : public type_operations
 		{
+		public:
 			predeclared_object_result make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) const override;
 		};
 
@@ -62,7 +64,7 @@ namespace expr
 		}
 
 		template<typename t>
-		void declare(std::string&& new_name, type_info_set& names = global_type_info())
+		void declare_with_name(std::string&& new_name, type_info_set& names = global_type_info())
 		{
 			auto ends_with = [](std::string const & value, std::string const & ending) -> bool
 			{
@@ -82,6 +84,16 @@ namespace expr
 			names.operations[new_name] = &global_type_operation_adresses<t>;
 			names.names[std::type_index{ typeid(t) }] = std::move(new_name);
 			
+		}
+
+		template<typename t, typename...ts>
+		void declare(type_info_set& names = global_type_info())
+		{
+			declare_with_name<t>(name_of<pre_call_t<t>>(names));
+			if constexpr(sizeof...(ts) > 0)
+			{
+				declare<ts...>(names);
+			}
 		}
 
 		struct type_info_set_name_generator
