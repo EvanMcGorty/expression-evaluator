@@ -94,16 +94,18 @@ public:
 #include<functional>
 #include<iostream>
 
-#include"..\evaluator.h"
+#include"../evaluator.h"
 
 using namespace expr;
 
 int main()
 {
-	//(using the global database) assign the polynomial class the name "poly", and similar for other classes
-	rename<polynomial>("poly");
-	rename<double>("num");
-	rename<std::vector<double>>("vec");
+	//(using the global database) assign the polynomial class the name "poly", and similar for other classes.
+	declare_with_name<polynomial>("poly");
+	declare_with_name<double>("num");
+	//vector is a type that the evaluator can automatically name. currently it will default to "num-vector" (in this case).
+	//note that if this had been called first, it would default to something like "double-vector" or "float64-vector"
+	declare<std::vector<double>>();
 
 
 	//create the environment/settings of an interactive interpreter with default options
@@ -127,8 +129,8 @@ int main()
 		<< "sum" << sfn(std::function<double(double, double)>{[](double a, double b) {return a + b; }})
 		<< "prod" << sfn(std::function<double(double, double)>{[](double a, double b) {return a * b; }})
 		<< "num" << sfn(&util<double>::basic::copy_construct)
-		<< "pi" << val(3.1415926535)
-		<< "e" << val(2.7182818284)
+		<< "pi" << copier(3.1415926535)
+		<< "e" << copier(2.7182818284)
 		<< "num" << fs_functs<util<double>>()
 
 		//then add overloads for sum and prod that work with polynomials (note that these overloads have less priority)
@@ -155,11 +157,11 @@ int main()
 	swap(=p/,poly(=v))
 	subst(=p,3)
 	subst(=p,7)
-	swap(=p,prod(=p,poly("[3,2,1,0]")))
+	swap(=p,prod(=p,poly([3 2 1 0])))
 	swap(=n/,vec.at(view(=p),3))
 	num.give(=n,prod(take(=n),take(=n)))
 	view(=p)
-	subst(sum(=p,poly("[0 0 0 0 0 0 0 0 0 1]")),prod(prod(sum(1,2),sum(3,4)),sum(e,pi)))
+	subst(sum(=p,poly([0 0 0 0 0 0 0 0 0 1])),prod(prod(sum(1,2),sum(3,4)),sum(e,pi)))
 	_vars
 	_exit
 

@@ -194,9 +194,9 @@ int main()
 
 	//binding various aspects of the program
 	evaluator.functions
-		<< "res" << val(&resources)
-		<< "state" << val(&player)
-		<< "turn" << val(&turn_count)
+		<< "res" << refto(resources)
+		<< "state" << refto(player)
+		<< "turn" << refto(turn_count)
 		<< "set_up" << sfn(set_up)
 
 		//making a function for interacting with the first environment and letting a turn go by
@@ -234,7 +234,7 @@ int main()
 a sample game looks like this:
 /|\
 \\\
-set_up("[3,3,3]",10)
+set_up([3,3,3],10)
 ///
 |||
 \\\

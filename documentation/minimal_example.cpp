@@ -55,7 +55,7 @@ _exit
 #include <vector>
 #include <iostream>
 
-#include "../details.h"
+#include "../evaluator.h"
 
 using namespace expr;
 
@@ -83,16 +83,17 @@ void print(std::vector<double> const &w)
 {
 	for (auto const &i : w)
 	{
-		std::cout << i << std::endl;
+		std::cout << i << '\n' << std::flush;
 	}
 }
 
 int main()
 {
-	std::cout << "this code will run before the evaluator is used" << std::endl;
+	std::cout << "this code will run before the evaluator is used\n" << std::flush;
 
 	//by default uses a global rename dataset
-	rename<std::vector<double>>("vec");
+	declare_with_name<std::vector<double>>("vec");
+	declare<double,std::unique_ptr<double>,std::shared_ptr<double>,std::optional<double>>();
 
 	//the environment that will hold variables and functions
 	environment env;
@@ -103,6 +104,9 @@ int main()
 		//util<t> wraps t and provides basic functions. by not providing a string, the evaluator chooses a default name.
 		.use<util<std::vector<double>>>()
 		.use<util<double>>()
+		.use<util<std::unique_ptr<double>>>()
+		.use<util<std::shared_ptr<double>>>()
+		.use<util<std::optional<double>>>()
 
 		//a pretty syntax for binding functions. sfn takes a function pointer and turns it into something that env can use.
 		<< "prod" << sfn(multiply)
@@ -120,7 +124,7 @@ int main()
 	//interpreter is a more complicated environment that interacts with iostreams and has settings (with default settings and cout/cin).
 	interpreter{ std::move(env) }.go();
 
-	std::cout << "this code will run after the user calls _exit from the interpreter" << std::endl;
+	std::cout << "this code will run after the user calls _exit from the interpreter\n" << std::flush;
 	char a;
 	std::cin >> a;
 }
