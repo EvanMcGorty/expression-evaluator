@@ -9,33 +9,11 @@ namespace expr
 {
 	namespace impl
 	{
-
-		struct wrapper_type
-		{
-
-		};
-
-		template<typename t>
-		constexpr bool is_wrapper_v = std::is_base_of_v<wrapper_type,t>;
-
-		template <typename t>
-		struct type_operation_info : public type_operation_info<t const&>
+		struct wrapper_type_operation_trait
 		{};
-
+		
 		template <typename t>
-		struct type_operation_info<t&&> : public type_operation_info<t&>
-		{
-
-		};
-
-		template <typename t>
-		struct type_operation_info<t&> : public type_operation_info<t const&>
-		{
-
-		};
-
-		template <typename t>
-		struct type_operation_info<t const&>
+		struct type_operation_info
 		{
 			static std::string print(t const& tar)
 			{
@@ -47,7 +25,7 @@ namespace expr
 					{
 						s << std::fixed << std::setprecision(32);
 					}
-					if constexpr(std::is_same<t,bool>)
+					if constexpr(std::is_same_v<t, bool>)
 					{
 						s << std::boolalpha;
 					}
@@ -57,14 +35,14 @@ namespace expr
 
 					if constexpr(std::is_floating_point_v<t>)
 					{
-						while(*ret.rbegin() != '.' && (*ret.rbegin() == '0' || ret.size() >= 15))
+						while (*ret.rbegin() != '.' && (*ret.rbegin() == '0' || ret.size() >= 15))
 						{
 							ret.pop_back();
 						}
 						if (*ret.rbegin() == '.')
 						{
 							ret.pop_back();
-						} 
+						}
 					}
 					return ret;
 				}
@@ -95,11 +73,7 @@ namespace expr
 			//when successful, start is exactly one place ahead of the last character of the parsed value.
 			static std::optional<t> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
-				if constexpr(is_wrapper_v<type_operation_info<t>>)
-				{
-					return std::nullopt;
-				}
-				else if constexpr(std::is_arithmetic_v<t> && !std::is_same_v<t, bool>)
+				if constexpr(std::is_arithmetic_v<t> && !std::is_same_v<t, bool>)
 				{
 					auto p = parse_range_to_number(start, stop);
 					if (!p)
@@ -180,12 +154,29 @@ namespace expr
 				}
 			}
 
+		};
 
+		template <typename t>
+		struct type_operation_info<t&&> : public type_operation_info<t&>
+		{
+
+		};
+
+		template <typename t>
+		struct type_operation_info<t&> : public type_operation_info<t const&>
+		{
+
+		};
+
+		template <typename t>
+		struct type_operation_info<t const&> : public type_operation_info<t>
+		{
+			
 		};
 
 
 		template <typename t>
-		struct type_operation_info<t* const&> : public wrapper_type
+		struct type_operation_info<t*> : public wrapper_type_operation_trait
 		{
 
 			template<typename name_generator = compiler_name_generator>
@@ -211,22 +202,10 @@ namespace expr
 				}
 			}
 
-
-			typedef t& unwrapped;
-
-			static bool can_unwrap(t* const& a)
-			{
-				return a != nullptr;
-			}
-
-			static unwrapped do_unwrap(t* const& a)
-			{
-				return *a;
-			}
 		};
 
 		template <typename t>
-		struct type_operation_info<std::unique_ptr<t> const&> : public wrapper_type
+		struct type_operation_info<std::unique_ptr<t>> : public wrapper_type_operation_trait
 		{
 
 			template<typename name_generator = compiler_name_generator>
@@ -283,22 +262,10 @@ namespace expr
 				}
 			}
 
-			
-			typedef t& unwrapped;
-
-			static bool can_unwrap(std::unique_ptr<t> const& a)
-			{
-				return a.get() != nullptr;
-			}
-
-			static unwrapped do_unwrap(std::unique_ptr<t> const& a)
-			{
-				return *a;
-			}
 		};
 
 		template <typename t>
-		struct type_operation_info<std::shared_ptr<t> const&> : public wrapper_type
+		struct type_operation_info<std::shared_ptr<t>> : public wrapper_type_operation_trait
 		{
 
 			template<typename name_generator = compiler_name_generator>
@@ -354,35 +321,11 @@ namespace expr
 					return "nullptr";
 				}
 			}
-
-
-			typedef t& unwrapped;
-
-			static bool can_unwrap(std::shared_ptr<t> const& a)
-			{
-				return a.get() != nullptr;
-			}
-
-			static unwrapped do_unwrap(std::shared_ptr<t> const& a)
-			{
-				return *a;
-			}
 		};
 
 
 		template <typename t>
-		struct type_operation_info<std::optional<t>&> : public type_operation_info<std::optional<t> const&>
-		{
-			typedef t& unwrapped;
-
-			static unwrapped do_unwrap(std::optional<t>& a)
-			{
-				return *a;
-			}
-		};
-
-		template <typename t>
-		struct type_operation_info<std::optional<t> const&> : public wrapper_type
+		struct type_operation_info<std::optional<t>> : public wrapper_type_operation_trait
 		{
 
 			static std::string print(std::optional<t> const& tar)
@@ -443,20 +386,6 @@ namespace expr
 					return std::nullopt;
 				}
 			}
-
-
-
-			typedef t const& unwrapped;
-
-			static bool can_unwrap(std::optional<t> const& a)
-			{
-				return a != std::nullopt;
-			}
-
-			static unwrapped do_unwrap(std::optional<t> const& a)
-			{
-				return *a;
-			}
 		};
 
 		template<typename t>
@@ -464,7 +393,7 @@ namespace expr
 		{
 		private:
 			std::remove_const_t<t> mutable val;
-			
+
 			strong() = delete;
 			strong(strong<t> const&) = delete;
 			void operator=(strong<t> const&) = delete;
@@ -492,10 +421,15 @@ namespace expr
 			{
 				return val;
 			}
+
+			operator bool() const
+			{
+				return true;
+			}
 		};
 
 		template <typename t>
-		struct type_operation_info<strong<t> const&> : public wrapper_type
+		struct type_operation_info<strong<t>> : public wrapper_type_operation_trait
 		{
 
 			template<typename name_generator = compiler_name_generator>
@@ -522,18 +456,6 @@ namespace expr
 				return type_operation_info<t>::print(*tar);
 			}
 
-
-			typedef std::remove_const_t<t>& unwrapped;
-
-			static bool can_unwrap(strong<t> const& a)
-			{
-				return true;
-			}
-
-			static unwrapped do_unwrap(strong<t> const& a)
-			{
-				return *a;
-			}
 		};
 
 
@@ -666,6 +588,48 @@ namespace expr
 				return std::string(a);
 			}
 		};
+
+
+
+
+
+		template<typename t, typename enable = void>
+		struct wrapper_type_operation_info
+		{
+			static constexpr bool is_wrapper()
+			{
+				return false;
+			}
+		};
+
+		template<typename t>
+		struct wrapper_type_operation_info<t,std::enable_if_t<std::is_base_of_v<wrapper_type_operation_trait, type_operation_info<t>>>>
+		{
+			static constexpr bool is_wrapper()
+			{
+				return true;
+			}
+
+			using wrapped = decltype(*std::declval<t>());
+
+			static bool can_unwrap(t&& a)
+			{
+				if (std::forward<t>(a))
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+
+			static wrapped do_unwrap(t&& a)
+			{
+				return *std::forward<t>(a);
+			}
+		};
+
 
 
 	}

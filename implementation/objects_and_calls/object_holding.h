@@ -329,15 +329,15 @@ namespace expr
 
 			mu::virt<any_object> unwrap() override
 			{
-				constexpr bool is_wrapper = is_wrapper_v<type_operation_info<will_pass>>;
+				constexpr bool is_wrapper = wrapper_type_operation_info<will_pass>::is_wrapper();
 				if constexpr(is_wrapper)
 				{
-					constexpr bool is_deref_returnable = can_return<typename type_operation_info<will_pass>::unwrapped>();
+					constexpr bool is_deref_returnable = can_return<typename wrapper_type_operation_info<will_pass>::wrapped>();
 					if constexpr(is_deref_returnable)
 					{
-						if(type_operation_info<will_pass>::can_unwrap(get_raw()))
+						if(wrapper_type_operation_info<will_pass>::can_unwrap(std::forward<will_pass>(get_raw())))
 						{
-							return mu::virt<any_object>::make<object_of<post_return_t<typename type_operation_info<will_pass>::unwrapped>>>(into_returnable(type_operation_info<will_pass>::do_unwrap(get_raw())));
+							return mu::virt<any_object>::make<object_of<post_return_t<typename wrapper_type_operation_info<will_pass>::wrapped>>>(into_returnable(wrapper_type_operation_info<will_pass>::do_unwrap(std::forward<will_pass>(get_raw()))));
 						}
 					}
 				}
