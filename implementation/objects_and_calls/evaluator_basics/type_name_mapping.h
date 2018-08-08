@@ -5,7 +5,7 @@
 #include <typeindex>
 #include <cstdlib>
 
-#include "type_operation_wraps.h"
+#include "type_operation_info.h"
 #include "call_typing.h"
 
 namespace expr
