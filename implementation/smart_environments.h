@@ -87,7 +87,7 @@ namespace expr
 
 				prepare_input(unparsed, special_call, to_run);
 				
-				output << "///" << std::endl;
+				output << "///" << '\n' << std::flush;
 
 				std::stringstream errors;
 
@@ -104,12 +104,12 @@ namespace expr
 			void go()
 			{
 				to_continue = true;
-				output << "/|\\" << std::endl;
+				output << "/|\\\n" << std::flush;
 				while (to_continue)
 				{
 					once();
 				}
-				output << "\\|/" << std::endl;
+				output << "\\|/\n" << std::flush;
 			}
 
 			function_set special_functions;

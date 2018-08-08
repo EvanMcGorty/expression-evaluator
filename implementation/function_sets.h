@@ -127,18 +127,6 @@ namespace expr
 				}
 			}
 
-			static object_holder to_string(std::vector<stack_elem>& a)
-			{
-				if (a.size() == 1 && !a[0].is_nullval())
-				{
-					return make_object<std::string>(a[0]->convert_into_string());
-				}
-				else
-				{
-					return object_holder::make_nullval();
-				}
-			}
-
 			static object_holder drop(std::vector<stack_elem>& a)
 			{
 				for (auto& it : a)
@@ -226,7 +214,6 @@ namespace expr
 			{
 				function_set ret;
 				ret.add(mfn(cpp_core::drop), "drop")
-					.add(mfn(cpp_core::to_string), "to_string")
 					.add(mfn(cpp_core::make_clone), "clone")
 					.add(mfn(cpp_core::unwrap), "unwrap")
 					.add(mfn(cpp_core::move_from_reference), "take")
@@ -262,7 +249,7 @@ namespace expr
 
 			static void println(std::string a)
 			{
-				std::cout << a << std::endl;
+				std::cout << a << '\n' << std::flush;
 			}
 
 			static std::string read()

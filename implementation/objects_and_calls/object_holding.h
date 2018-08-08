@@ -273,7 +273,7 @@ namespace expr
 
 			std::string string_view(type_info_set const& names) override
 			{
-				return std::string("object_of{") + name_of<t>(names) + "(" + convert_into_string() + ")" + "}";
+				return name_of<t>(names) + "(" + convert_into_string() + ")";
 			}
 
 			mu::virt<any_object> as_non_trivially_destructible() && override
@@ -650,11 +650,11 @@ namespace expr
 			{
 				if (ref->is_nullval())
 				{
-					return "empty_variable";
+					return "#";
 				}
 				else
 				{
-					return "variable_with_" + (**ref).string_view(names);
+					return (**ref).string_view(names);
 				}
 			}
 

@@ -24,11 +24,15 @@ namespace expr
 			{
 				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> object_holder
 					{
-						if (a.size() == 1 && !a[0].is_nullval())
+						if (a.size() == 1)
 						{
-							if(!(a[0]->is_object() && a[0].downcast_get<any_object>()->is<void>()))
+							if (a[0].is_nullval())
 							{
-								*to << a[0]->string_view(*from) << std::endl;
+								*to << "#\n" << std::flush;
+							}
+							else if(!(a[0]->is_object() && a[0].downcast_get<any_object>()->is<void>()))
+							{
+								*to << a[0]->string_view(*from) << '\n' << std::flush;
 							}
 							return object_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 						}
@@ -44,11 +48,15 @@ namespace expr
 			{
 				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{[to = &to](std::vector<stack_elem>& a) -> object_holder
 				{
-					if (a.size() == 1 && !a[0].is_nullval())
+					if (a.size() == 1)
 					{
-						if(!(a[0]->is_object() && a[0].downcast_get<any_object>()->is<void>()))
+						if (a[0].is_nullval())
 						{
-							*to << a[0]->convert_into_string() << std::endl;
+							*to << "#\n" << std::flush;
+						}
+						else if(!(a[0]->is_object() && a[0].downcast_get<any_object>()->is<void>()))
+						{
+							*to << a[0]->convert_into_string() << '\n' << std::flush;
 						}
 						return object_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 					}
