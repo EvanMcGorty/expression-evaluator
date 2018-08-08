@@ -1,5 +1,6 @@
 #pragma once
 #include<memory>
+#include<iomanip>
 
 #include"literal_parsing.h"
 #include"type_demangle.h"
@@ -41,8 +42,31 @@ namespace expr
 				if constexpr(std::is_arithmetic_v<t>)
 				{
 					std::stringstream s;
+
+					if constexpr(std::is_floating_point_v<t>)
+					{
+						s << std::fixed << std::setprecision(32);
+					}
+					if constexpr(std::is_same<t,bool>)
+					{
+						s << std::boolalpha;
+					}
+
 					s << tar;
-					return s.str();
+					std::string ret = s.str();
+
+					if constexpr(std::is_floating_point_v<t>)
+					{
+						while(*ret.rbegin() != '.' && (*ret.rbegin() == '0' || ret.size() >= 15))
+						{
+							ret.pop_back();
+						}
+						if (*ret.rbegin() == '.')
+						{
+							ret.pop_back();
+						} 
+					}
+					return ret;
 				}
 				else if constexpr(std::is_convertible_v<t const&, std::string>)
 				{

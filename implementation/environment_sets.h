@@ -83,6 +83,12 @@ namespace expr
 			return sfn(std::function<t&()>{[val = &a]()->t& {return *val; }});
 		}
 
+		template<typename t>
+		held_callable constrefto(t const& a)
+		{
+			return sfn(std::function<t const&()>{[val = &a]()->t const& {return *val; }});
+		}
+
 		held_callable mfn(std::function<object_holder(std::vector<stack_elem>&)>&& target)
 		{
 			return held_callable::make<manual_callable>(std::move(target));
