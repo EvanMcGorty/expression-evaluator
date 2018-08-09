@@ -1,10 +1,10 @@
-#pragma once
-
 #include"implementation/smart_environments.h"
+
 
 namespace expr
 {
-	//creates a callable object that will return a copy of the value passed into copier
+
+//creates a callable object that will return a copy of the value passed into copier
 	using impl::copier;
 
 	//creates a callable object that will return a reference to the object into refto
@@ -41,25 +41,10 @@ namespace expr
 	//an organization of callable objects
 	using impl::function_set;
 
-	//core utilities to the evaluator
-	using impl::core;
-
-	//core utilities specific to c++
-	using impl::cpp_core;
-
-	//utilities for interacting with the terminal and system
-	using impl::terminal;
-
-	//utilities generic to any type
-	using impl::util;
-
-	//utilities for wrappers of any type
-	using impl::wrapper_util;
-
 	//renames a type within a typename dataset (by default uses a global one)
 	using impl::declare_with_name;
 
 	//does declare_with_name on arbitrarily many types using their default names
 	using impl::declare;
-}
 
+}

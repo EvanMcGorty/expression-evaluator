@@ -46,10 +46,6 @@ namespace expr
 					}
 					return ret;
 				}
-				else if constexpr(std::is_convertible_v<t const&, std::string>)
-				{
-					return literal{ literal_value{ std::string(tar) } }.make_string();
-				}
 				else
 				{
 					std::stringstream s;
