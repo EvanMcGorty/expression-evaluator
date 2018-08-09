@@ -195,8 +195,8 @@ int main()
 	//binding various aspects of the program
 	evaluator.functions
 		<< "res" << refto(resources)
-		<< "state" << refto(player)
-		<< "turn" << refto(turn_count)
+		<< "state" << constrefto(player)
+		<< "turn" << constrefto(turn_count)
 		<< "set_up" << sfn(set_up)
 
 		//making a function for interacting with the first environment and letting a turn go by
