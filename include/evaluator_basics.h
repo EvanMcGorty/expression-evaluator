@@ -6,7 +6,7 @@
 namespace expr
 {
 
-//creates a callable object that will return a copy of the value passed into copier
+	//creates a callable object that will return a copy of the value passed into copier
 	using impl::copier;
 
 	//creates a callable object that will return a reference to the object into refto
@@ -48,5 +48,14 @@ namespace expr
 
 	//does declare_with_name on arbitrarily many types using their default names
 	using impl::declare;
+
+	//core utilities to the evaluator
+	using impl::core;
+
+	//core utilities specific to c++
+	using impl::cpp_core;
+
+	//utilities generic to any type
+	using impl::util;
 
 }

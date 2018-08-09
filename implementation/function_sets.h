@@ -35,6 +35,160 @@ namespace expr
 			return fs_info<t>::get_name(names);
 		}
 
+		
+		template<typename t>
+		struct basic_util
+		{
+			static t default_construct()
+			{
+				if constexpr(std::is_default_constructible_v<t>)
+				{
+					return t{};
+				}
+				else
+				{
+					assert_with_invalid_method_usage([&]() {return false; });
+				}
+			}
+
+			static t copy_construct(t const& a)
+			{
+				if constexpr(std::is_copy_constructible_v<t>)
+				{
+					return a;
+				}
+				else
+				{
+					assert_with_invalid_method_usage([&]() {return false; });
+				}
+			}
+
+			static t move_construct(t&& a)
+			{
+				if constexpr(std::is_move_constructible_v<t>)
+				{
+					return std::move(a);
+				}
+				else
+				{
+					assert_with_invalid_method_usage([&]() {return false; });
+				}
+			}
+
+			static void move_assign(t& a, t&& b)
+			{
+				if constexpr(std::is_move_assignable_v<t>)
+				{
+					a = std::move(b);
+				}
+				else
+				{
+					assert_with_invalid_method_usage([&]() {return false; });
+				}
+			}
+
+			static void copy_assign(t& a, t const& b)
+			{
+				if constexpr(std::is_copy_assignable_v<t>)
+				{
+					a = b;
+				}
+				else
+				{
+					assert_with_invalid_method_usage([&]() {return false; });
+				}
+			}
+
+			static void swap(t& a, t& b)
+			{
+				std::swap(a, b);
+			}
+
+		};
+
+		template<typename t>
+		struct fs_info<basic_util<t>>
+		{
+			static function_set get_functions()
+			{
+				function_set ret;
+				if constexpr(std::is_default_constructible_v<t>)
+				{
+					ret.add(sfn(&basic_util<t>::default_construct), "make");
+				}
+				if constexpr(std::is_move_constructible_v<t>)
+				{
+					ret.add(sfn(&basic_util<t>::move_construct), "make");
+					ret.add(sfn(&basic_util<t>::move_construct), "move-make");
+				}
+				if constexpr(std::is_copy_constructible_v<t>)
+				{
+					ret.add(sfn(&basic_util<t>::copy_construct), "make");
+					ret.add(sfn(&basic_util<t>::copy_construct), "copy-make");
+				}
+				if constexpr(std::is_move_assignable_v<t>)
+				{
+					ret.add(sfn(&basic_util<t>::move_assign), "give");
+					ret.add(sfn(&basic_util<t>::move_assign), "move-give");
+				}
+				if constexpr(std::is_copy_assignable_v<t>)
+				{
+					ret.add(sfn(&basic_util<t>::copy_assign), "give");
+					ret.add(sfn(&basic_util<t>::copy_assign), "copy-give");
+				}
+				ret.add(sfn(&basic_util<t>::swap), "swap");
+				return ret;
+			}
+
+			static std::string get_name(type_info_set const& from)
+			{
+				return name_of<val_wrap<t>>(from);
+			}
+		};
+
+
+		template<typename t>
+		struct extended_util
+		{};
+
+		template<typename t>
+		struct fs_info<extended_util<t>>
+		{
+			static function_set get_functions()
+			{
+				return function_set{};
+			}
+
+			static std::string get_name(type_info_set const& from)
+			{
+				return name_of<val_wrap<t>>(from);
+			}
+		};
+
+
+		template<typename t>
+		struct util
+		{
+			typedef basic_util<t> basic;
+			typedef extended_util<t> extended;
+		};
+
+		template<typename t>
+		struct fs_info<util<t>>
+		{
+			static function_set get_functions()
+			{
+				function_set basic = fs_info<basic_util<t>>::get_functions();
+				function_set extended = fs_info<extended_util<t>>::get_functions();
+				return std::move(basic.use("", std::move(extended)));
+			}
+
+			static std::string get_name(type_info_set const& from)
+			{
+				return name_of<val_wrap<t>>(from);
+			}
+		};
+
 		struct core
 		{
 			static object_holder swap(std::vector<stack_elem>& a)
@@ -229,446 +383,7 @@ namespace expr
 			}
 		};
 
-		struct terminal
-		{
 
-			[[ noreturn ]] static void exit()
-			{
-				throw 0;
-			}
-
-			static void sys(std::string a)
-			{
-				system(a.c_str());
-			}
-
-			static void print(std::string a)
-			{
-				std::cout << a << std::flush;
-			}
-
-			static void println(std::string a)
-			{
-				std::cout << a << '\n' << std::flush;
-			}
-
-			static std::string read()
-			{
-				std::string ret;
-				std::getline(std::cin, ret);
-				return ret;
-			}
-
-			static std::string input(std::string msg)
-			{
-				std::cout << msg << std::flush;
-				std::string ret;
-				std::getline(std::cin, ret);
-				return ret;
-			}
-
-		};
-
-		template<>
-		struct fs_info<terminal>
-		{
-			static function_set get_functions()
-			{
-				function_set ret;
-				ret
-					.add(sfn(&terminal::exit), "quit")
-					.add(sfn(&terminal::sys), "system")
-					.add(sfn(&terminal::print), "print")
-					.add(sfn(&terminal::println), "println")
-					.add(sfn(&terminal::read), "read")
-					.add(sfn(&terminal::input), "input");
-				return ret;
-			}
-
-			static std::string get_name(type_info_set const&)
-			{
-				return "sys";
-			}
-		};
-
-
-		template<typename t>
-		struct basic_util
-		{
-			static t default_construct()
-			{
-				if constexpr(std::is_default_constructible_v<t>)
-				{
-					return t{};
-				}
-				else
-				{
-					assert_with_invalid_method_usage([&]() {return false; });
-				}
-			}
-
-			static t copy_construct(t const& a)
-			{
-				if constexpr(std::is_copy_constructible_v<t>)
-				{
-					return a;
-				}
-				else
-				{
-					assert_with_invalid_method_usage([&]() {return false; });
-				}
-			}
-
-			static t move_construct(t&& a)
-			{
-				if constexpr(std::is_move_constructible_v<t>)
-				{
-					return std::move(a);
-				}
-				else
-				{
-					assert_with_invalid_method_usage([&]() {return false; });
-				}
-			}
-
-			static void move_assign(t& a, t&& b)
-			{
-				if constexpr(std::is_move_assignable_v<t>)
-				{
-					a = std::move(b);
-				}
-				else
-				{
-					assert_with_invalid_method_usage([&]() {return false; });
-				}
-			}
-
-			static void copy_assign(t& a, t const& b)
-			{
-				if constexpr(std::is_copy_assignable_v<t>)
-				{
-					a = b;
-				}
-				else
-				{
-					assert_with_invalid_method_usage([&]() {return false; });
-				}
-			}
-
-			static void swap(t& a, t& b)
-			{
-				std::swap(a, b);
-			}
-
-		};
-
-		template<typename t>
-		struct fs_info<basic_util<t>>
-		{
-			static function_set get_functions()
-			{
-				function_set ret;
-				if constexpr(std::is_default_constructible_v<t>)
-				{
-					ret.add(sfn(&basic_util<t>::default_construct), "make");
-				}
-				if constexpr(std::is_move_constructible_v<t>)
-				{
-					ret.add(sfn(&basic_util<t>::move_construct), "make");
-					ret.add(sfn(&basic_util<t>::move_construct), "move-make");
-				}
-				if constexpr(std::is_copy_constructible_v<t>)
-				{
-					ret.add(sfn(&basic_util<t>::copy_construct), "make");
-					ret.add(sfn(&basic_util<t>::copy_construct), "copy-make");
-				}
-				if constexpr(std::is_move_assignable_v<t>)
-				{
-					ret.add(sfn(&basic_util<t>::move_assign), "give");
-					ret.add(sfn(&basic_util<t>::move_assign), "move-give");
-				}
-				if constexpr(std::is_copy_assignable_v<t>)
-				{
-					ret.add(sfn(&basic_util<t>::copy_assign), "give");
-					ret.add(sfn(&basic_util<t>::copy_assign), "copy-give");
-				}
-				ret.add(sfn(&basic_util<t>::swap), "swap");
-				return ret;
-			}
-
-			static std::string get_name(type_info_set const& from)
-			{
-				return name_of<val_wrap<t>>(from);
-			}
-		};
-
-
-		template<typename t>
-		struct extended_util
-		{};
-
-		template<typename t>
-		struct fs_info<extended_util<t>>
-		{
-			static function_set get_functions()
-			{
-				return function_set{};
-			}
-
-			static std::string get_name(type_info_set const& from)
-			{
-				return name_of<val_wrap<t>>(from);
-			}
-		};
-
-
-		template<typename t>
-		struct util
-		{
-			typedef basic_util<t> basic;
-			typedef extended_util<t> extended;
-		};
-
-		template<typename t>
-		struct fs_info<util<t>>
-		{
-			static function_set get_functions()
-			{
-				function_set basic = fs_info<basic_util<t>>::get_functions();
-				function_set extended = fs_info<extended_util<t>>::get_functions();
-				return std::move(basic.use("", std::move(extended)));
-			}
-
-			static std::string get_name(type_info_set const& from)
-			{
-				return name_of<val_wrap<t>>(from);
-			}
-		};
-
-
-		template<typename t>
-		struct wrapper_util
-		{
-			static t* mutable_pointer(t& a)
-			{
-				return a;
-			}
-
-			static t const* const_pointer(t& a)
-			{
-				return a;
-			}
-
-			static std::unique_ptr<t> mutable_unique(t&& a)
-			{
-				return std::make_unique<t>(std::move(a));
-			}
-
-			static std::unique_ptr<t const> const_unique(t&& a)
-			{
-				return std::make_unique<t const>(std::move(a));
-			}
-
-			static std::shared_ptr<t> mutable_shared(t&& a)
-			{
-				return std::make_shared<t>(std::move(a));
-			}
-
-			static std::shared_ptr<t const> const_shared(t&& a)
-			{
-				return std::make_shared<t const>(std::move(a));
-			}
-
-			static std::optional<t> mutable_optional(t&& a)
-			{
-				return std::optional<t>(std::move(a));
-			}
-
-			static std::optional<t const> const_optional(t&& a)
-			{
-				return std::optional<t const>(std::move(a));
-			}
-		};
-
-		template<typename t>
-		struct fs_info<wrapper_util<t>>
-		{
-			static function_set get_functions()
-			{
-				function_set ret;
-				if constexpr(std::is_move_constructible_v<t>)
-				{
-					ret.add(sfn(&wrapper_util<t>::mutable_unique), "unique");
-					ret.add(sfn(&wrapper_util<t>::const_unique), "const-unique");
-					ret.add(sfn(&wrapper_util<t>::mutable_shared), "shared");
-					ret.add(sfn(&wrapper_util<t>::const_shared), "const-shared");
-					ret.add(sfn(&wrapper_util<t>::mutable_shared), "optional");
-					ret.add(sfn(&wrapper_util<t>::const_shared), "const-optional");
-				}
-				ret.add(sfn(&wrapper_util<t>::mutable_reference), "ptr");
-				ret.add(sfn(&wrapper_util<t>::const_reference), "const-ptr");
-				return std::move(ret);
-			}
-
-			static std::string get_name(type_info_set const& from)
-			{
-				return name_of<val_wrap<t>>(from) + "-wrap";
-			}
-		};
-
-
-		template<>
-		struct extended_util<std::string>
-		{
-			static std::string from_char_vector(std::vector<char> const& a)
-			{
-				return std::string{ a.begin(),a.end() };
-			}
-
-			static std::string from_c_str(char const* from)
-			{
-				return std::string{ from };
-			}
-
-			static char const* as_c_str(std::string const& tar)
-			{
-				return tar.c_str();
-			}
-
-			static char& index(std::string& tar, size_t at)
-			{
-				return tar.at(at);
-			}
-
-			static char const& const_index(std::string const& tar, size_t at)
-			{
-				return tar.at(at);
-			}
-
-			static void append(std::string& a, std::string const& b)
-			{
-				a.append(b);
-			}
-
-			static void resize(std::string& a, size_t to)
-			{
-				a.resize(to);
-			}
-
-			static size_t size(std::string const& a)
-			{
-				return a.size();
-			}
-
-		};
-
-		template<>
-		struct fs_info<extended_util<std::string>>
-		{
-			static function_set get_functions()
-			{
-				function_set ret;
-				ret
-					.add(sfn(&extended_util<std::string>::from_char_vector), "char-vec-make")
-					.add(sfn(&extended_util<std::string>::from_char_vector), "make")
-					.add(sfn(&extended_util<std::string>::as_c_str), "as-c_str")
-					.add(sfn(&extended_util<std::string>::from_c_str), "c_str-make")
-					.add(sfn(&extended_util<std::string>::from_c_str), "make")
-					.add(sfn(&extended_util<std::string>::index), "at")
-					.add(sfn(&extended_util<std::string>::const_index), "at")
-					.add(sfn(&extended_util<std::string>::append), "append")
-					.add(sfn(&extended_util<std::string>::resize), "resize")
-					.add(sfn(&extended_util<std::string>::size), "len");
-				return ret;
-			}
-
-			static std::string get_name(type_info_set const& from)
-			{
-				return name_of<val_wrap<std::string>>(from);
-			}
-		};
-
-		
-		template<typename t>
-		struct extended_util<std::vector<t>>
-		{
-			static object_holder from_list(std::vector<stack_elem>& a)
-			{
-				std::vector<t> ret;
-				for (auto& v : a)
-				{
-					std::optional<val_wrap<t>> g = smart_take_elem<val_wrap<t>>(v);
-					if (g)
-					{
-						ret.emplace_back(t(std::move(*g)));
-					}
-				}
-				return make_object<std::vector<t>>(std::move(ret));
-			}
-
-			static t& index(std::vector<t>& tar, size_t at)
-			{
-				return tar.at(at);
-			}
-
-			static t const& const_index(std::vector<t> const& tar, size_t at)
-			{
-				return tar.at(at);
-			}
-
-			static void append(std::vector<t>& a, std::vector<t>&& b)
-			{
-				a.reserve(a.size() + b.size());
-				for (auto&& i : std::move(b))
-				{
-					a.emplace_back(std::move(i));
-				}
-			}
-
-			static void resize(std::vector<t>& a, size_t to)
-			{
-				if constexpr(std::is_default_constructible_v<t>)
-				{
-					a.resize(to);
-				}
-				else
-				{
-					assert_with_invalid_method_usage([&]() {return false; });
-				}
-			}
-
-			static size_t size(std::vector<t> const& a)
-			{
-				return a.size();
-			}
-
-		};
-
-		template<typename t>
-		struct fs_info<extended_util<std::vector<t>>>
-		{
-			static function_set get_functions()
-			{
-				function_set ret;
-				ret
-					.add(mfn(&extended_util<std::vector<t>>::from_list), "make")
-					.add(mfn(&extended_util<std::vector<t>>::from_list), "list-make")
-					.add(sfn(&extended_util<std::vector<t>>::index), "at")
-					.add(sfn(&extended_util<std::vector<t>>::const_index), "at")
-					.add(sfn(&extended_util<std::vector<t>>::append), "append")
-					.add(sfn(&extended_util<std::vector<t>>::size), "size");
-				if constexpr(std::is_default_constructible_v<t>)
-				{
-					ret.add(sfn(&extended_util<std::vector<t>>::size), "resize");
-				}
-				return std::move(ret);
-			}
-
-			static std::string get_name(type_info_set const& from)
-			{
-				return name_of<val_wrap<std::vector<t>>>(from);
-			}
-		};
 
 
 	}

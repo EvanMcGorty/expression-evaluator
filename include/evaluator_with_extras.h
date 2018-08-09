@@ -1,6 +1,6 @@
 #pragma once
 
-#include"quick_evaluator.h"
+#include"evaluator.h"
 
 namespace expr
 {
@@ -19,8 +19,8 @@ namespace expr
 	//uses fs_info to get the name of an import class
 	using impl::fs_name;
 
-	
-
-
+	//for supplying information and methods for types
+	using impl::type_operation_info;
+	using impl::wrapper_type_operation_info;
 
 }
