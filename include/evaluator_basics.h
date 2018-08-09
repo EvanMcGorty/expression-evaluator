@@ -1,4 +1,6 @@
-#include"implementation/smart_environments.h"
+#pragma once
+
+#include"../implementation/smart_environments.h"
 
 
 namespace expr

@@ -1,4 +1,6 @@
-#include"quick_evaluator"
+#pragma once
+
+#include"quick_evaluator.h"
 
 namespace expr
 {
