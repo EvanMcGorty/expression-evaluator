@@ -87,9 +87,10 @@ namespace expr
 			}
 		};
 
-        
+
+
 		template<typename t>
-		struct type_operation_info<std::vector<t> const&>
+		struct type_operation_info<std::vector<t>>
 		{
 			template<typename name_generator = compiler_name_generator>
 			static std::string type_name(name_generator instance)

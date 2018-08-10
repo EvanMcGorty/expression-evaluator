@@ -79,7 +79,7 @@ namespace expr
 		
 
 		template<>
-		struct type_operation_info<std::string const&>
+		struct type_operation_info<std::string>
 		{
 			template<typename name_generator = compiler_name_generator>
 			static std::string type_name(name_generator instance)

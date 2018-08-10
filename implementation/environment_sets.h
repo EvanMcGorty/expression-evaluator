@@ -114,11 +114,11 @@ namespace expr
 
 		class function_set;
 
-		template<typename t>
-		std::string fs_name(const type_info_set &names);
+		template<typename t, typename...fs_arg_ts>
+		function_set fs_functs(fs_arg_ts&&...fs_args);
 
 		template<typename t>
-		function_set fs_functs();
+		std::string fs_name(type_info_set const& names);
 
 		class function_set
 		{
@@ -142,25 +142,7 @@ namespace expr
 
 
 			template<typename t = void, typename string_convertible = std::string>
-			function_set& use(string_convertible&& n = fs_name<t>(global_type_info()), function_set&& set = fs_functs<t>())
-			{
-				std::string name{ n };
-				if (name == "")
-				{
-					for (auto it = set.map.begin(); it != set.map.end(); ++it)
-					{
-						add_to_map(std::move(*it));
-					}
-					return *this;
-				}
-				assert_with_invalid_name_usage([&]() {return name_checker::is_valid(std::string{ name }); });
-				for (auto it = set.map.begin(); it != set.map.end(); ++it)
-				{
-					auto cur = std::move(*it);
-					add_to_map(std::make_pair(std::string{ name + "." + cur.first }, std::move(cur.second)));
-				}
-				return *this;
-			}
+			function_set& use(string_convertible&& n = fs_name<t>(global_type_info()), function_set&& set = fs_functs<t>());
 
 			std::optional<held_callable*> get(std::string const& a)
 			{

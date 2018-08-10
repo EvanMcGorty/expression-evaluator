@@ -466,7 +466,7 @@ namespace expr
 			}
 		}
 
-		object_holder parse_to_object(std::string::const_iterator& start, std::string::const_iterator stop)
+		object_holder parse_to_object(std::string::const_iterator& start, std::string::const_iterator stop, type_info_set const& names)
 		{
 			if(start == stop)
 			{
@@ -488,8 +488,8 @@ namespace expr
 			{
 				return object_holder::make_nullval();
 			}
-			auto found = global_type_info().operations.find(std::move(type_name));
-			if (found == global_type_info().operations.end())
+			auto found = names.operations.find(std::move(type_name));
+			if (found == names.operations.end())
 			{
 				return object_holder::make_nullval();
 			}

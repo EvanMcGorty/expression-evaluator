@@ -24,18 +24,38 @@ namespace expr
 			}
 		};
 
-		template<typename t>
-		inline function_set fs_functs()
+		template<typename t, typename...fs_arg_ts>
+		function_set fs_functs(fs_arg_ts&&...fs_args)
 		{
-			return fs_info<t>::get_functions();
+			return fs_info<t>::get_functions(std::forward<fs_arg_ts>(fs_args)...);
 		}
 		template<typename t>
-		inline std::string fs_name(type_info_set const& names)
+		std::string fs_name(type_info_set const& names)
 		{
 			return fs_info<t>::get_name(names);
 		}
 
-		
+		template <typename t, typename string_convertible>
+		function_set &function_set::use(string_convertible &&n, function_set &&set)
+		{
+			std::string name{n};
+			if (name == "")
+			{
+				for (auto it = set.map.begin(); it != set.map.end(); ++it)
+				{
+					add_to_map(std::move(*it));
+				}
+				return *this;
+			}
+			assert_with_invalid_name_usage([&]() { return name_checker::is_valid(std::string{name}); });
+			for (auto it = set.map.begin(); it != set.map.end(); ++it)
+			{
+				auto cur = std::move(*it);
+				add_to_map(std::make_pair(std::string{name + "." + cur.first}, std::move(cur.second)));
+			}
+			return *this;
+		}
+
 		template<typename t>
 		struct basic_util
 		{
@@ -231,21 +251,6 @@ namespace expr
 				}
 			}
 
-			static object_holder parse(std::vector<stack_elem>& a)
-			{
-				if(a.size() == 1)
-				{
-					std::optional<ref_wrap<std::string const>> g = smart_take_elem<ref_wrap<std::string const>>(a[0]);
-					if(g)
-					{
-						auto start = g->to->begin();
-						auto stop = g->to->end();
-						return parse_to_object(start,stop);
-					}
-				}
-				return object_holder::make_nullval();
-			}
-
 		};
 
 		template<>
@@ -256,8 +261,7 @@ namespace expr
 				function_set ret;
 				ret.add(mfn(core::swap), "swap")
 					.add(mfn(core::first), "first")
-					.add(mfn(core::last), "last")
-					.add(mfn(core::parse), "parse");
+					.add(mfn(core::last), "last");
 				return ret;
 			}
 
@@ -359,6 +363,18 @@ namespace expr
 					return object_holder::make_nullval();
 				}
 			}
+
+			static object_holder to_string(std::vector<stack_elem>& a)
+			{
+				if (a.size() == 1 && !a[0].is_nullval() && a[0]->has_value())
+				{
+					return make_object(a[0].downcast_get<value_elem_val>()->convert_into_string());
+				}
+				else
+				{
+					return object_holder::make_nullval();
+				}
+			}
 		};
 
 		template<>
@@ -369,6 +385,7 @@ namespace expr
 				function_set ret;
 				ret.add(mfn(cpp_core::drop), "drop")
 					.add(mfn(cpp_core::make_clone), "clone")
+					.add(mfn(cpp_core::to_string), "to_str")
 					.add(mfn(cpp_core::unwrap), "unwrap")
 					.add(mfn(cpp_core::move_from_reference), "take")
 					.add(mfn(cpp_core::make_reference_to), "ref")
