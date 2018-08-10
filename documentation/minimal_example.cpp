@@ -92,8 +92,8 @@ int main()
 	std::cout << "this code will run before the evaluator is used\n" << std::flush;
 
 	//by default uses a global rename dataset
-	declare_with_name<std::vector<double>>("vec");
-	declare<double,std::unique_ptr<double>,std::shared_ptr<double>,std::optional<double>>();
+	declare_with_name<double>("num");
+	declare<std::vector<double>>();
 
 	//the environment that will hold variables and functions
 	environment env;
@@ -104,9 +104,6 @@ int main()
 		//util<t> wraps t and provides basic functions. by not providing a string, the evaluator chooses a default name.
 		.use<util<std::vector<double>>>()
 		.use<util<double>>()
-		.use<util<std::unique_ptr<double>>>()
-		.use<util<std::shared_ptr<double>>>()
-		.use<util<std::optional<double>>>()
 
 		//a pretty syntax for binding functions. sfn takes a function pointer and turns it into something that env can use.
 		<< "prod" << sfn(multiply)

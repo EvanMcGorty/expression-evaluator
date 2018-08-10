@@ -62,6 +62,7 @@ namespace expr
 				}
 
 				special_functions
+					.add(variables_builder(names),"build_vars")
 					.add(garbage_getter(), "garb")
 					.add(info_printer(output, names), "info")
 					.add(value_printer(output), "view")

@@ -236,6 +236,25 @@ namespace expr
 		{
 		public:
 
+			std::string make_builder(std::string const& builder_function, std::string const& var_name, type_info_set const& names, std::ostream& to)
+			{
+				std::string ret;
+				for(auto& it : values)
+				{
+					to << "swap(=" << var_name << "/,";
+					if (it.is_nullval())
+					{
+						to << '#';
+					}
+					else
+					{
+						to << builder_function << "(\"" << (it->string_view(names)) << "\")";
+					}
+					to << ")\n";
+				}
+				return ret;
+			}
+
 			object_holder * push_front(object_holder&& a)
 			{
 				values.emplace_back(std::move(a));
@@ -324,6 +343,15 @@ namespace expr
 		{
 			friend class environment;
 		public:
+
+		
+			void make_builder(std::string builder_function, type_info_set const& names, std::ostream& to)
+			{
+				for(auto& it : map)
+				{
+					it.second.make_builder(builder_function,it.first,names, to);
+				}
+			}
 
 
 			object_holder* push_var(std::string&& a)

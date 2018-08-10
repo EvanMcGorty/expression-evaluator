@@ -123,6 +123,14 @@ namespace expr
 				});
 			}
 
+			held_callable variables_builder(type_info_set const& names = global_type_info(), std::ostream& to= std::cout)
+			{
+				return sfn(std::function<void(std::string)>([vars = &variables, to = &to, names = &names](std::string to_call) -> void
+				{
+					vars->make_builder(to_call,*names,*to);
+				}));
+			}
+
 
 			function_set functions;
 
