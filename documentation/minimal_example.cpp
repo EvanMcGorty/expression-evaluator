@@ -55,7 +55,7 @@ _exit
 #include <vector>
 #include <iostream>
 
-#include"../include/evaluator.h"
+#include"../include/expression-evaluator/evaluator.h"
 
 using namespace expr;
 
