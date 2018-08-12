@@ -1,19 +1,6 @@
 /*
 this is a simple, minimal example use of the evaluator
 
-compile this with:
-
-g++ minimal_example.cpp -std=c++17
-or
-clang-cl minimal_example.cpp /GX /std:c++17
-or
-clang++ minimal_example.cpp -std=c++17 -Xclang -flto-visibility-public-std
-
-on windows g++ might need -Os to optimize for size
-
-for msvc, cpp files may need to be set with "bigobj" in their properties.
-
-requires c++17 support, runtime type info, and exceptions.
 
 when the terminal opens, try entering the following lines:
 _funcs
