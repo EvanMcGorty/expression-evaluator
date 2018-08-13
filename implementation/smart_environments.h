@@ -49,7 +49,7 @@ namespace expr
 		{
 		public:
 
-			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}, name_set const& n = global_type_renames()) :
+			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}, type_info_set const& n = global_type_info()) :
 				environment(std::move(base)),
 				input(i),
 				output(o),
@@ -62,6 +62,7 @@ namespace expr
 				}
 
 				special_functions
+					.add(variables_builder(names),"build_vars")
 					.add(garbage_getter(), "garb")
 					.add(info_printer(output, names), "info")
 					.add(value_printer(output), "view")
@@ -87,7 +88,7 @@ namespace expr
 
 				prepare_input(unparsed, special_call, to_run);
 				
-				output << "///" << std::endl;
+				output << "///" << '\n' << std::flush;
 
 				std::stringstream errors;
 
@@ -104,12 +105,12 @@ namespace expr
 			void go()
 			{
 				to_continue = true;
-				output << "/|\\" << std::endl;
+				output << "/|\\\n" << std::flush;
 				while (to_continue)
 				{
 					once();
 				}
-				output << "\\|/" << std::endl;
+				output << "\\|/\n" << std::flush;
 			}
 
 			function_set special_functions;
@@ -119,7 +120,7 @@ namespace expr
 			std::istream& input;
 			std::ostream& output;
 			option_set settings;
-			name_set const& names;
+			type_info_set const& names;
 
 		private:
 
@@ -162,31 +163,31 @@ namespace expr
 
 			}
 
-			void evaluate_input(stack& result, std::ostream& errors, executable& to_run, std::optional<statement>& special_call)
+			void evaluate_input(stack& result, std::ostream& info, executable& to_run, std::optional<statement>& special_call)
 			{
-				result = run(std::move(to_run), errors);
+				result = run(std::move(to_run), info);
 				if (special_call)
 				{
-					perform(std::move(*special_call), result, variables, special_functions, garbage, errors);
+					perform(std::move(*special_call), result, variables, special_functions, garbage, info);
 				}
 				else if (settings.default_final_operation)
 				{
 					std::string to_use = *settings.default_final_operation;
-					assert_with_generic_logic_error(to_use.size() >= 1);
+					assert_with_generic_logic_error([&]() {return to_use.size() >= 1; });
 					if (*to_use.begin() == '_')
 					{
 						to_use = std::string{ to_use.begin() + 1,to_use.end() };
-						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, special_functions, garbage, errors);
+						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, special_functions, garbage, info);
 					}
 					else
 					{
-						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, functions, garbage, errors);
+						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, functions, garbage, info);
 					}
 				}
 
-				assert_with_generic_logic_error(result.stuff.size() == 1);
+				assert_with_generic_logic_error([&]() {return result.stuff.size() == 1; });
 
-				garbage.clean_all_to_front(result, 1);
+				garbage.clean_all_to_front(result, 1, info);
 			}
 			
 		};

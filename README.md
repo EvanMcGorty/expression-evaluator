@@ -23,9 +23,8 @@ a c++ function doesn't always consume the "bits" that it's given. non-const rval
 a few other notes:
 - objects are kept virtually on the free-store, so move constructors don't need to be called implicitly.
 - when they are passed for a non-const rvalue reference, objects that are trivially destructible, trivially copy constructible, and trivially move constructible will not be consumed.
-- lvalue references and pointers are interchangable.
-- an object of type "t" can be passed for a t*, t&, t const*, or t const&. 
-- an object of type "t*"/"t&"/"smart pointer to t"/"optional of t" can be passed for a t const*, t const&, t*, t&, remove_const t*, or remove_const t&.
+- an object of type t/t&& can be passed for a t/t&&, t&, or t const&. 
+- an object of type t& can be passed for a t const&, or a t&,
 - (currently) passed objects will not be implicitly upcast or copy/move converted to the type in the function signature.
 - as a workaround, there is a simple overload resolution system that can be used for type conversions.
 - if a function cannot run with the types it has been passed, it will still free resources that it has been passed.

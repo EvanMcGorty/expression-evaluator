@@ -2,8 +2,8 @@
 #include<vector>
 #include<optional>
 
-#include"virtual-function-utilities/algebraic_virtual.h"
-#include"virtual-function-utilities/free-store_virtual.h"
+#include"expressions_basics/virtual-function-utilities/algebraic_virtual.h"
+#include"expressions_basics/virtual-function-utilities/free-store_virtual.h"
 
 #include"parsing_checks.h"
 
@@ -227,16 +227,24 @@ namespace expr
 
 				std::string ret;
 
-				assert_with_generic_logic_error(start != stop);
+				assert_with_generic_logic_error([&]() {return start != stop; });
 
-				if (*start != '"')
+				if(*start != '"')
 				{
-					while (start != stop && !name_checker::canbeafterelem(*start))
+					if (*start == '\'')
+					{
+						++start;
+					}
+					while (start != stop && !name_checker::mustbeendofelem(*start))
 					{
 						ret.push_back(*start);
 						++start;
 					}
-					return std::optional<literal>{literal{std::move(ret)}};
+					while (ret.size() > 0 && *ret.rbegin() == ' ')
+					{
+						ret.pop_back();
+					}
+					return std::optional<literal>{literal{ std::move(ret) }};
 				}
 
 
@@ -248,7 +256,7 @@ namespace expr
 					if (*start == '"')
 					{
 						++start;
-						if (start == stop || name_checker::canbeafterelem(*start))
+						if (start == stop || name_checker::canbeendofelem(*start))
 						{
 							return std::optional<literal>{literal{std::move(ret)}};
 						}
@@ -383,7 +391,7 @@ namespace expr
 
 			static std::optional<variable> parse(std::string::const_iterator& start, std::string::const_iterator stop)
 			{
-				assert_with_generic_logic_error(start != stop && *start == '=');
+				assert_with_generic_logic_error([&]() {return start != stop && *start == '='; });
 
 				std::string ret;
 				sc sc_ret;
@@ -845,7 +853,7 @@ namespace expr
 
 		inline std::optional<function> function::parse(std::string::const_iterator& start, std::string::const_iterator stop)
 		{
-			assert_with_generic_logic_error(start != stop && (name_checker::isupper(*start) || name_checker::islower(*start)));
+			assert_with_generic_logic_error([&]() {return start != stop && (name_checker::isupper(*start) || name_checker::islower(*start)); });
 
 
 			std::string retname;

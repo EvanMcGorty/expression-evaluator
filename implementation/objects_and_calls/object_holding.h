@@ -1,8 +1,8 @@
 #pragma once
 
-#include"type_asker.h"
-#include"statement.h"
-#include"type_demangle.h"
+#include"evaluator_basics/type_asker.h"
+#include"evaluator_basics/type_name_mapping.h"
+#include"expressions/tree_structure.h"
 
 namespace expr
 {
@@ -22,7 +22,7 @@ namespace expr
 				return false;
 			}
 
-			virtual bool is_reference() const
+			virtual bool is_variable() const
 			{
 				return false;
 			}
@@ -34,7 +34,7 @@ namespace expr
 
 			virtual std::string convert_into_string() = 0;
 
-			virtual std::string string_view(name_set const& names) = 0;
+			virtual std::string string_view(type_info_set const& names) = 0;
 
 			//returns true if this is an object and the held value was moved.
 			virtual bool get(any_type_ask* tar) = 0;
@@ -75,7 +75,7 @@ namespace expr
 				return std::string{ val };
 			}
 
-			std::string string_view(name_set const&) override
+			std::string string_view(type_info_set const&) override
 			{
 				literal temp{ literal_value{std::string{val}} };
 				return std::string("unparsed{") + temp.make_string() + "}";
@@ -117,12 +117,15 @@ namespace expr
 				return true;
 			}
 
-			virtual mu::virt<any_object> make_clone() const = 0;
+			virtual mu::virt<any_object> make_clone() = 0;
 
-			virtual mu::virt<any_object> take_referenced() = 0;
-			
-			//returns true upon success
-			virtual bool give_reference(any_elem_val&) = 0;
+			virtual mu::virt<any_object> make_reference() = 0;
+
+			virtual mu::virt<any_object> make_constant_reference() = 0;
+
+			virtual mu::virt<any_object> take_value() = 0;
+
+			virtual mu::virt<any_object> unwrap() = 0;
 		};
 
 
@@ -150,7 +153,6 @@ namespace expr
 			}
 
 
-
 		};
 
 
@@ -168,7 +170,7 @@ namespace expr
 				return "";
 			}
 			
-			std::string string_view(name_set const&) override
+			std::string string_view(type_info_set const&) override
 			{
 				return "void_object{}";
 			}
@@ -178,12 +180,28 @@ namespace expr
 				return mu::virt<any_object>::make<void_object>();
 			}
 
-			mu::virt<any_object> make_clone() const override
+
+			mu::virt<any_object> make_clone() override
 			{
 				return mu::virt<any_object>::make_nullval();
 			}
 
-			mu::virt<any_object> take_referenced() override
+			mu::virt<any_object> make_reference() override
+			{
+				return mu::virt<any_object>::make_nullval();
+			}
+
+			mu::virt<any_object> make_constant_reference() override
+			{
+				return mu::virt<any_object>::make_nullval();
+			}
+
+			mu::virt<any_object> take_value() override
+			{
+				return mu::virt<any_object>::make_nullval();
+			}
+			
+			mu::virt<any_object> unwrap() override
 			{
 				return mu::virt<any_object>::make_nullval();
 			}
@@ -214,11 +232,6 @@ namespace expr
 				return false;
 			}
 
-			bool give_reference(any_elem_val&) override
-			{
-				return false;
-			}
-
 		};
 
 
@@ -229,9 +242,19 @@ namespace expr
 		class object_of final : public any_object
 		{
 		private:
-			constexpr std::type_info const& type() const
+			typedef typename type<t>::raw raw;
+			typedef typename type<t>::will_pass will_pass;
+
+			raw& get_raw()
 			{
-				return typeid(t);
+				if constexpr(type<t>::is_ref())
+				{
+					return static_cast<raw&>(val);
+				}
+				else if constexpr(type<t>::is_val())
+				{
+					return val.wrapped;
+				}
 			}
 
 		public:
@@ -240,23 +263,24 @@ namespace expr
 				val(std::move(a))
 			{
 				static_assert(!std::is_const_v<t>,"object_of<t> should not have a const t");
+				static_assert(!type<t>::is_raw());
 			}
 
 			std::string convert_into_string() override
 			{
-				return converter<t>::print(val);
+				return type_operation_info<will_pass>::print(get_raw());
 			}
 
-			std::string string_view(name_set const& names) override
+			std::string string_view(type_info_set const& names) override
 			{
-				return std::string("object_of{") + name_of<t>(names) + "(" + converter<t>::print(val) + ")" + "}";
+				return name_of<t>(names) + "(" + convert_into_string() + ")";
 			}
 
 			mu::virt<any_object> as_non_trivially_destructible() && override
 			{
-				if constexpr(std::is_trivially_destructible_v<t>)
+				if constexpr(std::is_trivially_destructible_v<raw>)
 				{
-					return mu::virt<any_object>::make<object_of<strong<t>>>(strong<t>(std::move(val)));
+					return mu::virt<any_object>::make<object_of<post_return_t<strong<raw>>>>(into_returnable(strong<raw>{std::move(get_raw())}));
 				}
 				else
 				{
@@ -269,11 +293,11 @@ namespace expr
 				return std::is_trivially_destructible_v<t>;
 			}
 
-			mu::virt<any_object> make_clone() const override
+			mu::virt<any_object> make_clone() override
 			{
-				if constexpr(std::is_copy_constructible<t>::value)
+				if constexpr(std::is_constructible_v<std::remove_const_t<raw>, raw&>)
 				{
-					return mu::virt<any_object>::make<object_of<t>>(t{ val });
+					return mu::virt<any_object>::make<object_of<val_wrap<std::remove_const_t<raw>>>>(into_returnable<std::remove_const_t<raw>>(std::remove_const_t<raw>(get_raw())));
 				}
 				else
 				{
@@ -281,48 +305,48 @@ namespace expr
 				}
 			}
 
-			mu::virt<any_object> take_referenced() override
+			mu::virt<any_object> make_reference() override
 			{
-				if constexpr(type_wrap_info<t>::is())
+				return mu::virt<any_object>::make<object_of<post_return_t<raw&>>>(into_returnable<raw&>(get_raw()));
+			}
+
+			mu::virt<any_object> make_constant_reference() override
+			{
+				return mu::virt<any_object>::make<object_of<post_return_t<raw const&>>>(into_returnable<raw const&>(get_raw()));
+			}
+
+			virtual mu::virt<any_object> take_value() override
+			{
+				if constexpr(type<t>::is_ref() && std::is_const_v<raw>)
 				{
-					if constexpr(!std::is_const_v<typename type_wrap_info<t>::deref>)
+					return mu::virt<any_object>::make_nullval();
+				}
+				else
+				{
+					return mu::virt<any_object>::make<object_of<post_return_t<raw>>>(into_returnable<raw>(std::move(get_raw())));
+				}
+			}
+
+			mu::virt<any_object> unwrap() override
+			{
+				constexpr bool is_wrapper = wrapper_type_operation_info<will_pass>::is_wrapper();
+				if constexpr(is_wrapper)
+				{
+					constexpr bool is_deref_returnable = can_return<typename wrapper_type_operation_info<will_pass>::wrapped>();
+					if constexpr(is_deref_returnable)
 					{
-						if(type_wrap_info<t>::get(val) != nullptr)
+						if(wrapper_type_operation_info<will_pass>::can_unwrap(std::forward<will_pass>(get_raw())))
 						{
-							return mu::virt<any_object>::make<object_of<typename type_wrap_info<t>::deref>>(std::move(*type_wrap_info<t>::get(val)));
+							return mu::virt<any_object>::make<object_of<post_return_t<typename wrapper_type_operation_info<will_pass>::wrapped>>>(into_returnable(wrapper_type_operation_info<will_pass>::do_unwrap(std::forward<will_pass>(get_raw()))));
 						}
 					}
 				}
 				return mu::virt<any_object>::make_nullval();
 			}
 
-
-
-			bool give_reference(any_elem_val& tar) override
-			{
-				if constexpr(type_wrap_info<t>::is())
-				{
-					if constexpr(!std::is_const_v<typename type_wrap_info<t>::deref>)
-					{
-						if (type_wrap_info<t>::get(val) != nullptr)
-						{
-							type_ask_of<typename type_wrap_info<t>::deref> ask;
-							tar.lazy_get(&ask);
-							if (ask.gotten)
-							{
-								*type_wrap_info<t>::get(val) = std::move(*ask.gotten);
-								return true;
-							}
-						}
-					}
-				}
-
-				return false;
-			}
-
 			std::type_info const& get_type() const override
 			{
-				return type();
+				return typeid(t);
 			}
 
 			bool is_movable()
@@ -351,40 +375,26 @@ namespace expr
 
 			bool get(any_type_ask* tar) override
 			{
-				if (tar->get_type() == typeid(t))
+				if constexpr(type<t>::is_val())
 				{
-					static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
-					return is_movable();
+					if (tar->get_type() == typeid(t))
+					{
+						static_cast<type_ask_of<t>*>(tar)->gotten.emplace(std::move(val));
+						return is_movable();
+					}
 				}
-				if (tar->get_type() == typeid(t*))
+				if (tar->get_type() == typeid(ref_wrap<raw>))
 				{
-					static_cast<type_ask_of<t*>*>(tar)->gotten.emplace(&val);
+					static_cast<type_ask_of<ref_wrap<raw>>*>(tar)->gotten.emplace(into_returnable<raw&>(get_raw()));
 					return false;
 				}
-				if constexpr(!std::is_const_v<t>)
+				if constexpr(!std::is_const_v<raw>)
 				{
-					if (tar->get_type() == typeid(t const*))
+					if (tar->get_type() == typeid(ref_wrap<raw const>))
 					{
-						static_cast<type_ask_of<t const*>*>(tar)->gotten.emplace(&val);
+						static_cast<type_ask_of<ref_wrap<raw const>>*>(tar)->gotten.emplace(into_returnable<raw const&>(get_raw()));
 						return false;
 					}
-				}
-				if constexpr (type_wrap_info<t>::is()) //to return a t*/t& as a t&& or t const&
-				{
-					if (tar->get_type() == typeid(typename type_wrap_info<t>::deref*))
-					{
-						static_cast<type_ask_of<typename type_wrap_info<t>::deref*>*>(tar)->gotten.emplace(std::move(type_wrap_info<t>::get(val)));
-						return false;
-					}
-					if constexpr(!std::is_const_v<typename type_wrap_info<t>::deref>)
-					{
-						if (tar->get_type() == typeid(typename type_wrap_info<t>::deref const*))
-						{
-							static_cast<type_ask_of<typename type_wrap_info<t>::deref const*>*>(tar)->gotten.emplace(std::move(type_wrap_info<t>::get(val)));
-							return false;
-						}
-					}
-					return false;
 				}
 				return false;
 			}
@@ -404,31 +414,16 @@ namespace expr
 				{
 					return true;
 				}
-				if (tar == typeid(t*))
+				if (tar == typeid(ref_wrap<raw>))
 				{
 					return true;
 				}
-				if constexpr(!std::is_const_v<t>)
+				if constexpr(!std::is_const_v<raw>)
 				{
-					if (tar == typeid(t const*))
+					if (tar == typeid(ref_wrap<raw const>))
 					{
 						return true;
 					}
-				}
-				if constexpr(type_wrap_info<t>::is())
-				{
-					if (tar == typeid(typename type_wrap_info<t>::deref*))
-					{
-						return true;
-					}
-					if constexpr(!std::is_const_v<typename type_wrap_info<t>::deref>)
-					{
-						if (tar == typeid(typename type_wrap_info<t>::deref const*))
-						{
-							return true;
-						}
-					}
-					return false;
 				}
 				return false;
 			}
@@ -440,25 +435,92 @@ namespace expr
 
 		using object_holder = mu::virt<any_object>;
 
+		template<typename t>
+		mu::virt<object_of<post_return_t<t>>> make_object(t&& a)
+		{
+			return mu::virt<object_of<post_return_t<t>>>::template make<object_of<post_return_t<t>>>(into_returnable<t>(std::forward<t>(a)));
+		}
+
+
+
+		struct predeclared_object_result
+		{
+			predeclared_object_result(object_holder&& a) :
+				wrapped(std::move(a))
+			{}
+			object_holder wrapped;
+		};
+
+
+		template<typename t>
+		predeclared_object_result type_operations_for<t>::make_from_string(std::string::const_iterator& start, std::string::const_iterator stop) const
+		{
+			std::optional<t> g{ type_operation_info<t>::parse(start,stop) };
+			if (g)
+			{
+				return predeclared_object_result{ make_object(std::move(*g)) };
+			}
+			else
+			{
+				return predeclared_object_result{ object_holder::make_nullval() };
+			}
+		}
+
+		object_holder parse_to_object(std::string::const_iterator& start, std::string::const_iterator stop, type_info_set const& names)
+		{
+			if(start == stop)
+			{
+				return object_holder::make_nullval();
+			}
+			std::string type_name;
+			type_name.reserve(std::distance(start,stop));
+			while(*start!='(')
+			{
+				type_name.push_back(*start);
+				++start;
+				if(start == stop)
+				{
+					return object_holder::make_nullval();
+				}
+			}
+			++start;
+			if(start == stop)
+			{
+				return object_holder::make_nullval();
+			}
+			auto found = names.operations.find(std::move(type_name));
+			if (found == names.operations.end())
+			{
+				return object_holder::make_nullval();
+			}
+			predeclared_object_result&& ret = found->second->make_from_string(start,stop);
+			if(start == stop || *start != ')')
+			{
+				return object_holder::make_nullval();
+			}
+			
+			return std::move(ret.wrapped);
+		}
+
 
 		//on a stack, this is what a variable pushes (unless if the variable is also being popped).
-		class value_reference : public value_elem_val
+		class variable_reference : public value_elem_val
 		{
 		public:
 
 
-			value_reference(object_holder* a)
+			variable_reference(object_holder* a)
 			{
 				ref = a;
 			}
 
-			bool is_reference() const override
+			bool is_variable() const override
 			{
 				return true;
 			}
 
 
-			mu::virt<any_object> make_clone() const override
+			mu::virt<any_object> make_clone() override
 			{
 				if (!ref->is_nullval())
 				{
@@ -470,11 +532,47 @@ namespace expr
 				}
 			}
 
-			mu::virt<any_object> take_referenced() override
+			mu::virt<any_object> make_reference() override
 			{
 				if (!ref->is_nullval())
 				{
-					return (**ref).take_referenced();
+					return (**ref).make_reference();
+				}
+				else
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
+			}
+
+			mu::virt<any_object> make_constant_reference() override
+			{
+				if (!ref->is_nullval())
+				{
+					return (**ref).make_constant_reference();
+				}
+				else
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
+			}
+
+			mu::virt<any_object> take_value() override
+			{
+				if (!ref->is_nullval())
+				{
+					return (**ref).take_value();
+				}
+				else
+				{
+					return mu::virt<any_object>::make_nullval();
+				}
+			}
+
+			mu::virt<any_object> unwrap() override
+			{
+				if (!ref->is_nullval())
+				{
+					return (**ref).unwrap();
 				}
 				else
 				{
@@ -483,17 +581,6 @@ namespace expr
 			}
 
 
-			bool give_reference(any_elem_val& tar) override
-			{
-				if (!ref->is_nullval())
-				{
-					return (**ref).give_reference(tar);
-				}
-				else
-				{
-					return false;
-				}
-			}
 
 			bool get(any_type_ask* tar) override
 			{
@@ -559,15 +646,15 @@ namespace expr
 				}
 			}
 
-			std::string string_view(name_set const& names) override
+			std::string string_view(type_info_set const& names) override
 			{
 				if (ref->is_nullval())
 				{
-					return "empty_variable";
+					return "#";
 				}
 				else
 				{
-					return "variable_with_" + (**ref).string_view(names);
+					return (**ref).string_view(names);
 				}
 			}
 

@@ -3,7 +3,6 @@
 #include<unordered_map>
 
 #include"tuple_call_unpack.h"
-#include"call_typing.h"
 #include"object_holding.h"
 
 namespace expr
@@ -16,14 +15,14 @@ namespace expr
 
 		object_holder get_value(stack_elem& a)
 		{
-			assert_with_generic_logic_error(a.is_nullval() || a->has_value());
+			assert_with_generic_logic_error([&]() {return a.is_nullval() || a->has_value(); });
 			if (a.is_nullval())
 			{
 				return object_holder::make_nullval();
 			}
-			else if (a->is_reference())
+			else if (a->is_variable())
 			{
-				return std::move(*a.downcast_get<value_reference>()->ref);
+				return std::move(*a.downcast_get<variable_reference>()->ref);
 			}
 			else if (a->is_object())
 			{
@@ -31,25 +30,25 @@ namespace expr
 			}
 			else
 			{
-				assert_with_generic_logic_error(false);
+				assert_with_generic_logic_error([&]() {return false; });
 				return object_holder::make_nullval();
 			}
 		}
 
 		void set_value(stack_elem& a, object_holder&& b)
 		{
-			assert_with_generic_logic_error(a.is_nullval() || a->has_value());
+			assert_with_generic_logic_error([&]() {return a.is_nullval() || a->has_value(); });
 			if (a.is_nullval() || a->is_object())
 			{
 				a = std::move(b);
 			}
-			else if (a->is_reference())
+			else if (a->is_variable())
 			{
-				(*a.downcast_get<value_reference>()->ref) = std::move(b);
+				(*a.downcast_get<variable_reference>()->ref) = std::move(b);
 			}
 			else
 			{
-				assert_with_generic_logic_error(false);
+				assert_with_generic_logic_error([&]() {return false; });
 			}
 		}
 
@@ -78,18 +77,20 @@ namespace expr
 						return std::nullopt;
 					}
 				}
-				else if constexpr (std::is_pointer_v<t>)
+				else if constexpr (type<t>::is_ref())
 				{
 					if (ask.pointed_to_value)
 					{
-						cur = stack_elem::make<object_of<std::remove_const_t<typename std::remove_pointer_t<t>>>>(std::move(ask.pointed_to_value->val));
-						return &cur.downcast_get<object_of<std::remove_const_t<typename std::remove_pointer_t<t>>>>()->val;
+						auto&& new_cur = make_object<std::remove_const_t<typename type<t>::raw>>(std::move(ask.pointed_to_value->val));
+						std::optional<t> ret{ t(new_cur->val.wrapped) };
+						cur = std::move(new_cur);
+						return ret;
 					}
 					else
 					{
 						if (ask.gotten)
 						{
-							return std::optional<t>{std::move(*ask.gotten)};
+							return std::optional<t>(std::move(*ask.gotten));
 						}
 						else
 						{
@@ -101,7 +102,7 @@ namespace expr
 				{
 					if (ask.gotten)
 					{
-						return std::optional<t>{std::move(*ask.gotten)};
+						return std::optional<t>(std::move(*ask.gotten));
 					}
 					else
 					{
@@ -116,7 +117,11 @@ namespace expr
 			template<typename tup_t, size_t ind, typename t, typename...ts>
 			void smart_set_rest(tup_t& a)
 			{
-				std::get<ind>(a) = smart_take_elem<t>(stuff[stuff.size() + ind - std::tuple_size_v<tup_t>]);
+				std::optional<t>&& temp = smart_take_elem<t>(stuff[stuff.size() + ind - std::tuple_size_v<tup_t>]);
+				if(temp)
+				{
+					std::get<ind>(a).emplace(std::move(*temp));
+				}
 				
 				if constexpr(sizeof...(ts) > 0)
 				{
@@ -171,7 +176,7 @@ namespace expr
 
 			virtual object_holder try_perform(stack& a, size_t args_to_take) = 0;
 			virtual bool can_perform(stack const& a, size_t args_to_take) const = 0;
-			virtual void put_type(std::ostream& target, name_set const& from) const = 0;
+			virtual void put_type(std::ostream& target, type_info_set const& from) const = 0;
 			virtual mu::virt<any_callable> add_layer(mu::virt<any_callable>&& tail) && = 0;
 			virtual ~any_callable()
 			{}
@@ -215,7 +220,7 @@ namespace expr
 			}
 
 
-			void put_type(std::ostream& into, name_set const& from) const override
+			void put_type(std::ostream& into, type_info_set const& from) const override
 			{
 				into << "\\ ";
 				base_callable::put_type(into, from);
@@ -229,7 +234,7 @@ namespace expr
 
 
 		template<typename t,typename...ts>
-		void put_types(std::ostream& target, name_set const& from)
+		void put_types(std::ostream& target, type_info_set const& from)
 		{
 			if constexpr(sizeof...(ts) > 0)
 			{
@@ -246,8 +251,8 @@ namespace expr
 		template<typename ret_t, typename...args>
 		class smart_callable : public any_callable
 		{
-			using use_tuple_type = std::tuple<store_t<args>...>;
-			using arg_tuple_type = std::tuple<std::optional<store_t<args>>...>;
+			using use_tuple_type = std::tuple<pre_call_t<args>...>;
+			using arg_tuple_type = std::tuple<std::optional<pre_call_t<args>>...>;
 		public:
 
 			smart_callable() = default;
@@ -255,7 +260,7 @@ namespace expr
 			smart_callable(smart_callable const&) = default;
 
 
-			smart_callable(std::function<returned_t<ret_t>(store_t<args>&&...)>&& f)
+			smart_callable(std::function<post_return_t<ret_t>(pre_call_t<args>&&...)>&& f)
 			{
 				target = std::move(f);
 			}
@@ -265,14 +270,22 @@ namespace expr
 				return held_callable::make<layered<smart_callable<ret_t, args...>>>(smart_callable<ret_t, args...>{std::move(target)}, std::move(tail));
 			}
 
-			void put_type(std::ostream& into, name_set const& from) const override
+			void put_type(std::ostream& into, type_info_set const& from) const override
 			{
 				into << '(';
 				if constexpr(sizeof...(args) > 0)
 				{
-					put_types<store_t<args>...>(into,from);
+					put_types<pre_call_t<args>...>(into,from);
 				}
-				into << ") -> " << name_of<returned_t<ret_t>>(from);
+
+				if constexpr(can_return<ret_t>())
+				{
+					into << ") -> " << name_of<post_return_t<ret_t>>(from);
+				}
+				else
+				{
+					into << ")";
+				}
 			}
 
 			//when the stack is not popped from, it is the callers responsibility to manage garbage variables
@@ -282,12 +295,12 @@ namespace expr
 				{
 					return object_holder::make_nullval();
 				}
-				assert_with_generic_logic_error(a.stuff.size() >= sizeof...(args));
+				assert_with_generic_logic_error([&]() {return a.stuff.size() >= sizeof...(args); });
 
 				if constexpr(sizeof...(args) > 0)
 				{
 					arg_tuple_type to_use;
-					a.smart_set_from_front<arg_tuple_type, store_t<args>...>(to_use);
+					a.smart_set_from_front<arg_tuple_type, pre_call_t<args>...>(to_use);
 					std::optional<use_tuple_type> might_use = prepare_arguments<0, args...>(std::move(to_use));
 
 					if (might_use)
@@ -299,7 +312,7 @@ namespace expr
 						}
 						else
 						{
-							return object_holder::make<object_of<returned_t<ret_t>>>(do_call(std::move(*might_use)));
+							return object_holder::make<object_of<post_return_t<ret_t>>>(do_call(std::move(*might_use)));
 						}
 					}
 					else
@@ -316,7 +329,7 @@ namespace expr
 					}
 					else
 					{
-						return object_holder::make<object_of<returned_t<ret_t>>>(do_call(use_tuple_type{}));
+						return object_holder::make<object_of<post_return_t<ret_t>>>(do_call(use_tuple_type{}));
 					}
 				}
 			}
@@ -328,11 +341,11 @@ namespace expr
 					return false;
 				}
 
-				assert_with_generic_logic_error(a.stuff.size() >= sizeof...(args));
+				assert_with_generic_logic_error([&]() {return a.stuff.size() >= sizeof...(args); });
 				
 				if constexpr(!(sizeof...(args) == 0))
 				{
-					if (a.smart_check_from_front<0, store_t<args>...>())
+					if (a.smart_check_from_front<0, pre_call_t<args>...>())
 					{
 						return true;
 					}
@@ -353,18 +366,18 @@ namespace expr
 			}
 
 
-			std::function<returned_t<ret_t>(store_t<args>&&...)> target;
+			std::function<post_return_t<ret_t>(pre_call_t<args>&&...)> target;
 
 		private:
 
 			template<size_t ind = 0, typename t, typename...ts>
-			static std::optional<std::tuple<store_t<t>, store_t<ts>...>> prepare_arguments(arg_tuple_type&& tar)
+			static std::optional<std::tuple<pre_call_t<t>, pre_call_t<ts>...>> prepare_arguments(arg_tuple_type&& tar)
 			{
 				if constexpr(sizeof...(ts) == 0)
 				{
 					if (std::get<ind>(tar))
 					{
-						return std::optional<std::tuple<store_t<t>, store_t<ts>...>>(std::move(std::tuple<store_t<t>>{std::move(*std::get<ind>(tar))}));
+						return std::optional<std::tuple<pre_call_t<t>, pre_call_t<ts>...>>(std::move(std::tuple<pre_call_t<t>>{std::move(*std::get<ind>(tar))}));
 					}
 					else
 					{
@@ -378,16 +391,16 @@ namespace expr
 						auto rest = prepare_arguments<ind + 1, ts...>(std::move(tar));
 						if (rest)
 						{
-							return std::tuple_cat(std::tuple<store_t<t>>(std::move(*std::get<ind>(tar))), std::move(*rest));
+							return std::tuple_cat(std::tuple<pre_call_t<t>>(std::move(*std::get<ind>(tar))), std::move(*rest));
 						}
 					}
 					return std::nullopt;
 				}
 			}
 
-			returned_t<ret_t> do_call(use_tuple_type&& a)
+			post_return_t<ret_t> do_call(use_tuple_type&& a)
 			{
-				return call(std::function<returned_t<ret_t>(store_t<args>&&...)>(target), std::move(a));
+				return call(std::function<post_return_t<ret_t>(pre_call_t<args>&&...)>(target), std::move(a));
 			}
 		};
 
@@ -400,7 +413,7 @@ namespace expr
 				target = a;
 			}
 
-			void put_type(std::ostream& into, name_set const&) const override
+			void put_type(std::ostream& into, type_info_set const&) const override
 			{
 				into << "(...)->?";
 			}
@@ -413,7 +426,7 @@ namespace expr
 
 			object_holder try_perform(stack& a, size_t args_to_take) override
 			{
-				assert_with_generic_logic_error(a.stuff.size() >= args_to_take);
+				assert_with_generic_logic_error([&]() {return a.stuff.size() >= args_to_take; });
 				std::vector<stack_elem> to_call;
 				to_call.reserve(args_to_take);
 				for (size_t i = a.stuff.size() - args_to_take; i != a.stuff.size(); ++i)

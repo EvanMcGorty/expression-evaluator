@@ -1,16 +1,17 @@
 #pragma once
-#include"smart_environments.h"
+#include"environment_sets.h"
+#include"objects_and_calls/statement.h"
 
 namespace expr
 {
 	namespace impl
 	{
 
-		inline void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& errors)
+		inline void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& info)
 		{
 			if (todo.val.is_nullval())
 			{
-				errors << "null value found\n";
+				info << "null value found\n";
 				loc.stuff.emplace_back(stack_elem::make_nullval());
 			}
 			else if (todo.val->is_literal_push())
@@ -32,7 +33,7 @@ namespace expr
 					}
 					else
 					{
-						errors << "variable name \"" << temp.var.data.var_name << "\" not found\n";
+						info << "variable name \"" << temp.var.data.var_name << "\" not found\n";
 						loc.stuff.emplace_back(stack_elem::make_nullval());
 					}
 				}
@@ -42,11 +43,11 @@ namespace expr
 					auto to_push = variables.get_var(temp.var.data.var_name);
 					if (to_push)
 					{
-						loc.stuff.emplace_back(stack_elem::make<value_reference>(*to_push));
+						loc.stuff.emplace_back(stack_elem::make<variable_reference>(*to_push));
 					}
 					else
 					{
-						errors << "variable name \"" << temp.var.data.var_name << "\" not found\n";
+						info << "variable name \"" << temp.var.data.var_name << "\" not found\n";
 						loc.stuff.emplace_back(stack_elem::make_nullval());
 					}
 				}
@@ -54,7 +55,7 @@ namespace expr
 				case(sc::push):
 				{
 					auto to_push = variables.push_var(std::move(temp.var.data.var_name));
-					loc.stuff.emplace_back(stack_elem::make<value_reference>(to_push));
+					loc.stuff.emplace_back(stack_elem::make<variable_reference>(to_push));
 				}
 				break;
 				}
@@ -65,8 +66,8 @@ namespace expr
 				auto optional_todo = functions.get(temp.name);
 				if (!optional_todo)
 				{
-					errors << "function name \"" << temp.name << "\" not found\n";
-					garbage.clean_all_to_front(loc, temp.arg_count);
+					info << "function name \"" << temp.name << "\" not found\n";
+					garbage.clean_all_to_front(loc, temp.arg_count, info);
 					loc.stuff.emplace_back(stack_elem::make_nullval());
 				}
 				else
@@ -81,48 +82,25 @@ namespace expr
 					}
 					catch (std::exception const& caught)
 					{
-						errors << "call to function \"" << temp.name << "\" threw an exception: " << caught.what() << "\n";
+						info << "call to function \"" << temp.name << "\" threw an exception: " << caught.what() << "\n";
 						tp = object_holder::make_nullval();
 						no_exceptions = false;
 					}
 
 					if (no_exceptions && tp.is_nullval())
 					{
-						errors << "call to function \"" << temp.name << "\" returned null\n";
+						info << "call to function \"" << temp.name << "\" returned null\n";
 					}
-					garbage.clean_all_to_front(loc, temp.arg_count);
+					garbage.clean_all_to_front(loc, temp.arg_count, info);
 					loc.stuff.emplace_back(std::move(tp));
 				}
 			}
 			else
 			{
-				assert_with_generic_logic_error(false);
+				assert_with_generic_logic_error([&]() {return false; });
 			}
 		}
 
-		inline void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& errors)
-		{
-			for (auto&& it : std::move(tar.statements))
-			{
-				perform(std::move(it), loc, env.variables,env.functions, env.garbage, errors);
-			}
-		}
-
-		inline stack environment::run(executable&& tar, std::ostream& errors)
-		{
-			stack loc;
-			perform_all(std::move(tar), loc, *this, errors);
-			return loc;
-		}
-
-		inline stack_elem environment::evaluate(expression&& tar, std::ostream& errors)
-		{
-			executable to_run;
-			std::move(tar).into_executable(to_run);
-			stack v = run(std::move(to_run), errors);
-			assert_with_generic_logic_error(v.stuff.size() == 1);
-			return std::move(*v.stuff.begin());
-		}
 
 	}
 }

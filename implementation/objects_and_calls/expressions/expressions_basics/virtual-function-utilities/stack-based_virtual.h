@@ -3,8 +3,15 @@
 #include<array>
 #include<string>
 #include<typeinfo>
-#include<assert.h>
+#include "../../../../asserts_and_errors.h"
 #include<functional>
+
+
+namespace expr
+{
+namespace impl
+{
+
 
 namespace mu
 {
@@ -225,7 +232,7 @@ public:
     void downcast(stack_virt<d,cap>& ret, std::function<void(base*,base*)> const& move_functor) &&
     {
         static_assert((std::is_base_of<base,d>::value || std::is_same<base,d>::value) && sizeof(d) <= cap,"to downcast stack_virt<xb,xc>&& to y*, yb must derive from xb and");
-        assert(can_downcast<d>());
+		expr::impl::assert_with_generic_logic_error([&]() {return can_downcast<d>(); });
         if(ret.check_state_whether_nonnull())
         {
             ret.call_destructor_on_data();
@@ -243,7 +250,7 @@ public:
     d* downcast_get()
     {
         static_assert((std::is_base_of<base,d>::value || std::is_same<base,d>::value) && sizeof(d) <= cap,"to downcast stack_virt<xb,xc>&& to y*, yb must derive from xb and");
-        assert(can_downcast<d>());
+		expr::impl::assert_with_generic_logic_error([&]() {return can_downcast<d>(); });
         return static_cast<d*>(get());
     }
 
@@ -251,7 +258,7 @@ public:
     d const* downcast_get() const
     {
         static_assert((std::is_base_of<base,d>::value || std::is_same<base,d>::value) && sizeof(d) <= cap,"to downcast stack_virt<xb,xc>&& to y*, yb must derive from xb and");
-        assert(can_downcast<d>());
+		expr::impl::assert_with_generic_logic_error([&]() {return can_downcast<d>(); });
         return static_cast<d const*>(get());
     }
 
@@ -267,7 +274,7 @@ public:
 
     stack_virt<base,sizeof(base)> shrink(stack_virt<base,sizeof(base)>& ret, std::function<void(base*,base*)> const& move_functor) &&
     {
-        assert(is_only_base());
+		expr::impl::assert_with_generic_logic_error([&]() {return is_only_base(); });
 
         if(ret.check_state_whether_nonnull())
         {
@@ -384,5 +391,9 @@ private:
     std::array<unsigned char,cap> data;
     bool is_nonnull; //there needs to be some representation of a null state after an r-value is moved out of
 };
+
+}
+
+}
 
 }

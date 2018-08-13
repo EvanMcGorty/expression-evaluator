@@ -1,0 +1,32 @@
+minimal_example.cpp is used here but you can build any of the examples with these commands
+
+generally: 
+building requires only a c++ compiler that supports c++17, runtime type info, and exceptions.
+the project is header only, so you dont need to build any thing outside of your own project.
+
+specifically:
+
+g++ minimal_example.cpp -std=c++17
+or
+clang-cl minimal_example.cpp /GX /std:c++17
+or
+clang++ minimal_example.cpp -std=c++17
+or
+open msvc, create a project, set the language standard to c++17, add an existing file, and select minimal_example.cpp
+
+caveats:
+
+for msvc, cpp files may need to be set with "bigobj" in their properties.
+on windows g++ might need -Os to optimize for size
+on windows clang++ may need "-Xclang -flto-visibility-public-std"
+
+notes:
+
+clang-cl needs "/GX" to enable exceptions
+clang++ needs "-Xclang -flto-visibility-public-std" to enable runtime type info
+using "Wall" with clang-cl may result in warnings, but "Wmany" should not
+using "Weverything" with clang++ may result in warnings, but "Wall" should not
+using "Wall" with g++ should not result in warnings
+
+the only important folders in this repository are implementation and include.
+they can be coppied and moved anywhere. everything else can be deleted if it isn't needed.

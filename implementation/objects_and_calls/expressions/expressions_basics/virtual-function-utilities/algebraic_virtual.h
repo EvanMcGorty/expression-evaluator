@@ -4,6 +4,11 @@
 #include<typeinfo>
 #include"stack-based_virtual.h"
 
+namespace expr
+{
+namespace impl
+{
+
 namespace mu
 {
 
@@ -202,7 +207,7 @@ public:
     auto downcast() &&
     {
         static_assert(variadic_utilities::is_one_of<d,derived...>(),"can only downcast to one of the derived types listed as a template parameter");
-        assert(data.template can_downcast<d>());
+		expr::impl::assert_with_generic_logic_error([&]() {return data.template can_downcast<d>(); });
         return changer<d>::change(std::move(*this),variadic_utilities::filter<d,derived...>::get());
     }
 
@@ -267,7 +272,7 @@ public:
 private:
 
     template<typename t, typename...ts>
-    std::function<void(base*,base*)> iterate_find_move_functor(std::type_info const& cur_type) const
+    static std::function<void(base*,base*)> iterate_find_move_functor(std::type_info const& cur_type)
     {
         if(cur_type == typeid(t))
         {
@@ -325,4 +330,7 @@ private:
 
 };
 
+}
+
+}
 }

@@ -94,16 +94,18 @@ public:
 #include<functional>
 #include<iostream>
 
-#include"..\evaluator.h"
+#include"../include/expression-evaluator/evaluator.h"
 
 using namespace expr;
 
 int main()
 {
-	//(using the global database) assign the polynomial class the name "poly", and similar for other classes
-	rename<polynomial>("poly");
-	rename<double>("num");
-	rename<std::vector<double>>("vec");
+	//(using the global database) assign the polynomial class the name "poly", and similar for other classes.
+	declare_with_name<polynomial>("poly");
+	declare_with_name<double>("num");
+	//vector is a type that the evaluator can automatically name. currently it will default to "num-vector" (in this case).
+	//note that if this had been called first, it would default to something like "double-vector" or "float64-vector"
+	declare<std::vector<double>>();
 
 
 	//create the environment/settings of an interactive interpreter with default options
@@ -120,6 +122,9 @@ int main()
 		//and also the vector utilities, which comes with some extra functions
 		<< "vec" << fs_functs<util<std::vector<double>>>()
 
+		//for the function str_to_obj, which can be used to load an object from one runtime to the next
+		<< "" << fs_functs<types>()
+
 		//then, with the name "poly", add a constructor function from vector<double>&& into polynomial
 		<< "poly" << cfn<polynomial, std::vector<double>&&>()
 
@@ -127,8 +132,8 @@ int main()
 		<< "sum" << sfn(std::function<double(double, double)>{[](double a, double b) {return a + b; }})
 		<< "prod" << sfn(std::function<double(double, double)>{[](double a, double b) {return a * b; }})
 		<< "num" << sfn(&util<double>::basic::copy_construct)
-		<< "pi" << val(3.1415926535)
-		<< "e" << val(2.7182818284)
+		<< "pi" << copier(3.1415926535)
+		<< "e" << copier(2.7182818284)
 		<< "num" << fs_functs<util<double>>()
 
 		//then add overloads for sum and prod that work with polynomials (note that these overloads have less priority)
@@ -148,21 +153,26 @@ int main()
 	e.go();
 	/*
 	try entering:
-	_funcs
-	swap(=v/,vec.make(2,3))
-	vec.append(=v,clone(=v))
-	=v
-	swap(=p/,poly(=v))
-	subst(=p,3)
-	subst(=p,7)
-	swap(=p,prod(=p,poly("[3,2,1,0]")))
-	swap(=n/,vec.at(view(=p),3))
-	num.give(=n,prod(take(=n),take(=n)))
-	view(=p)
-	subst(sum(=p,poly("[0 0 0 0 0 0 0 0 0 1]")),prod(prod(sum(1,2),sum(3,4)),sum(e,pi)))
-	_vars
-	_exit
+_funcs
+swap(=v/,vec.make(2,3))
+vec.append(=v,clone(=v))
+=v
+swap(=p/,poly(=v))
+subst(=p,3)
+subst(=p,7)
+swap(=p,prod(=p,poly([3 2 1 0])))
+swap(=n/,vec.at(view(=p),3))
+num.give(=n,prod(take(=n),take(=n)))
+view(=p)
+swap(subst(sum(=p,poly([0 0 0 0 0 0 0 0 0 1])),prod(prod(sum(1,2),sum(3,4)),sum(e,pi))),=p/)
+_vars
+_build_vars('str_to_obj)
+_exit
 
+	you can copy the result of _build_vars next time to load the same variables.
+	however, not all types can be loaded. references wont work for obvious reasons and
+	polynomial is a custom type that is this example does not provide parsing functions for.
+	so, some values might not transfer over.
 	*/
 
 	std::cout << "have a good day!\n" << std::flush;

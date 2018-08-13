@@ -1,6 +1,6 @@
 #pragma once
 #include<deque>
-#include"function_evaluations.h"
+#include"objects_and_calls/function_evaluations.h"
 
 
 namespace expr
@@ -72,9 +72,21 @@ namespace expr
 		}
 
 		template<typename t>
-		held_callable val(t&& a)
+		held_callable copier(t&& a)
 		{
-			return sfn(std::function<t()>{[val = std::move(a)]() -> t {return t{ val }; }});
+			return sfn(std::function<t()>{[val = std::move(a)]()->t {return t{ val }; }});
+		}
+		
+		template<typename t>
+		held_callable refto(t& a)
+		{
+			return sfn(std::function<t&()>{[val = &a]()->t& {return *val; }});
+		}
+
+		template<typename t>
+		held_callable constrefto(t const& a)
+		{
+			return sfn(std::function<t const&()>{[val = &a]()->t const& {return *val; }});
 		}
 
 		held_callable mfn(std::function<object_holder(std::vector<stack_elem>&)>&& target)
@@ -102,11 +114,11 @@ namespace expr
 
 		class function_set;
 
-		template<typename t>
-		std::string fs_name(const name_set &names);
+		template<typename t, typename...fs_arg_ts>
+		function_set fs_functs(fs_arg_ts&&...fs_args);
 
 		template<typename t>
-		function_set fs_functs();
+		std::string fs_name(type_info_set const& names);
 
 		class function_set
 		{
@@ -123,32 +135,14 @@ namespace expr
 			template<typename string_convertible>
 			function_set& add(held_callable&& f, string_convertible&& n)
 			{
-				throw_invalid_name_usage(name_checker::is_valid(std::string{ n }));
+				assert_with_invalid_name_usage([&]() {return name_checker::is_valid(std::string{ n }); });
 				add_to_map(std::make_pair(std::string{ n }, std::move(f)));
 				return *this;
 			}
 
 
 			template<typename t = void, typename string_convertible = std::string>
-			function_set& use(string_convertible&& n = fs_name<t>(global_type_renames()), function_set&& set = fs_functs<t>())
-			{
-				std::string name{ n };
-				if (name == "")
-				{
-					for (auto it = set.map.begin(); it != set.map.end(); ++it)
-					{
-						add_to_map(std::move(*it));
-					}
-					return *this;
-				}
-				throw_invalid_name_usage(name_checker::is_valid(std::string{ name }));
-				for (auto it = set.map.begin(); it != set.map.end(); ++it)
-				{
-					auto cur = std::move(*it);
-					add_to_map(std::make_pair(std::string{ name + "." + cur.first }, std::move(cur.second)));
-				}
-				return *this;
-			}
+			function_set& use(string_convertible&& n = fs_name<t>(global_type_info()), function_set&& set = fs_functs<t>());
 
 			std::optional<held_callable*> get(std::string const& a)
 			{
@@ -242,6 +236,25 @@ namespace expr
 		{
 		public:
 
+			std::string make_builder(std::string const& builder_function, std::string const& var_name, type_info_set const& names, std::ostream& to)
+			{
+				std::string ret;
+				for(auto& it : values)
+				{
+					to << "swap(=" << var_name << "/,";
+					if (it.is_nullval())
+					{
+						to << '#';
+					}
+					else
+					{
+						to << builder_function << "(\"" << (it->string_view(names)) << "\")";
+					}
+					to << ")\n";
+				}
+				return ret;
+			}
+
 			object_holder * push_front(object_holder&& a)
 			{
 				values.emplace_back(std::move(a));
@@ -274,7 +287,7 @@ namespace expr
 				}
 			}
 
-			std::string string_view(name_set const& from)
+			std::string string_view(type_info_set const& from)
 			{
 				if (values.size() == 0)
 				{
@@ -297,25 +310,26 @@ namespace expr
 				return ret;
 			}
 
-			void clean_to_front(stack_elem& from)
+			void clean_to_front(stack_elem& from, std::ostream& info)
 			{
 				if (!from.is_nullval() && from->is_object())
 				{
 					auto to_push = std::move(from).downcast<any_object>();
 					if (!to_push->can_trivially_destruct())
 					{
+						info << to_push->string_view(global_type_info()) << " cleaned to stack front\n";
 						push_front(std::move(to_push));
 					}
 				}
 			}
 
-			void clean_all_to_front(stack& from, size_t count)
+			void clean_all_to_front(stack& from, size_t count, std::ostream& info)
 			{
-				assert_with_generic_logic_error(count <= from.stuff.size());
+				assert_with_generic_logic_error([&]() {return count <= from.stuff.size(); });
 
 				for (size_t i = 0; i != count; ++i)
 				{
-					clean_to_front(*from.stuff.rbegin());
+					clean_to_front(*from.stuff.rbegin(), info);
 					from.stuff.pop_back();
 				}
 			}
@@ -329,6 +343,15 @@ namespace expr
 		{
 			friend class environment;
 		public:
+
+		
+			void make_builder(std::string builder_function, type_info_set const& names, std::ostream& to)
+			{
+				for(auto& it : map)
+				{
+					it.second.make_builder(builder_function,it.first,names, to);
+				}
+			}
 
 
 			object_holder* push_var(std::string&& a)
@@ -362,7 +385,7 @@ namespace expr
 				}
 			}
 
-			void put_values(std::ostream& to, name_set const& from)
+			void put_values(std::ostream& to, type_info_set const& from)
 			{
 				for (auto& it : map)
 				{
