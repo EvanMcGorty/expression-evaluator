@@ -76,7 +76,7 @@ namespace expr
 					.add(sfn(&extended_util<std::vector<t>>::size), "size");
 				if constexpr(std::is_default_constructible_v<t>)
 				{
-					ret.add(sfn(&extended_util<std::vector<t>>::size), "resize");
+					ret.add(sfn(&extended_util<std::vector<t>>::resize), "resize");
 				}
 				return std::move(ret);
 			}

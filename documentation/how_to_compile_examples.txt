@@ -10,7 +10,7 @@ g++ minimal_example.cpp -std=c++17
 or
 clang-cl minimal_example.cpp /GX /std:c++17
 or
-clang++ minimal_example.cpp -std=c++17 -Xclang -flto-visibility-public-std
+clang++ minimal_example.cpp -std=c++17
 or
 open msvc, create a project, set the language standard to c++17, add an existing file, and select minimal_example.cpp
 
@@ -18,6 +18,7 @@ caveats:
 
 for msvc, cpp files may need to be set with "bigobj" in their properties.
 on windows g++ might need -Os to optimize for size
+on windows clang++ may need "-Xclang -flto-visibility-public-std"
 
 notes:
 
