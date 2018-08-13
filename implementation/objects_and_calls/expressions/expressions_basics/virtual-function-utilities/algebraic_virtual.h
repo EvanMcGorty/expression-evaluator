@@ -272,7 +272,7 @@ public:
 private:
 
     template<typename t, typename...ts>
-    std::function<void(base*,base*)> iterate_find_move_functor(std::type_info const& cur_type) const
+    static std::function<void(base*,base*)> iterate_find_move_functor(std::type_info const& cur_type)
     {
         if(cur_type == typeid(t))
         {

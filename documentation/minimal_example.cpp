@@ -7,7 +7,7 @@ _funcs
 prod(2,3)
 push(8.4)
 =my_double/
-swap(=my_double,double.make(3.14))
+swap(=my_double,num.make(3.14))
 =my_double
 push(prod(=my_double,-1/2))
 rotate(=my_double)
@@ -31,7 +31,7 @@ _garb(=g)
 =my_double\
 _garb(=g)
 =g
-strong(double.make(4))
+strong(num.make(4))
 _garb(=g)
 =g
 drop(=g\)
