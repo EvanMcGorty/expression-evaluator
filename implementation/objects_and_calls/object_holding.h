@@ -650,7 +650,7 @@ namespace expr
 			{
 				if (ref->is_nullval())
 				{
-					return "#";
+					return "_";
 				}
 				else
 				{
