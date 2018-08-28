@@ -63,7 +63,8 @@ namespace expr
 			}
 		}
 
-		std::optional<std::pair<bool, std::pair<big_uint, big_uint>>> parse_range_to_number(std::string::const_iterator& start, std::string::const_iterator stop)
+		template<typename IteratorToChar>
+		std::optional<std::pair<bool, std::pair<big_uint, big_uint>>> parse_range_to_number(IteratorToChar& start, IteratorToChar stop)
 		{
 			std::pair<big_uint, big_uint> ret;
 			bool signret = false;

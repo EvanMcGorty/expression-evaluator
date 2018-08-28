@@ -28,7 +28,7 @@ namespace expr
 						{
 							if (a[0].is_nullval())
 							{
-								*to << "#\n" << std::flush;
+								*to << "_\n" << std::flush;
 							}
 							else if(!(a[0]->is_object() && a[0].downcast_get<any_object>()->is<void>()))
 							{
@@ -52,7 +52,7 @@ namespace expr
 					{
 						if (a[0].is_nullval())
 						{
-							*to << "#\n" << std::flush;
+							*to << "_\n" << std::flush;
 						}
 						else if(!(a[0]->is_object() && a[0].downcast_get<any_object>()->is<void>()))
 						{

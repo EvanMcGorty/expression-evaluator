@@ -244,7 +244,7 @@ namespace expr
 					to << "swap(=" << var_name << "/,";
 					if (it.is_nullval())
 					{
-						to << '#';
+						to << '_';
 					}
 					else
 					{
@@ -298,7 +298,7 @@ namespace expr
 				{
 					if (it.is_nullval())
 					{
-						ret.push_back('#');
+						ret.push_back('_');
 					}
 					else
 					{

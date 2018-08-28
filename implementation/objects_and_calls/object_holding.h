@@ -466,7 +466,8 @@ namespace expr
 			}
 		}
 
-		object_holder parse_to_object(std::string::const_iterator& start, std::string::const_iterator stop, type_info_set const& names)
+		template<typename IteratorToChar>
+		object_holder parse_to_object(IteratorToChar& start, IteratorToChar stop, type_info_set const& names)
 		{
 			if(start == stop)
 			{

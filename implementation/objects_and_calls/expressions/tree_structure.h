@@ -221,8 +221,8 @@ namespace expr
 				return ret;
 			}
 
-
-			static std::optional<literal> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			template<typename IteratorToChar>
+			static std::optional<literal> parse(IteratorToChar& start, IteratorToChar stop)
 			{
 
 				std::string ret;
@@ -388,8 +388,8 @@ namespace expr
 				return ret;
 			}
 
-
-			static std::optional<variable> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			template<typename IteratorToChar>
+			static std::optional<variable> parse(IteratorToChar& start, IteratorToChar stop)
 			{
 				assert_with_generic_logic_error([&]() {return start != stop && *start == '='; });
 
@@ -490,7 +490,8 @@ namespace expr
 
 			std::string make_string() const override;
 
-			static std::optional<function> parse(std::string::const_iterator& start, std::string::const_iterator stop);
+			template<typename IteratorToChar>
+			static std::optional<function> parse(IteratorToChar& start, IteratorToChar stop);
 
 
 
@@ -630,8 +631,8 @@ namespace expr
 				return make(std::string{ to_be_parsed });
 			}
 
-
-			static std::optional<expression> parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			template<typename IteratorToChar>
+			static std::optional<expression> parse(IteratorToChar& start, IteratorToChar stop)
 			{
 				if (start == stop)
 				{
@@ -680,7 +681,8 @@ namespace expr
 				}
 			}
 
-			static expression literal_parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			template<typename IteratorToChar>
+			static expression literal_parse(IteratorToChar& start, IteratorToChar stop)
 			{
 				auto g = literal::parse(start, stop);
 				if (g)
@@ -693,7 +695,8 @@ namespace expr
 				}
 			}
 
-			static expression variable_parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			template<typename IteratorToChar>
+			static expression variable_parse(IteratorToChar& start, IteratorToChar stop)
 			{
 				auto g = variable::parse(start, stop);
 				if (g)
@@ -706,7 +709,8 @@ namespace expr
 				}
 			}
 
-			static expression function_parse(std::string::const_iterator& start, std::string::const_iterator stop)
+			template<typename IteratorToChar>
+			static expression function_parse(IteratorToChar& start, IteratorToChar stop)
 			{
 				auto g = function::parse(start, stop);
 				if (g)
@@ -825,12 +829,8 @@ namespace expr
 			ret.reserve(data.fn_name.size() + data.arguments.size() * 10);
 			ret = data.fn_name;
 			ret.push_back('(');
-			//for(std::vector<expression>::const_iterator it = arguments.cbegin(); it!=arguments.cend(); ++it)
-			//for(int i = 0; i!=arguments.size(); ++i)
 			for (auto const& it : data.arguments)
 			{
-				//ret.append(it->str());
-				//ret.append(arguments.at(i).str());
 				if (it.val.is_nullval())
 				{
 					ret.push_back('_');
@@ -851,7 +851,8 @@ namespace expr
 			return ret;
 		}
 
-		inline std::optional<function> function::parse(std::string::const_iterator& start, std::string::const_iterator stop)
+		template<typename IteratorToChar>
+		inline std::optional<function> function::parse(IteratorToChar& start, IteratorToChar stop)
 		{
 			assert_with_generic_logic_error([&]() {return start != stop && (name_checker::isupper(*start) || name_checker::islower(*start)); });
 
