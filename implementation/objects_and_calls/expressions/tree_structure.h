@@ -1,6 +1,7 @@
 #pragma once
 #include<vector>
 #include<optional>
+#include<iterator>
 
 #include"expressions_basics/virtual-function-utilities/algebraic_virtual.h"
 #include"expressions_basics/virtual-function-utilities/free-store_virtual.h"
@@ -240,7 +241,7 @@ namespace expr
 						ret.push_back(*start);
 						++start;
 					}
-					while (ret.size() > 0 && *ret.rbegin() == ' ')
+					while (ret.size() > 0 && name_checker::iswhitespace(*ret.rbegin()))
 					{
 						ret.pop_back();
 					}
@@ -406,25 +407,26 @@ namespace expr
 				{
 					if (!(name_checker::isinnerchar(*start)))
 					{
-						switch (*start)
+						char cur = *start;
+						if (cur == '/')
 						{
-						case('/'):
 							sc_ret = sc::push;
 							++start;
-							break;
-						case('\\'):
+						}
+						else if (cur == '\\')
+						{
 							sc_ret = sc::pop;
 							++start;
-							break;
-						case(')'):
-						case(','):
-						case(' '):
-							sc_ret = sc::neutral;
-							break;
-						default:
-							return std::nullopt;
-							break;
 						}
+						else if (name_checker::mustbeendofelem(cur))
+						{
+							sc_ret = sc::neutral;
+						}
+						else
+						{
+							return std::nullopt;
+						}
+
 						if (ret.size() == 0 || !name_checker::isendchar(ret[ret.size() - 1]))
 						{
 							return std::nullopt;
@@ -505,6 +507,42 @@ namespace expr
 		using dtp = mu::algebraic<node, literal, variable, function>;
 
 		class executable;
+
+		
+		//reading into raw_char calls istream::get(char&) so it can be read newlines
+		struct raw_char
+		{
+			operator char&&() &&
+			{
+				return std::move(val);
+			}
+			operator char&()
+			{
+				return val;
+			}
+			operator char const&() const
+			{
+				return val;
+			}
+
+			char val;
+		};
+
+		std::istream& operator>>(std::istream& from, raw_char& to)
+		{
+			from.get(to.val);
+			return from;
+		}
+
+		std::istream_iterator<raw_char> raw_istream_iter()
+		{
+			return std::istream_iterator<raw_char>();
+		}
+
+		std::istream_iterator<raw_char> raw_istream_iter(std::istream& target)
+		{
+			return std::istream_iterator<raw_char>(target);
+		}
 
 		class expression
 		{
@@ -617,7 +655,7 @@ namespace expr
 				}
 				while (it != to_be_parsed.cend())
 				{
-					if (*it != ' ')
+					if (!name_checker::iswhitespace(*it))
 					{
 						return make_empty();
 					}
@@ -817,9 +855,8 @@ namespace expr
 
 		std::istream& operator>>(std::istream& stream, expression& expression)
 		{
-			std::string to_parse;
-			std::getline(stream, to_parse);
-			expression = expression::make(to_parse);
+			auto it = raw_istream_iter(stream);
+			expression = expression::parse(it, raw_istream_iter()).value_or(expression::make_empty());
 			return stream;
 		}
 
@@ -869,7 +906,12 @@ namespace expr
 			}
 			function ret{ name_checker{std::move(retname)} };
 
-			while (start != stop && *start == ' ')
+			if (start != stop && *start == '\n')
+			{
+				return std::optional<function>{std::move(ret)};
+			}
+
+			while (start != stop && name_checker::iswhitespace(*start))
 			{
 				++start;
 			}
@@ -916,12 +958,12 @@ namespace expr
 					return std::nullopt;
 				}
 
-				while (start != stop && *start == ' ')
+				while (start != stop && name_checker::iswhitespace(*start))
 				{
 					++start;
 				}
 
-				if (start != stop && *start != ',' && *start != ')')
+				if (start != stop && !name_checker::mustbeendofelem(*start))
 				{
 					return std::nullopt;
 				}

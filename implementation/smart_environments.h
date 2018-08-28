@@ -79,14 +79,11 @@ namespace expr
 			{
 				output << "\\\\\\\n" << std::flush;
 
-				std::string unparsed;
-				std::getline(input, unparsed);
-
 				std::optional<statement> special_call;
 
 				executable to_run;
 
-				prepare_input(unparsed, special_call, to_run);
+				prepare_input(special_call, to_run);
 				
 				output << "///" << '\n' << std::flush;
 
@@ -124,11 +121,13 @@ namespace expr
 
 		private:
 
-			void prepare_input(std::string& unparsed, std::optional<statement>& special_call, executable& to_run)
+			void prepare_input(std::optional<statement>& special_call, executable& to_run)
 			{
-				if (unparsed.begin() != unparsed.end() && *unparsed.begin() == '_')
+				auto it = raw_istream_iter(input);
+				if (it->val == '_')
 				{
-					expression n = expression::make(std::string{ unparsed.begin() + 1, unparsed.end() });
+					++it;
+					expression n = expression::function_parse(it, {});
 					if (n.get_function() == nullptr)
 					{
 						if (settings.whether_to_reprint_input_as_parsed)
@@ -151,7 +150,7 @@ namespace expr
 				}
 				else
 				{
-					expression n = expression::make(std::string{ unparsed.begin(), unparsed.end() });
+					expression n = expression::parse(it, {}).value_or(expression::make_empty());
 
 					if (settings.whether_to_reprint_input_as_parsed)
 					{

@@ -71,4 +71,7 @@ namespace expr
 	//post_return_t<t> is the object stored after a function returns a t
 	using impl::post_return_t;
 
+	//allows for manual parsing of newlines
+	using impl::raw_istream_iter;
+
 }

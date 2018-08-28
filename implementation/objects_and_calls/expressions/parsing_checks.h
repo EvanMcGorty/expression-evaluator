@@ -164,7 +164,7 @@ namespace expr
 			{
 				switch (a)
 				{
-				case(' '):case(','):case(')'):
+				case(' '):case(','):case(')'):case('\n'):case('\t'):
 					return true;
 					break;
 				default:
@@ -177,7 +177,20 @@ namespace expr
 			{
 				switch (a)
 				{
-				case(','):case(')'):
+				case(','):case(')'):case('\n'):case('\t'):
+					return true;
+					break;
+				default:
+					return false;
+					break;
+				}
+			}
+
+			static bool iswhitespace(char a)
+			{
+				switch (a)
+				{
+				case(' '):case('\t'):case('\n'):
 					return true;
 					break;
 				default:

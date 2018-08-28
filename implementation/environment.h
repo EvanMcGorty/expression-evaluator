@@ -20,6 +20,19 @@ namespace expr
 				return evaluate(expression::make(a), errors);
 			}
 
+			template<typename IteratorToChar>
+			stack_elem evaluate(IteratorToChar& start, IteratorToChar stop, std::ostream& errors)
+			{
+				return evaluate(expression::parse(start,stop),errors);
+			}
+
+			stack_elem evaluate(std::istream& from, std::ostream& errors)
+			{
+				auto it = raw_istream_iter(from);
+				return evaluate(expression::parse(it, {}).value_or(expression::make_empty()), errors);
+			}
+
+
 			held_callable info_printer(std::ostream& to = std::cout, type_info_set const& from = global_type_info())
 			{
 				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> object_holder
