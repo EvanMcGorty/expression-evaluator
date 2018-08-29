@@ -927,7 +927,7 @@ namespace expr
 			{
 				++start;
 
-				while (start != stop && *start == ' ')
+				while (start != stop && name_checker::iswhitespace(*start))
 				{
 					++start;
 				}

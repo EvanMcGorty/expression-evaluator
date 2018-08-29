@@ -105,7 +105,7 @@ namespace expr
 				{
 					return { std::vector<t>{} };
 				}
-				while (start != stop && *start == ' ')
+				while (start != stop && name_checker::iswhitespace(*start))
 				{
 					++start;
 				}
@@ -113,16 +113,12 @@ namespace expr
 				{
 					return { std::vector<t>{} };
 				}
-				if (*start == '[' || *start == '(' || *start == '{')
+				if (*start == '[' || *start == '{')
 				{
 					char close_char = '!'; //not initialized
 					if (*start == '[')
 					{
 						close_char = ']';
-					}
-					else if (*start == '(')
-					{
-						close_char = ')';
 					}
 					else if (*start == '{')
 					{
@@ -132,7 +128,7 @@ namespace expr
 					++start;
 					while (start != stop)
 					{
-						while (start != stop && *start == ' ')
+						while (start != stop && name_checker::iswhitespace(*start))
 						{
 							++start;
 						}
@@ -157,7 +153,7 @@ namespace expr
 							return std::nullopt;
 						}
 
-						while (start != stop && *start == ' ')
+						while (start != stop && name_checker::iswhitespace(*start))
 						{
 							++start;
 						}

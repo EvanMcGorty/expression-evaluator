@@ -127,7 +127,14 @@ namespace expr
 				if (it->val == '_')
 				{
 					++it;
-					expression n = expression::function_parse(it, {});
+
+					std::optional<expression> g = expression::parse(it, {});
+					if (*it != '\n')
+					{
+						g = std::nullopt;
+					}
+					expression n = g.value_or(expression::make_empty());
+
 					if (n.get_function() == nullptr)
 					{
 						if (settings.whether_to_reprint_input_as_parsed)
@@ -150,7 +157,12 @@ namespace expr
 				}
 				else
 				{
-					expression n = expression::parse(it, {}).value_or(expression::make_empty());
+					std::optional<expression> g = expression::parse(it, {});
+					if (*it != '\n')
+					{
+						g = std::nullopt;
+					}
+					expression n = g.value_or(expression::make_empty());
 
 					if (settings.whether_to_reprint_input_as_parsed)
 					{
