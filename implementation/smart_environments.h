@@ -1,3 +1,4 @@
+#pragma once
 #include"environment.h"
 
 namespace expr
@@ -49,7 +50,9 @@ namespace expr
 		{
 		public:
 
-			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}, type_info_set const& n = global_type_info()) :
+			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{});
+
+			interpreter(type_info_set const& n, environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}) :
 				environment(std::move(base)),
 				input(i),
 				output(o),
@@ -62,12 +65,12 @@ namespace expr
 				}
 
 				special_functions
-					.add(variables_builder(names),"build_vars")
+					.add(variables_builder(names), "build_vars")
 					.add(garbage_getter(), "garb")
-					.add(info_printer(output, names), "info")
+					.add(info_printer(names, output), "info")
 					.add(value_printer(output), "view")
-					.add(variables_printer(output, names), "vars")
-					.add(functions_printer(output, names), "funcs")
+					.add(variables_printer(names, output), "vars")
+					.add(functions_printer(names, output), "funcs")
 					.add(mfn(&core::swap), "swap")
 					.add(mfn(&cpp_core::drop), "drop")
 					.add(sfn(std::function<void()>{
@@ -75,6 +78,7 @@ namespace expr
 				}), "exit");
 			}
 
+			
 			void once()
 			{
 				output << "\\\\\\\n" << std::flush;
@@ -180,10 +184,10 @@ namespace expr
 
 			void evaluate_input(stack& result, std::ostream& info, executable& to_run, std::optional<statement>& special_call)
 			{
-				result = run(std::move(to_run), info);
+				result = run(std::move(to_run), info, names);
 				if (special_call)
 				{
-					perform(std::move(*special_call), result, variables, special_functions, garbage, info);
+					perform(std::move(*special_call), result, variables, special_functions, garbage, info, names);
 				}
 				else if (settings.default_final_operation)
 				{
@@ -192,17 +196,17 @@ namespace expr
 					if (*to_use.begin() == '_')
 					{
 						to_use = std::string{ to_use.begin() + 1,to_use.end() };
-						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, special_functions, garbage, info);
+						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, special_functions, garbage, info, names);
 					}
 					else
 					{
-						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, functions, garbage, info);
+						perform(statement::val_type::make<function_call>(to_use, size_t(1)), result, variables, functions, garbage, info, names);
 					}
 				}
 
 				assert_with_generic_logic_error([&]() {return result.stuff.size() == 1; });
 
-				garbage.clean_all_to_front(result, 1, info);
+				garbage.clean_all_to_front(result, 1, info, names);
 			}
 			
 		};

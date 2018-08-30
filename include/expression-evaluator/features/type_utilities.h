@@ -49,7 +49,7 @@ namespace expr
 		template<>
 		struct fs_info<types>
 		{
-			static function_set get_functions(type_info_set const& names = global_type_info())
+			static function_set get_functions(type_info_set const& names)
 			{
 				types tar{names};
 				function_set ret;
@@ -58,6 +58,8 @@ namespace expr
 					.add(mfn(tar.parse_string()), "str_to_obj");
 				return ret;
 			}
+
+			static function_set get_functions();
 
 			static std::string get_name(type_info_set const&)
 			{

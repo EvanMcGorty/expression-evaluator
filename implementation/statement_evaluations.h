@@ -7,7 +7,7 @@ namespace expr
 	namespace impl
 	{
 
-		inline void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& info)
+		inline void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& info, type_info_set const& names)
 		{
 			if (todo.val.is_nullval())
 			{
@@ -67,7 +67,7 @@ namespace expr
 				if (!optional_todo)
 				{
 					info << "function name \"" << temp.name << "\" not found\n";
-					garbage.clean_all_to_front(loc, temp.arg_count, info);
+					garbage.clean_all_to_front(loc, temp.arg_count, info, names);
 					loc.stuff.emplace_back(stack_elem::make_nullval());
 				}
 				else
@@ -91,7 +91,7 @@ namespace expr
 					{
 						info << "call to function \"" << temp.name << "\" returned null\n";
 					}
-					garbage.clean_all_to_front(loc, temp.arg_count, info);
+					garbage.clean_all_to_front(loc, temp.arg_count, info, names);
 					loc.stuff.emplace_back(std::move(tp));
 				}
 			}

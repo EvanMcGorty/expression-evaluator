@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <cstdlib>
 #include <memory>
@@ -41,30 +42,6 @@ namespace expr
 
 
 
-		static type_info_set* global_type_info_object_pointer;
-		
-		inline void delete_global_type_info_object()
-		{
-			delete global_type_info_object_pointer;
-		}
-
-		template<typename t>
-		struct global_type_info_maker
-		{
-			static type_info_set*& make_global_type_info_object()
-			{
-				global_type_info_object_pointer = nullptr;
-				return global_type_info_object_pointer;
-			}
-		};
-
-
-		type_info_set& global_type_info()
-		{
-			static type_info_set*& val = global_type_info_maker<void>::make_global_type_info_object();
-			return *val;
-		}
-
 		template<typename t>
 		void declare_with_name(std::string&& new_name, type_info_set& names)
 		{
@@ -87,6 +64,9 @@ namespace expr
 			names.names[std::type_index{ typeid(t) }] = std::move(new_name);
 			
 		}
+
+		template <typename t>
+		void declare_with_name(std::string&& new_name);
 
 
 		struct type_info_set_name_generator
@@ -143,12 +123,15 @@ namespace expr
 		template<typename t, typename...ts>
 		void declare(type_info_set& names)
 		{
-			declare_with_name<t>(name_of<pre_call_t<t>>(names));
+			declare_with_name<t>(name_of<pre_call_t<t>>(names),names);
 			if constexpr(sizeof...(ts) > 0)
 			{
 				declare<ts...>(names);
 			}
 		}
+
+		template <typename t>
+		void declare();
 
 		template<typename t>
 		inline std::string type_info_set_name_generator::retrieve()

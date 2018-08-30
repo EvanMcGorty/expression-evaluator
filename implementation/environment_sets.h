@@ -142,7 +142,10 @@ namespace expr
 
 
 			template<typename t = void, typename string_convertible = std::string>
-			function_set& use(string_convertible&& n = fs_name<t>(global_type_info()), function_set&& set = fs_functs<t>());
+			function_set& use(string_convertible&& n, function_set&& set = fs_functs<t>());
+			
+			template<typename t = void, typename string_convertible = std::string>
+			function_set& use(function_set&& set = fs_functs<t>());
 
 			std::optional<held_callable*> get(std::string const& a)
 			{
@@ -310,26 +313,26 @@ namespace expr
 				return ret;
 			}
 
-			void clean_to_front(stack_elem& from, std::ostream& info)
+			void clean_to_front(stack_elem& from, std::ostream& info, type_info_set const& names)
 			{
 				if (!from.is_nullval() && from->is_object())
 				{
 					auto to_push = std::move(from).downcast<any_object>();
 					if (!to_push->can_trivially_destruct())
 					{
-						info << to_push->string_view(global_type_info()) << " cleaned to stack front\n";
+						info << to_push->string_view(names) << " cleaned to stack front\n";
 						push_front(std::move(to_push));
 					}
 				}
 			}
 
-			void clean_all_to_front(stack& from, size_t count, std::ostream& info)
+			void clean_all_to_front(stack& from, size_t count, std::ostream& info, type_info_set const& names)
 			{
 				assert_with_generic_logic_error([&]() {return count <= from.stuff.size(); });
 
 				for (size_t i = 0; i != count; ++i)
 				{
-					clean_to_front(*from.stuff.rbegin(), info);
+					clean_to_front(*from.stuff.rbegin(), info, names);
 					from.stuff.pop_back();
 				}
 			}

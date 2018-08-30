@@ -11,13 +11,16 @@ namespace expr
 		public:
 
 
+			stack run(executable&& a, std::ostream& errors, type_info_set const& names);
 			stack run(executable&& a, std::ostream& errors);
 
+
+			stack_elem evaluate(expression&& a, std::ostream& errors, type_info_set const& names);
 			stack_elem evaluate(expression&& a, std::ostream& errors);
 
-			stack_elem evaluate(std::string const& a, std::ostream& errors)
+			stack_elem evaluate(std::string const& a, std::ostream& errors, type_info_set const& names)
 			{
-				return evaluate(expression::make(a), errors);
+				return evaluate(expression::make(a), errors, names);
 			}
 
 			template<typename IteratorToChar>
@@ -26,14 +29,14 @@ namespace expr
 				return evaluate(expression::parse(start,stop),errors);
 			}
 
-			stack_elem evaluate(std::istream& from, std::ostream& errors)
+			stack_elem evaluate(std::istream& from, std::ostream& errors, type_info_set const& names)
 			{
 				auto it = raw_istream_iter(from);
-				return evaluate(expression::parse(it, {}).value_or(expression::make_empty()), errors);
+				return evaluate(expression::parse(it, {}).value_or(expression::make_empty()), errors, names);
 			}
 
 
-			held_callable info_printer(std::ostream& to = std::cout, type_info_set const& from = global_type_info())
+			held_callable info_printer(type_info_set const& from, std::ostream& to = std::cout)
 			{
 				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> object_holder
 					{
@@ -55,7 +58,7 @@ namespace expr
 						}
 					}});
 			}
-
+			held_callable info_printer(std::ostream& to = std::cout);
 
 			held_callable value_printer(std::ostream& to = std::cout)
 			{
@@ -111,7 +114,7 @@ namespace expr
 				});
 			}
 
-			held_callable functions_printer(std::ostream& to = std::cout, type_info_set const& names = global_type_info())
+			held_callable functions_printer(type_info_set const& names, std::ostream& to = std::cout)
 			{
 				return sfn(std::function<void()>{
 					[to = &to,fs = &functions, names = &names]() -> void
@@ -125,8 +128,9 @@ namespace expr
 					}
 				});
 			}
+			held_callable functions_printer(std::ostream& to = std::cout);
 
-			held_callable variables_printer(std::ostream& to = std::cout, type_info_set const& names = global_type_info())
+			held_callable variables_printer(type_info_set const& names,std::ostream& to = std::cout)
 			{
 				return sfn(std::function<void()>{
 					[to = &to, vs = &variables,names = &names]() -> void
@@ -135,15 +139,16 @@ namespace expr
 					}
 				});
 			}
+			held_callable variables_printer(std::ostream& to = std::cout);
 
-			held_callable variables_builder(type_info_set const& names = global_type_info(), std::ostream& to= std::cout)
+			held_callable variables_builder(type_info_set const& names, std::ostream& to = std::cout)
 			{
 				return sfn(std::function<void(std::string)>([vars = &variables, to = &to, names = &names](std::string to_call) -> void
 				{
 					vars->make_builder(to_call,*names,*to);
 				}));
 			}
-
+			held_callable variables_builder(std::ostream& to = std::cout);
 
 			function_set functions;
 
@@ -152,27 +157,27 @@ namespace expr
 		};
 
 
-		inline void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& info)
+		inline void perform_all(executable&& tar, stack& loc, environment& env, std::ostream& info, type_info_set const& names)
 		{
 			for (auto&& it : std::move(tar.statements))
 			{
-				perform(std::move(it), loc, env.variables, env.functions, env.garbage, info);
+				perform(std::move(it), loc, env.variables, env.functions, env.garbage, info, names);
 			}
 		}
 
-		inline stack environment::run(executable&& tar, std::ostream& info)
+		inline stack environment::run(executable&& tar, std::ostream& info, type_info_set const& names)
 		{
 			stack loc;
-			perform_all(std::move(tar), loc, *this, info);
+			perform_all(std::move(tar), loc, *this, info, names);
 			return loc;
 		}
 
 
-		inline stack_elem environment::evaluate(expression&& tar, std::ostream& info)
+		inline stack_elem environment::evaluate(expression&& tar, std::ostream& info, type_info_set const& names)
 		{
 			executable to_run;
 			std::move(tar).into_executable(to_run);
-			stack v = run(std::move(to_run), info);
+			stack v = run(std::move(to_run), info,names);
 			assert_with_generic_logic_error([&]() {return v.stuff.size() == 1; });
 			return std::move(*v.stuff.begin());
 		}
