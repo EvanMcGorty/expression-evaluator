@@ -103,7 +103,7 @@ namespace expr
 			{
 				to_continue = true;
 				output << "/|\\\n" << std::flush;
-				while (to_continue)
+				while (to_continue && input.good())
 				{
 					once();
 				}
@@ -162,7 +162,7 @@ namespace expr
 				else
 				{
 					std::optional<expression> g = expression::parse(it, {});
-					if (*it != '\n')
+					if (*it != '\n' && input.good())
 					{
 						g = std::nullopt;
 					}
