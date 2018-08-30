@@ -43,6 +43,7 @@ _exit
 #include <iostream>
 
 #include"../include/expression-evaluator/evaluator.h"
+#include"../include/expression-evaluator/features/everything.h"
 
 using namespace expr;
 

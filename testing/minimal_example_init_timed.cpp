@@ -57,6 +57,7 @@ _exit
 #include <chrono>
 
 #include "../include/expression-evaluator/everything.h"
+#include"../include/expression-evaluator/features/everything.h"
 
 using namespace expr;
 

@@ -48,23 +48,25 @@ namespace expr
 			delete global_type_info_object_pointer;
 		}
 
-
-		type_info_set*& make_global_type_info_object()
+		template<typename t>
+		struct global_type_info_maker
 		{
-			std::atexit(&delete_global_type_info_object);
-			global_type_info_object_pointer = new type_info_set();
-			return global_type_info_object_pointer;
-		}
+			static type_info_set*& make_global_type_info_object()
+			{
+				global_type_info_object_pointer = nullptr;
+				return global_type_info_object_pointer;
+			}
+		};
 
 
 		type_info_set& global_type_info()
 		{
-			static type_info_set*& val = make_global_type_info_object();
+			static type_info_set*& val = global_type_info_maker<void>::make_global_type_info_object();
 			return *val;
 		}
 
 		template<typename t>
-		void declare_with_name(std::string&& new_name, type_info_set& names = global_type_info())
+		void declare_with_name(std::string&& new_name, type_info_set& names)
 		{
 			auto ends_with = [](std::string const & value, std::string const & ending) -> bool
 			{
@@ -102,7 +104,7 @@ namespace expr
 		};
 		
 		template<typename t>
-		std::string name_of(type_info_set const& names = global_type_info())
+		std::string name_of(type_info_set const& names)
 		{
 			static_assert(!type<t>::is_raw());
 
@@ -139,7 +141,7 @@ namespace expr
 
 
 		template<typename t, typename...ts>
-		void declare(type_info_set& names = global_type_info())
+		void declare(type_info_set& names)
 		{
 			declare_with_name<t>(name_of<pre_call_t<t>>(names));
 			if constexpr(sizeof...(ts) > 0)
