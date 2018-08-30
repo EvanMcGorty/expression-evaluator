@@ -124,6 +124,10 @@ namespace expr
 			void prepare_input(std::optional<statement>& special_call, executable& to_run)
 			{
 				auto it = raw_istream_iter(input);
+				while(*it == '\n')
+				{
+					++it;
+				}
 				if (it->val == '_')
 				{
 					++it;
