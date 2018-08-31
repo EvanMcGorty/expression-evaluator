@@ -23,10 +23,10 @@ namespace expr
 			return global_type_info_object_pointer;
 		}
 
-		type_info_set& global_type_info()
+		type_info_set* global_type_info()
 		{
 			static type_info_set*& val = make_global_type_info_object();
-			return *val;
+			return val;
 		}
 
 		template <typename t>

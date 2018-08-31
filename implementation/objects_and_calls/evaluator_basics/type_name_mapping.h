@@ -40,11 +40,14 @@ namespace expr
 			~type_info_set() {}
 		};
 
+		constexpr type_info_set* blank_set = nullptr;
 
 
 		template<typename t>
-		void declare_with_name(std::string&& new_name, type_info_set& names)
+		void declare_with_name(std::string&& new_name, type_info_set* names)
 		{
+			assert_with_invalid_method_usage([&]() {return names != nullptr; });
+
 			auto ends_with = [](std::string const & value, std::string const & ending) -> bool
 			{
 				if (ending.size() > value.size()) return false;
@@ -54,14 +57,14 @@ namespace expr
 			assert_with_invalid_method_usage([&]() {return !ends_with(new_name, "-ref") && !ends_with(new_name, "-const"); });
 			static_assert(!(std::is_const_v<t>||std::is_reference_v<t>), "can only declare a raw type, references and const are not allowed");
 			
-			auto g = names.names.find(std::type_index{ typeid(t) });
-			if (g != names.names.end())
+			auto g = names->names.find(std::type_index{ typeid(t) });
+			if (g != names->names.end())
 			{
-				names.operations.erase(names.operations.find(g->second));
-				names.names.erase(g);
+				names->operations.erase(names->operations.find(g->second));
+				names->names.erase(g);
 			}
-			names.operations[new_name] = &global_type_operation_adresses<t>;
-			names.names[std::type_index{ typeid(t) }] = std::move(new_name);
+			names->operations[new_name] = &global_type_operation_adresses<t>;
+			names->names[std::type_index{ typeid(t) }] = std::move(new_name);
 			
 		}
 
@@ -72,9 +75,9 @@ namespace expr
 		struct type_info_set_name_generator
 		{
 
-			type_info_set_name_generator(type_info_set const& a)
+			type_info_set_name_generator(type_info_set const* a)
 			{
-				names = &a;
+				names = a;
 			}
 
 			template<typename t>
@@ -84,9 +87,10 @@ namespace expr
 		};
 		
 		template<typename t>
-		std::string name_of(type_info_set const& names)
+		std::string name_of(type_info_set const* names)
 		{
 			static_assert(!type<t>::is_raw());
+
 
 			using raw = typename type<t>::raw;
 
@@ -100,13 +104,18 @@ namespace expr
 			}
 			else
 			{
-				auto g = names.names.find(std::type_index{ typeid(raw) });
-				if (g == names.names.end())
+				if (names == nullptr)
+				{
+					return type_operation_info<raw>::template type_name<compiler_name_generator>(compiler_name_generator{});
+				}
+
+				auto g = names->names.find(std::type_index{ typeid(raw) });
+				if (g == names->names.end())
 				{
 					static_assert(!std::is_const_v<raw>);
 					std::string ret = type_operation_info<raw>::template type_name<type_info_set_name_generator>(type_info_set_name_generator{ names });
 
-					while (names.operations.find(ret) != names.operations.end())
+					while (names->operations.find(ret) != names->operations.end())
 					{
 						ret = "automatically_named." + ret;
 					}
@@ -121,8 +130,10 @@ namespace expr
 
 
 		template<typename t, typename...ts>
-		void declare(type_info_set& names)
+		void declare(type_info_set* names)
 		{
+			assert_with_invalid_method_usage([&]() {return names != nullptr; });
+
 			declare_with_name<t>(name_of<pre_call_t<t>>(names),names);
 			if constexpr(sizeof...(ts) > 0)
 			{
@@ -136,7 +147,7 @@ namespace expr
 		template<typename t>
 		inline std::string type_info_set_name_generator::retrieve()
 		{
-			return name_of<pre_call_t<t>>(*names);
+			return name_of<pre_call_t<t>>(names);
 		}
 
 	}

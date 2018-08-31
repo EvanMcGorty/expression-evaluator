@@ -17,7 +17,7 @@ namespace expr
 				return function_set{};
 			}
 
-			static std::string get_name(type_info_set const& names)
+			static std::string get_name(type_info_set const* names)
 			{
 				static_assert("no overloaded instance of fs_info exists for this class");
 				return "";
@@ -30,7 +30,7 @@ namespace expr
 			return fs_info<t>::get_functions(std::forward<fs_arg_ts>(fs_args)...);
 		}
 		template<typename t>
-		std::string fs_name(type_info_set const& names)
+		std::string fs_name(type_info_set const* names)
 		{
 			return fs_info<t>::get_name(names);
 		}
@@ -160,7 +160,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(type_info_set const& from)
+			static std::string get_name(type_info_set const* from)
 			{
 				return name_of<val_wrap<t>>(from);
 			}
@@ -179,7 +179,7 @@ namespace expr
 				return function_set{};
 			}
 
-			static std::string get_name(type_info_set const& from)
+			static std::string get_name(type_info_set const* from)
 			{
 				return name_of<val_wrap<t>>(from);
 			}
@@ -203,7 +203,7 @@ namespace expr
 				return std::move(basic.use("", std::move(extended)));
 			}
 
-			static std::string get_name(type_info_set const& from)
+			static std::string get_name(type_info_set const* from)
 			{
 				return name_of<val_wrap<t>>(from);
 			}
@@ -265,7 +265,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(type_info_set const&)
+			static std::string get_name(type_info_set const*)
 			{
 				return "core";
 			}
@@ -394,7 +394,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(type_info_set const&)
+			static std::string get_name(type_info_set const*)
 			{
 				return "cpp";
 			}

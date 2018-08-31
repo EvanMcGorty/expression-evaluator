@@ -6,9 +6,9 @@ namespace expr
     {
 		struct types
 		{
-			types(type_info_set const& a)
+			types(type_info_set const* a)
 			{
-				names = &a;
+				names = a;
 			}
 
 			auto parse_string()
@@ -22,7 +22,7 @@ namespace expr
 						{
 							auto start = g->to->begin();
 							auto stop = g->to->end();
-							return parse_to_object(start,stop,*names);
+							return parse_to_object(start,stop,names);
 						}
 					}
 					return object_holder::make_nullval();
@@ -36,7 +36,7 @@ namespace expr
 				{
 					if(a.size() == 1 && !a[0].is_nullval())
 					{
-						return make_object(a[0]->string_view(*names));
+						return make_object(a[0]->string_view(names));
 					}
 					return object_holder::make_nullval();
 				};
@@ -49,7 +49,7 @@ namespace expr
 		template<>
 		struct fs_info<types>
 		{
-			static function_set get_functions(type_info_set const& names)
+			static function_set get_functions(type_info_set const* names)
 			{
 				types tar{names};
 				function_set ret;
@@ -61,7 +61,7 @@ namespace expr
 
 			static function_set get_functions();
 
-			static std::string get_name(type_info_set const&)
+			static std::string get_name(type_info_set const*)
 			{
 				return "types";
 			}

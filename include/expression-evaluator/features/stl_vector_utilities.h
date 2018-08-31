@@ -81,7 +81,7 @@ namespace expr
 				return std::move(ret);
 			}
 
-			static std::string get_name(type_info_set const& from)
+			static std::string get_name(type_info_set const* from)
 			{
 				return name_of<val_wrap<std::vector<t>>>(from);
 			}

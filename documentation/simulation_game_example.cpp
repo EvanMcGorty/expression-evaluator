@@ -170,7 +170,6 @@ std::string random_event()
 
 #include"../include/expression-evaluator/evaluator.h"
 #include"../include/expression-evaluator/expression.h"
-#include"../include/expression-evaluator/features/everything.h"
 using namespace expr;
 
 

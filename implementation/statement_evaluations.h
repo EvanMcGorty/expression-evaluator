@@ -7,7 +7,7 @@ namespace expr
 	namespace impl
 	{
 
-		inline void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& info, type_info_set const& names)
+		inline void perform(statement&& todo, stack& loc, variable_set& variables, function_set& functions, variable_value_stack& garbage, std::ostream& info, type_info_set const* names)
 		{
 			if (todo.val.is_nullval())
 			{

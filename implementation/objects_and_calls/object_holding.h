@@ -34,7 +34,7 @@ namespace expr
 
 			virtual std::string convert_into_string() = 0;
 
-			virtual std::string string_view(type_info_set const& names) = 0;
+			virtual std::string string_view(type_info_set const* names) = 0;
 
 			//returns true if this is an object and the held value was moved.
 			virtual bool get(any_type_ask* tar) = 0;
@@ -75,7 +75,7 @@ namespace expr
 				return std::string{ val };
 			}
 
-			std::string string_view(type_info_set const&) override
+			std::string string_view(type_info_set const*) override
 			{
 				literal temp{ literal_value{std::string{val}} };
 				return std::string("unparsed{") + temp.make_string() + "}";
@@ -170,7 +170,7 @@ namespace expr
 				return "";
 			}
 			
-			std::string string_view(type_info_set const&) override
+			std::string string_view(type_info_set const*) override
 			{
 				return "void_object{}";
 			}
@@ -271,7 +271,7 @@ namespace expr
 				return type_operation_info<will_pass>::print(get_raw());
 			}
 
-			std::string string_view(type_info_set const& names) override
+			std::string string_view(type_info_set const* names) override
 			{
 				return name_of<t>(names) + "(" + convert_into_string() + ")";
 			}
@@ -467,7 +467,7 @@ namespace expr
 		}
 
 		template<typename IteratorToChar>
-		object_holder parse_to_object(IteratorToChar& start, IteratorToChar stop, type_info_set const& names)
+		object_holder parse_to_object(IteratorToChar& start, IteratorToChar stop, type_info_set const* names)
 		{
 			if(start == stop)
 			{
@@ -489,8 +489,8 @@ namespace expr
 			{
 				return object_holder::make_nullval();
 			}
-			auto found = names.operations.find(std::move(type_name));
-			if (found == names.operations.end())
+			auto found = names->operations.find(std::move(type_name));
+			if (found == names->operations.end())
 			{
 				return object_holder::make_nullval();
 			}
@@ -647,7 +647,7 @@ namespace expr
 				}
 			}
 
-			std::string string_view(type_info_set const& names) override
+			std::string string_view(type_info_set const* names) override
 			{
 				if (ref->is_nullval())
 				{

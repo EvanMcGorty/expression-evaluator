@@ -60,7 +60,7 @@ namespace expr
 				return ret;
 			}
 
-			static std::string get_name(type_info_set const&)
+			static std::string get_name(type_info_set const*)
 			{
 				return "sys";
 			}

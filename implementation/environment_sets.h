@@ -118,7 +118,7 @@ namespace expr
 		function_set fs_functs(fs_arg_ts&&...fs_args);
 
 		template<typename t>
-		std::string fs_name(type_info_set const& names);
+		std::string fs_name(type_info_set const* names);
 
 		class function_set
 		{
@@ -239,7 +239,7 @@ namespace expr
 		{
 		public:
 
-			std::string make_builder(std::string const& builder_function, std::string const& var_name, type_info_set const& names, std::ostream& to)
+			std::string make_builder(std::string const& builder_function, std::string const& var_name, type_info_set const* names, std::ostream& to)
 			{
 				std::string ret;
 				for(auto& it : values)
@@ -290,7 +290,7 @@ namespace expr
 				}
 			}
 
-			std::string string_view(type_info_set const& from)
+			std::string string_view(type_info_set const* from)
 			{
 				if (values.size() == 0)
 				{
@@ -313,7 +313,7 @@ namespace expr
 				return ret;
 			}
 
-			void clean_to_front(stack_elem& from, std::ostream& info, type_info_set const& names)
+			void clean_to_front(stack_elem& from, std::ostream& info, type_info_set const* names)
 			{
 				if (!from.is_nullval() && from->is_object())
 				{
@@ -326,7 +326,7 @@ namespace expr
 				}
 			}
 
-			void clean_all_to_front(stack& from, size_t count, std::ostream& info, type_info_set const& names)
+			void clean_all_to_front(stack& from, size_t count, std::ostream& info, type_info_set const* names)
 			{
 				assert_with_generic_logic_error([&]() {return count <= from.stuff.size(); });
 
@@ -348,7 +348,7 @@ namespace expr
 		public:
 
 		
-			void make_builder(std::string builder_function, type_info_set const& names, std::ostream& to)
+			void make_builder(std::string builder_function, type_info_set const* names, std::ostream& to)
 			{
 				for(auto& it : map)
 				{
@@ -388,7 +388,7 @@ namespace expr
 				}
 			}
 
-			void put_values(std::ostream& to, type_info_set const& from)
+			void put_values(std::ostream& to, type_info_set const* from)
 			{
 				for (auto& it : map)
 				{

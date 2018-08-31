@@ -52,7 +52,7 @@ namespace expr
 
 			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{});
 
-			interpreter(type_info_set const& n, environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}) :
+			interpreter(type_info_set const* n, environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}) :
 				environment(std::move(base)),
 				input(i),
 				output(o),
@@ -121,7 +121,7 @@ namespace expr
 			std::istream& input;
 			std::ostream& output;
 			option_set settings;
-			type_info_set const& names;
+			type_info_set const* names;
 
 		private:
 
