@@ -59,7 +59,10 @@ namespace expr
 				return ret;
 			}
 
-			static function_set get_functions();
+			static function_set get_functions()
+			{
+				return fs_info<types>::get_functions(default_type_info());
+			}
 
 			static std::string get_name(type_info_set const*)
 			{

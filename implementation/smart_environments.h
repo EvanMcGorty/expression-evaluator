@@ -50,8 +50,6 @@ namespace expr
 		{
 		public:
 
-			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{});
-
 			interpreter(type_info_set const* n, environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}) :
 				environment(std::move(base)),
 				input(i),
@@ -78,6 +76,10 @@ namespace expr
 				}), "exit");
 			}
 
+
+			interpreter(environment&& base = environment{}, std::istream& i = std::cin, std::ostream& o = std::cout, option_set&& s = option_set{}) :
+				interpreter(default_type_info(), std::move(base), i, o, std::move(s))
+			{}
 			
 			void once()
 			{

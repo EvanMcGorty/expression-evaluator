@@ -145,7 +145,10 @@ namespace expr
 			function_set& use(string_convertible&& n, function_set&& set = fs_functs<t>());
 			
 			template<typename t = void, typename string_convertible = std::string>
-			function_set& use(function_set&& set = fs_functs<t>());
+			function_set& use(function_set&& set = fs_functs<t>())
+			{
+				return use(fs_name<t>(default_type_info()), std::move(set));
+			}
 
 			std::optional<held_callable*> get(std::string const& a)
 			{

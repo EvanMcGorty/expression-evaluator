@@ -40,7 +40,22 @@ namespace expr
 			~type_info_set() {}
 		};
 
-		constexpr type_info_set* blank_set = nullptr;
+		constexpr type_info_set* empty_type_info = nullptr;
+
+		template<typename enable>
+		struct global_type_info_enabler
+		{
+			static type_info_set* get()
+			{
+				return empty_type_info;
+			}
+		};
+
+		template<typename enable = void>
+		type_info_set* default_type_info()
+		{
+			return global_type_info_enabler<enable>::get();
+		}
 
 
 		template<typename t>
@@ -129,6 +144,7 @@ namespace expr
 		}
 
 
+
 		template<typename t, typename...ts>
 		void declare(type_info_set* names)
 		{
@@ -141,7 +157,7 @@ namespace expr
 			}
 		}
 
-		template <typename t>
+		template <typename...t>
 		void declare();
 
 		template<typename t>

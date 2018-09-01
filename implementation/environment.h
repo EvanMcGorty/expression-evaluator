@@ -12,27 +12,46 @@ namespace expr
 
 
 			stack run(executable&& a, std::ostream& errors, type_info_set const* names);
-			stack run(executable&& a, std::ostream& errors);
+			stack run(executable&& a, std::ostream& errors)
+			{
+				return run(std::move(a), errors, default_type_info());
+			}
 
 
 			stack_elem evaluate(expression&& a, std::ostream& errors, type_info_set const* names);
-			stack_elem evaluate(expression&& a, std::ostream& errors);
+			stack_elem evaluate(expression&& a, std::ostream& errors)
+			{
+				return evaluate(std::move(a), errors, default_type_info());
+			}
 
 			stack_elem evaluate(std::string const& a, std::ostream& errors, type_info_set const* names)
 			{
 				return evaluate(expression::make(a), errors, names);
 			}
+			stack_elem evaluate(std::string const& a, std::ostream& errors)
+			{
+				return evaluate(std::move(a), errors, default_type_info());
+			}
 
+			template<typename IteratorToChar>
+			stack_elem evaluate(IteratorToChar& start, IteratorToChar stop, std::ostream& errors, type_info_set const* names)
+			{
+				return evaluate(expression::parse(start,stop),errors,names);
+			}
 			template<typename IteratorToChar>
 			stack_elem evaluate(IteratorToChar& start, IteratorToChar stop, std::ostream& errors)
 			{
-				return evaluate(expression::parse(start,stop),errors);
+				return evaluate(start,stop,errors,default_type_info());
 			}
 
 			stack_elem evaluate(std::istream& from, std::ostream& errors, type_info_set const* names)
 			{
 				auto it = raw_istream_iter(from);
 				return evaluate(expression::parse(it, {}).value_or(expression::make_empty()), errors, names);
+			}
+			stack_elem evaluate(std::istream& from, std::ostream& errors)
+			{
+				return evaluate(from,errors,default_type_info());
 			}
 
 
@@ -58,7 +77,10 @@ namespace expr
 						}
 					}});
 			}
-			held_callable info_printer(std::ostream& to = std::cout);
+			held_callable info_printer(std::ostream& to = std::cout)
+			{
+				return info_printer(default_type_info(), to);
+			}
 
 			held_callable value_printer(std::ostream& to = std::cout)
 			{
@@ -128,7 +150,10 @@ namespace expr
 					}
 				});
 			}
-			held_callable functions_printer(std::ostream& to = std::cout);
+			held_callable functions_printer(std::ostream& to = std::cout)
+			{
+				return functions_printer(default_type_info(), to);
+			}
 
 			held_callable variables_printer(type_info_set const* names,std::ostream& to = std::cout)
 			{
@@ -139,7 +164,10 @@ namespace expr
 					}
 				});
 			}
-			held_callable variables_printer(std::ostream& to = std::cout);
+			held_callable variables_printer(std::ostream& to = std::cout)
+			{
+				return variables_printer(default_type_info(), to);
+			}
 
 			held_callable variables_builder(type_info_set const* names, std::ostream& to = std::cout)
 			{
@@ -148,7 +176,10 @@ namespace expr
 					vars->make_builder(to_call,*names,*to);
 				}));
 			}
-			held_callable variables_builder(std::ostream& to = std::cout);
+			held_callable variables_builder(std::ostream& to = std::cout)
+			{
+				return variables_builder(default_type_info(), to);
+			}
 
 			function_set functions;
 

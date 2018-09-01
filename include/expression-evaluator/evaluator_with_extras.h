@@ -23,4 +23,6 @@ namespace expr
 	using impl::type_operation_info;
 	using impl::wrapper_type_operation_info;
 
+	using impl::default_type_infos;
+
 }
