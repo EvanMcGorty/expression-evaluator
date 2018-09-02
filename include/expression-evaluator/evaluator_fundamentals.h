@@ -62,8 +62,11 @@ namespace expr
 	//checks the name of a type in a type_info_set, by default using the global type dataset
 	using impl::name_of;
 
-	//a global type dataset
-	using impl::global_type_info;
+	//for supplying information and methods for types
+	using impl::type_operation_info;
+	using impl::wrapper_type_operation_info;
+
+	using impl::default_type_info;
 
 	//pre_call_t<t> is the object stored before being passed into a function argument of t
 	using impl::pre_call_t;
