@@ -78,7 +78,7 @@ namespace expr
 			std::string string_view(type_info_set const*) override
 			{
 				literal temp{ literal_value{std::string{val}} };
-				return std::string("unparsed{") + temp.make_string() + "}";
+				return temp.make_string();
 			}
 
 			bool lazy_get(any_type_ask* tar) override
@@ -172,7 +172,7 @@ namespace expr
 			
 			std::string string_view(type_info_set const*) override
 			{
-				return "void_object{}";
+				return "void_object";
 			}
 
 			mu::virt<any_object> as_non_trivially_destructible() && override

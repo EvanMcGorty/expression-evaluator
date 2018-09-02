@@ -139,12 +139,12 @@ namespace expr
 			held_callable functions_printer(type_info_set const* names, std::ostream& to = std::cout)
 			{
 				return sfn(std::function<void()>{
-					[to = &to,fs = &functions, names = &names]() -> void
+					[to = &to,fs = &functions, names = names]() -> void
 					{
 						for (auto const& it : fs->view())
 						{
 							*to << it.first;
-							it.second->put_type(*to,*names);
+							it.second->put_type(*to,names);
 							*to << '\n' << std::flush;
 						}
 					}
@@ -158,9 +158,9 @@ namespace expr
 			held_callable variables_printer(type_info_set const* names,std::ostream& to = std::cout)
 			{
 				return sfn(std::function<void()>{
-					[to = &to, vs = &variables,names = &names]() -> void
+					[to = &to, vs = &variables,names = names]() -> void
 					{
-						vs->put_values(*to,*names);
+						vs->put_values(*to,names);
 					}
 				});
 			}
@@ -171,9 +171,9 @@ namespace expr
 
 			held_callable variables_builder(type_info_set const* names, std::ostream& to = std::cout)
 			{
-				return sfn(std::function<void(std::string)>([vars = &variables, to = &to, names = &names](std::string to_call) -> void
+				return sfn(std::function<void(std::string)>([vars = &variables, to = &to, names = names](std::string to_call) -> void
 				{
-					vars->make_builder(to_call,*names,*to);
+					vars->make_builder(to_call,names,*to);
 				}));
 			}
 			held_callable variables_builder(std::ostream& to = std::cout)

@@ -242,9 +242,8 @@ namespace expr
 		{
 		public:
 
-			std::string make_builder(std::string const& builder_function, std::string const& var_name, type_info_set const* names, std::ostream& to)
+			void make_builder(std::string const& builder_function, std::string const& var_name, type_info_set const* names, std::ostream& to)
 			{
-				std::string ret;
 				for(auto& it : values)
 				{
 					to << "swap(=" << var_name << "/,";
@@ -258,7 +257,6 @@ namespace expr
 					}
 					to << ")\n";
 				}
-				return ret;
 			}
 
 			object_holder * push_front(object_holder&& a)
