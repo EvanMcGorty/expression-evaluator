@@ -55,9 +55,9 @@ namespace expr
 			}
 
 
-			held_callable info_printer(type_info_set const* from, std::ostream& to = std::cout)
+			held_callable info_printer(type_info_set const* names, std::ostream& to = std::cout)
 			{
-				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{[to = &to, from = &from](std::vector<stack_elem>& a) -> object_holder
+				return mfn(std::function<object_holder(std::vector<stack_elem>&)>{[to = &to, names = names](std::vector<stack_elem>& a) -> object_holder
 					{
 						if (a.size() == 1)
 						{
@@ -67,7 +67,7 @@ namespace expr
 							}
 							else if(!(a[0]->is_object() && a[0].downcast_get<any_object>()->is<void>()))
 							{
-								*to << a[0]->string_view(*from) << '\n' << std::flush;
+								*to << a[0]->string_view(names) << '\n' << std::flush;
 							}
 							return object_holder::make<void_object>(); //indicates a successful function call even though the return type is void
 						}
