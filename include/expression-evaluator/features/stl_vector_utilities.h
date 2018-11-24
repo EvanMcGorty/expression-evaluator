@@ -137,7 +137,7 @@ namespace expr
 						{
 							return std::nullopt;
 						}
-						else if (*start == ']')
+						else if (*start == close_char)
 						{
 							++start;
 							return { std::move(ret) };
