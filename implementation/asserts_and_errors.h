@@ -9,7 +9,7 @@ namespace expr
 
 		using expression_evaluator_usage_logic_error = std::logic_error;
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 		template<typename InvokesToBool>
 		void assert_with_generic_logic_error(InvokesToBool a)
 		{
