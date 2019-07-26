@@ -1,3 +1,4 @@
+#pragma once
 #include"../../../implementation/function_sets.h"
 
 namespace expr

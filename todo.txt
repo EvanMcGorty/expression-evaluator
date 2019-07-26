@@ -19,6 +19,7 @@ make error messages better:
 
 important:
 kind of literal that starts with open brace and ignores all closed braces except for one immediately after a newline
+	or perhaps a tabbed literal that ends after a newline is found without a tab following
 better include system
 make parsing code better
 	stop using switch statements in parsing_checks

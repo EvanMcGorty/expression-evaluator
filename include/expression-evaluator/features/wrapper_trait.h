@@ -1,3 +1,4 @@
+#pragma once
 #include"../../../implementation/objects_and_calls/evaluator_basics/type_operation_info.h"
 
 namespace expr
