@@ -1,0 +1,8 @@
+my theorem solver is an example of how one might use this library only for it's expressions 
+(to take advantage of their tree-like structure)
+it requires mathematical expressions that to be iterated through.
+as it uses the expression-evaluator as a submodule, you can clone it with:
+
+git clone https://github.com/EvanMcGorty/theorem-solver.git --recurse-submodules
+
+inlcude run.h and call run() to see it in action
