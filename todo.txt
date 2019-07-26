@@ -1,0 +1,114 @@
+currently working on:
+
+urgent:
+provide direct access to the members of interpreter and environment
+try to accomplish two things at once:
+	ability to make variables act as references like c++ ones do
+	references to objects? to other variables? to normal memory/addresses? do they prolong lifetimes?
+	deal with issue of variables automatically acting as r-values
+make vector and string generic to allocators/more of their template arguments
+workaround from fs_functs with constructing the module-class directly
+generic version of swap (e.g. i dont need to do vec.swap)
+clarify differences between address/reference operations and variable operations
+variable operation for assignment instead of swap
+make error messages better:
+	assert for everything as early as possible (farther down / earlier in the stack)
+	#pragma message
+	static assert
+
+
+important:
+kind of literal that starts with open brace and ignores all closed braces except for one immediately after a newline
+better include system
+make parsing code better
+	stop using switch statements in parsing_checks
+	instead have functions depend on each other to give them more meaning
+	stop doing things so manually
+ability to do more with literals, e.g. assignment by literal to assign a variable holding vector to a list-ref
+add changes to virtual_function_utilities repo
+ifdef to determine things like whether to use exceptions
+utilities for builtins (float, int, etc)
+fix view_string for literals and void objects
+in addition to returning nullval, functions should throw exceptions
+_funcs should show special functions too
+_vars should show variables
+fix up code
+	comment everything
+	optimize code
+	make code nicer and more clear
+	add and removing comments
+add static asserts to avoid cryptic error messages from bad function signatures 
+	(organize static_asserts like regular asserts are organized)
+get rid of warnings
+more options for actions upon a failed call (so objects dont have to be consumed)
+function for taking a held callable and making it a "smart returner" which creates an overload that returns by giving its last argument the result
+alternative to quotes for literals, braced quotes
+be more flexible with types (e.g. volitile, is std::remove_const the right choice?)
+manual callables with type annotations,
+test types without move semantics but with copy semantics, types with only move semantics, no semantics, etc.
+make parsing better/cleaner
+	allow parsing to work so that parenthases and square brackets are interchangable
+	provide basic operators to be converted into functions
+	for example "x + y" -> "acm(x,y)" standing for accumulation, or "x @ y" -> "mbr(x,y)" standing for member
+way to extract object_of<object_holder>
+
+to eventually consider:
+expression evaluator main function generator, extensionless file in the directory of your code.
+	it has information that you enter about your code, informing it of classes, functions, and globals.
+	it generates an interpreter and a main function that runs.
+	you would call some exe on your path that generates from it a temporary cpp file to compile
+	with various options such as compiler/flags, kinds of libraries to include,
+make entire python like programming language for the expression evaluator independent of any c++ types, working entirely off of literals.
+	methods for storing and extracting literal_value from object_of
+	a function can have literal_value as an argument, typed objects automatically have to_string called and it can take literals directly.
+	evaluating literals might be how scripting-like things are done (control flow, functions)
+supply the user with tools to make it easier for them to extend the expression evaluator
+way to uniquely identify selected types (builtins and standard library) across runtimes and compilations.
+	compile code with gcc/clang at runtime and somehow copy types
+take more advantage of streams
+use the expression evaluator as a bridge between languages!!!???(c++ and python?)
+	have a type_operation_trait for being python-printable
+ability to rename template names (for example so you could make all instances of sometypename-optional into sometypename-option)
+implicit casts with std::vector and with held_object?
+make more callables, corrosponding bind functions, or functions for making a callable and one single bind function
+put non-template dependant code in separate functions to speed compile time
+try to make type_wrap code faster with member functions maybe
+try using std::decay
+better error messages with bad parses and add literal validity checking
+	instead of: 
+	"call to function _____ returned null"
+	it should be
+	"call to function _____ failed because of ______"
+make it possible to rethrow exceptions caught by the evaluator
+put exception stuff in cpp_core, put old exceptions on the garbage
+use macros to determine what features are on
+better explain namespaces, implicit casts, difference between variables/literals and regular objects
+parse code (entire programs?) with macros
+macros for making stuff easier
+more implicit casts, support for c arrays and c strings
+make it easier to use value_holders, held_callables, statements, stacks, and executables from c++ code.
+add a definition of demangle for msvc, better printing of types' default names
+make the library for elem more complicated and provide functions for making algebraic operations convenient
+make it so an elem can contain enums that corrospond to names.
+get mutable and volitile values to work
+
+other:
+
+look at chaiscript for inspiration
+
+things to support through parsing/printing and function_sets
+primitive types
+type_infos with type_traits and type information databases
+constructors/conversion/casting/hierarchies
+pair/tuple/array/list/deque/vector/map/set
+iterator/range/algorithm
+control-flow/scripting/function/closure/lambda
+optional/variant/any
+regex/string/stringstream/iostream/iomanip/fstream/filesystem/streams in general
+shared_ptr/weak_ptr/unique_ptr
+thread/future/promise/mutex
+chrono/duration/time_point
+numerics/trig/complex/random
+bool/logic/bitset/bitwise operations
+system/architecture/information
+make existing function_sets better
